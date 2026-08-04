@@ -29,6 +29,17 @@ export default function App() {
   const [history, setHistory] = useState([]);
   const [inputMode, setInputMode] = useState('keyboard'); // 'keyboard' | 'touch'
 
+  // タッチデバイスかどうかを自動判定
+  const [isTouchDevice, setIsTouchDevice] = useState(false);
+
+  useEffect(() => {
+    const hasTouch =
+      'ontouchstart' in window ||
+      navigator.maxTouchPoints > 0 ||
+      window.matchMedia('(pointer: coarse)').matches;
+    setIsTouchDevice(hasTouch);
+  }, []);
+
   const timerRef = useRef(null);
   const startTimeRef = useRef(null);
 
@@ -154,44 +165,49 @@ export default function App() {
         片手トリル速度チェッカー
       </h1>
       <p className="text-xs md:text-sm text-gray-600 mb-4">
-        <span className="hidden md:inline">※ 有効キー（片手）から2種類を連打して自動10秒計測（IMEオフ）</span>
-        <span className="md:hidden">※ 下の左右パッドを交互に連続タップして自動10秒計測</span>
+        {!isTouchDevice ? (
+          <span>※ 有効キー（片手）から2種類を連打して自動10秒計測（IMEオフ）</span>
+        ) : (
+          <span>※ 下の左右パッドを交互に連続タップして自動10秒計測</span>
+        )}
       </p>
 
-      {/* PC専用エリア (md:blockで幅768px以上のみ表示)：キーボードの有効キー対応表 */}
-      <div className="hidden md:block bg-white p-4 rounded-xl border border-gray-200 mb-6 shadow-sm">
-        <div className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-3">
-          PCキーボード 有効キー対応表（※ 左手と右手を混ぜた入力はできません）
-        </div>
-        <div className="grid grid-cols-2 gap-4 text-sm">
-          <div className="p-3 bg-blue-50 rounded-lg border border-blue-100">
-            <span className="font-bold text-blue-700 block mb-2">左手キー (A, S, D, F, Space)</span>
-            <div className="text-gray-700 text-xs flex flex-wrap gap-1.5">
-              <span className="bg-white px-2 py-1 rounded border border-blue-200 font-medium"><strong>f</strong> : 人差し指</span>
-              <span className="bg-white px-2 py-1 rounded border border-blue-200 font-medium"><strong>d</strong> : 中指</span>
-              <span className="bg-white px-2 py-1 rounded border border-blue-200 font-medium"><strong>s</strong> : 薬指</span>
-              <span className="bg-white px-2 py-1 rounded border border-blue-200 font-medium"><strong>a</strong> : 小指</span>
-              <span className="bg-white px-2 py-1 rounded border border-blue-200 font-medium"><strong>Space</strong> : 親指</span>
+      {/* PC（非タッチデバイス）専用エリア：キーボードの有効キー対応表 */}
+      {!isTouchDevice && (
+        <div className="bg-white p-4 rounded-xl border border-gray-200 mb-6 shadow-sm">
+          <div className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-3">
+            PCキーボード 有効キー対応表（※ 左手と右手を混ぜた入力はできません）
+          </div>
+          <div className="grid grid-cols-2 gap-4 text-sm">
+            <div className="p-3 bg-blue-50 rounded-lg border border-blue-100">
+              <span className="font-bold text-blue-700 block mb-2">左手キー (A, S, D, F, Space)</span>
+              <div className="text-gray-700 text-xs flex flex-wrap gap-1.5">
+                <span className="bg-white px-2 py-1 rounded border border-blue-200 font-medium"><strong>f</strong> : 人差し指</span>
+                <span className="bg-white px-2 py-1 rounded border border-blue-200 font-medium"><strong>d</strong> : 中指</span>
+                <span className="bg-white px-2 py-1 rounded border border-blue-200 font-medium"><strong>s</strong> : 薬指</span>
+                <span className="bg-white px-2 py-1 rounded border border-blue-200 font-medium"><strong>a</strong> : 小指</span>
+                <span className="bg-white px-2 py-1 rounded border border-blue-200 font-medium"><strong>Space</strong> : 親指</span>
+              </div>
+            </div>
+            <div className="p-3 bg-purple-50 rounded-lg border border-purple-100">
+              <span className="font-bold text-purple-700 block mb-2">右手キー (J, K, L, ;, Space)</span>
+              <div className="text-gray-700 text-xs flex flex-wrap gap-1.5">
+                <span className="bg-white px-2 py-1 rounded border border-purple-200 font-medium"><strong>j</strong> : 人差し指</span>
+                <span className="bg-white px-2 py-1 rounded border border-purple-200 font-medium"><strong>k</strong> : 中指</span>
+                <span className="bg-white px-2 py-1 rounded border border-purple-200 font-medium"><strong>l</strong> : 薬指</span>
+                <span className="bg-white px-2 py-1 rounded border border-purple-200 font-medium"><strong>;</strong> : 小指</span>
+                <span className="bg-white px-2 py-1 rounded border border-purple-200 font-medium"><strong>Space</strong> : 親指</span>
+              </div>
             </div>
           </div>
-          <div className="p-3 bg-purple-50 rounded-lg border border-purple-100">
-            <span className="font-bold text-purple-700 block mb-2">右手キー (J, K, L, ;, Space)</span>
-            <div className="text-gray-700 text-xs flex flex-wrap gap-1.5">
-              <span className="bg-white px-2 py-1 rounded border border-purple-200 font-medium"><strong>j</strong> : 人差し指</span>
-              <span className="bg-white px-2 py-1 rounded border border-purple-200 font-medium"><strong>k</strong> : 中指</span>
-              <span className="bg-white px-2 py-1 rounded border border-purple-200 font-medium"><strong>l</strong> : 薬指</span>
-              <span className="bg-white px-2 py-1 rounded border border-purple-200 font-medium"><strong>;</strong> : 小指</span>
-              <span className="bg-white px-2 py-1 rounded border border-purple-200 font-medium"><strong>Space</strong> : 親指</span>
-            </div>
-          </div>
         </div>
-      </div>
+      )}
 
       {/* 計測パネル */}
       <div className="bg-white p-4 md:p-6 rounded-xl border border-gray-200 text-center mb-4 md:mb-6 shadow-sm">
         <div className="text-xs md:text-sm font-medium text-gray-400 uppercase mb-1">
           {status === 'idle'
-            ? 'キーを押すか、下のパッドを叩いてスタート'
+            ? (!isTouchDevice ? 'キーを押してスタート' : '下のパッドを叩いてスタート')
             : status === 'running'
             ? '計測中...'
             : '計測完了'}
@@ -248,23 +264,25 @@ export default function App() {
         )}
       </div>
 
-      {/* スマホ専用エリア (md:hiddenで幅768px未満のみ表示)：フレキシブル2パッド領域 */}
-      <div className="grid md:hidden grid-cols-2 gap-3 flex-1 min-h-[220px] mb-6">
-        <div
-          onPointerDown={(e) => handlePadDown('LEFT', e)}
-          className="bg-blue-500/10 hover:bg-blue-500/20 active:bg-blue-500/30 border-2 border-blue-400 rounded-2xl flex flex-col items-center justify-center cursor-pointer touch-none transition-transform active:scale-[0.98] shadow-sm"
-        >
-          <span className="text-3xl font-extrabold text-blue-600 tracking-wider">LEFT</span>
-          <span className="text-xs text-blue-500 font-medium mt-1">（左パッド）</span>
+      {/* タッチデバイス専用エリア：フレキシブル2パッド領域 */}
+      {isTouchDevice && (
+        <div className="grid grid-cols-2 gap-3 flex-1 min-h-[220px] mb-6">
+          <div
+            onPointerDown={(e) => handlePadDown('LEFT', e)}
+            className="bg-blue-500/10 hover:bg-blue-500/20 active:bg-blue-500/30 border-2 border-blue-400 rounded-2xl flex flex-col items-center justify-center cursor-pointer touch-none transition-transform active:scale-[0.98] shadow-sm"
+          >
+            <span className="text-3xl font-extrabold text-blue-600 tracking-wider">LEFT</span>
+            <span className="text-xs text-blue-500 font-medium mt-1">（左パッド）</span>
+          </div>
+          <div
+            onPointerDown={(e) => handlePadDown('RIGHT', e)}
+            className="bg-purple-500/10 hover:bg-purple-500/20 active:bg-purple-500/30 border-2 border-purple-400 rounded-2xl flex flex-col items-center justify-center cursor-pointer touch-none transition-transform active:scale-[0.98] shadow-sm"
+          >
+            <span className="text-3xl font-extrabold text-purple-600 tracking-wider">RIGHT</span>
+            <span className="text-xs text-purple-500 font-medium mt-1">（右パッド）</span>
+          </div>
         </div>
-        <div
-          onPointerDown={(e) => handlePadDown('RIGHT', e)}
-          className="bg-purple-500/10 hover:bg-purple-500/20 active:bg-purple-500/30 border-2 border-purple-400 rounded-2xl flex flex-col items-center justify-center cursor-pointer touch-none transition-transform active:scale-[0.98] shadow-sm"
-        >
-          <span className="text-3xl font-extrabold text-purple-600 tracking-wider">RIGHT</span>
-          <span className="text-xs text-purple-500 font-medium mt-1">（右パッド）</span>
-        </div>
-      </div>
+      )}
 
       {/* 履歴テーブル */}
       <div>
