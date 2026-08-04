@@ -247,7 +247,7 @@ export default function App() {
             </div>
           </div>
           <div className="bg-amber-50 p-1 md:p-1.5 rounded-lg border border-amber-200">
-            <div className="text-[10px] md:text-xs font-bold text-amber-700">16連符 BPM</div>
+            <div className="text-[10px] md:text-xs font-bold text-amber-700">16分音符 BPM</div>
             <div className="text-xl md:text-2xl font-extrabold text-amber-600 mt-0.5 md:mt-1">
               {currentBPM}
             </div>
@@ -299,7 +299,7 @@ export default function App() {
                   <th className="p-2 md:p-3 border-b">組み合わせ</th>
                   <th className="p-2 md:p-3 border-b">合計打数</th>
                   <th className="p-2 md:p-3 border-b">打/秒 (CPS)</th>
-                  <th className="p-2 md:p-3 border-b bg-amber-50 font-bold text-amber-800">16連符 BPM</th>
+                  <th className="p-2 md:p-3 border-b bg-amber-50 font-bold text-amber-800">16分音符 BPM</th>
                 </tr>
               </thead>
               <tbody>
