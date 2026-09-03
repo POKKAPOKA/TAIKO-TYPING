@@ -29,15 +29,15 @@ export default function App() {
   const [history, setHistory] = useState([]);
   const [inputMode, setInputMode] = useState('keyboard'); // 'keyboard' | 'touch'
 
-  // タッチデバイスかどうかを自動判定
-  const [isTouchDevice, setIsTouchDevice] = useState(false);
+  const [isPcWidth, setIsPcWidth] = useState(false);
 
   useEffect(() => {
-    const hasTouch =
-      'ontouchstart' in window ||
-      navigator.maxTouchPoints > 0 ||
-      window.matchMedia('(pointer: coarse)').matches;
-    setIsTouchDevice(hasTouch);
+    const mediaQuery = window.matchMedia('(min-width: 768px)');
+    const updatePcWidth = () => setIsPcWidth(mediaQuery.matches);
+
+    updatePcWidth();
+    mediaQuery.addEventListener('change', updatePcWidth);
+    return () => mediaQuery.removeEventListener('change', updatePcWidth);
   }, []);
 
   const timerRef = useRef(null);
@@ -127,12 +127,13 @@ export default function App() {
   // キーボード入力ダウン
   const handleKeyDown = useCallback(
     (e) => {
+      if (!isPcWidth) return;
       if (e.repeat || e.isComposing) return;
       const key = e.key.toLowerCase();
       if (!(key in FINGER_MAP)) return;
       processInput(key, 'keyboard');
     },
-    [processInput]
+    [isPcWidth, processInput]
   );
 
   useEffect(() => {
@@ -165,7 +166,7 @@ export default function App() {
         片手トリル速度チェッカー
       </h1>
       <p className="text-xs md:text-sm text-gray-600 mb-4">
-        {!isTouchDevice ? (
+        {isPcWidth ? (
           <span>※ 有効キー（片手）から2種類を連打して自動10秒計測（IMEオフ）</span>
         ) : (
           <span>※ 下の左右パッドを交互に連続タップして自動10秒計測</span>
@@ -173,7 +174,7 @@ export default function App() {
       </p>
 
       {/* PC（非タッチデバイス）専用エリア：キーボードの有効キー対応表 */}
-      {!isTouchDevice && (
+      {isPcWidth && (
         <div className="bg-white p-4 rounded-xl border border-gray-200 mb-6 shadow-sm">
           <div className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-3">
             PCキーボード 有効キー対応表（※ 左手と右手を混ぜた入力はできません）
@@ -207,7 +208,7 @@ export default function App() {
       <div className="bg-white p-4 md:p-6 rounded-xl border border-gray-200 text-center mb-4 md:mb-6 shadow-sm">
         <div className="text-xs md:text-sm font-medium text-gray-400 uppercase mb-1">
           {status === 'idle'
-            ? (!isTouchDevice ? 'キーを押してスタート' : '下のパッドを叩いてスタート')
+            ? (isPcWidth ? 'キーを押してスタート' : '下のパッドを叩いてスタート')
             : status === 'running'
             ? '計測中...'
             : '計測完了'}
@@ -265,7 +266,7 @@ export default function App() {
       </div>
 
       {/* タッチデバイス専用エリア：フレキシブル2パッド領域 */}
-      {isTouchDevice && (
+      {!isPcWidth && (
         <div className="grid grid-cols-2 gap-3 flex-1 min-h-[220px] mb-6">
           <div
             onPointerDown={(e) => handlePadDown('LEFT', e)}
