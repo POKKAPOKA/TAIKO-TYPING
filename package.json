@@ -4,21 +4,19 @@
   "version": "1.0.0",
   "type": "module",
   "scripts": {
-    "dev": "vite"
+    "dev": "vite",
+    "build": "vite build",
+    "publish": "powershell -ExecutionPolicy Bypass -File .\\publish.ps1"
   },
   "dependencies": {
     "react": "^19.2.8",
-    "react-dom": "^19.2.8"
+    "react-dom": "^19.2.8",
+    "zustand": "^5.0.15"
   },
   "devDependencies": {
     "@tailwindcss/vite": "^4.3.3",
     "@vitejs/plugin-react": "^6.0.5",
     "tailwindcss": "^4.3.3",
     "vite": "^8.2.0"
-  },
-  "scripts": {
-    "dev": "vite",
-    "build": "vite build",
-    "publish": "powershell -ExecutionPolicy Bypass -File .\\publish.ps1"
   }
 }
