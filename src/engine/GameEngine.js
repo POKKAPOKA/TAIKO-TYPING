@@ -3,6 +3,7 @@ import { useGameStore } from '../store/gameStore';
 const JUDGE_WINDOW = {
   PERFECT: 50,
   GOOD: 100,
+  MISS: 150
 };
 
 export class GameEngine {
@@ -29,10 +30,8 @@ export class GameEngine {
     store.reset();
     store.setStatus('playing');
     
-    // time昇順にソートしてキューを初期化
     this.queue = [...loadedScore.notes].sort((a, b) => a.time - b.time).map(note => ({ ...note, typed: "" }));
     
-    // 理論値スコアの計算と保存（全ノーツJUSTICE=100点）
     store.setMaxScore(this.queue.length * 100);
 
     this.currentTarget = this.queue.shift() || null;
@@ -116,7 +115,12 @@ export class GameEngine {
     const isFirstHit = typedLen === 0;
     
     if (isFirstHit) {
-      this.judgeRhythm();
+      const timeDiff = Math.abs(this.currentTime - this.currentTarget.time);
+      if (timeDiff > JUDGE_WINDOW.MISS) {
+        // 150ms より外側の入力は完全に無視（空振り扱い）
+        return;
+      }
+      this.judgeRhythm(timeDiff);
     }
 
     this.currentTarget.typed += key;
@@ -128,19 +132,16 @@ export class GameEngine {
     }
   }
 
-  judgeRhythm() {
-    const timeDiff = Math.abs(this.currentTime - this.currentTarget.time);
+  judgeRhythm(timeDiff) {
     const store = useGameStore.getState();
 
     if (timeDiff <= JUDGE_WINDOW.PERFECT) {
       store.setLastJudgment('JUSTICE');
       store.addScore(100);
-      store.setCombo(store.combo + 1);
     } else if (timeDiff <= JUDGE_WINDOW.GOOD) {
       store.setLastJudgment('ATTACK');
       store.addScore(50);
-      store.setCombo(store.combo + 1);
-    } else {
+    } else if (timeDiff <= JUDGE_WINDOW.MISS) {
       store.setLastJudgment('MISS');
       store.setCombo(0);
       store.addMissCount();
@@ -149,6 +150,9 @@ export class GameEngine {
 
   completeCurrentTarget() {
     const store = useGameStore.getState();
+    
+    // 単語を最後まで打ち切った瞬間のみコンボを加算
+    store.setCombo(store.combo + 1);
     
     this.currentTarget = this.queue.shift() || null;
     
