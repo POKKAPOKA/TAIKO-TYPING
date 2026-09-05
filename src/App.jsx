@@ -4,8 +4,10 @@ import { gameEngine } from './engine/GameEngine';
 import NotesArea from './components/NotesArea';
 import EditorView from './components/editor/EditorView';
 
+import SongSelect from './components/SongSelect';
+
 function App() {
-  const [appMode, setAppMode] = useState('menu'); // 'menu' | 'setup' | 'game' | 'editor'
+  const [appMode, setAppMode] = useState('menu'); // 'menu' | 'setup' | 'game' | 'editor' | 'songSelect'
 
   const score = useGameStore(state => state.score);
   const maxCombo = useGameStore(state => state.maxCombo);
@@ -34,24 +36,6 @@ function App() {
   const handleStartGame = () => {
     setAppMode('game');
     gameEngine.start();
-  };
-
-  const handleDemoStart = async () => {
-    try {
-      const response = await fetch('./kimigayo.json');
-      if (!response.ok) {
-        throw new Error(`Failed to load demo score: ${response.status} ${response.statusText}`);
-      }
-      const data = await response.json();
-      
-      setLoadedScore(data, "kimigayo.json");
-      setAudioUrl('./kimigayo.mp3', "kimigayo.mp3");
-      setAppMode('game');
-      setTimeout(() => gameEngine.start(), 0);
-    } catch (error) {
-      console.error(error);
-      alert("デモデータの読み込みに失敗しました。\npublic フォルダに kimigayo.json と kimigayo.mp3 が配置されているか確認してください。");
-    }
   };
 
   const handleStop = () => {
@@ -110,6 +94,10 @@ function App() {
   if (appMode === 'editor') {
     return <EditorView onExit={() => setAppMode('menu')} />;
   }
+  
+  if (appMode === 'songSelect') {
+    return <SongSelect onBack={() => setAppMode('menu')} onStartGame={() => setAppMode('game')} />;
+  }
 
   return (
     <div className="min-h-screen bg-neutral-900 text-white flex flex-col items-center p-8 font-sans select-none overflow-y-auto">
@@ -118,10 +106,16 @@ function App() {
       {appMode === 'menu' && (
         <div className="flex flex-col gap-6 mt-20">
           <button 
-            onClick={() => setAppMode('setup')}
+            onClick={() => setAppMode('songSelect')}
             className="px-12 py-4 bg-orange-500 hover:bg-orange-400 text-neutral-900 rounded-full font-black text-2xl transition-colors"
           >
             PLAY GAME
+          </button>
+          <button 
+            onClick={() => setAppMode('setup')}
+            className="px-12 py-4 bg-cyan-600 hover:bg-cyan-500 text-white rounded-full font-black text-2xl transition-colors"
+          >
+            CUSTOM PLAY (LOCAL)
           </button>
           <button 
             onClick={() => setAppMode('editor')}
@@ -134,7 +128,7 @@ function App() {
 
       {appMode === 'setup' && (
         <div className="bg-neutral-800 rounded-3xl p-8 flex flex-col items-center gap-8 w-full max-w-xl">
-          <h2 className="text-2xl font-black text-white">GAME SETUP</h2>
+          <h2 className="text-2xl font-black text-white">CUSTOM PLAY SETUP</h2>
           
           <div className="w-full flex flex-col gap-4">
             <label className={`cursor-pointer w-full text-center py-4 rounded-full font-bold transition-colors ${loadedScore ? 'bg-green-500 text-neutral-900' : 'bg-neutral-700 hover:bg-neutral-600 text-white'}`}>
@@ -163,15 +157,6 @@ function App() {
               START
             </button>
           </div>
-
-          <div className="w-full border-t border-neutral-700 my-2"></div>
-          
-          <button 
-            onClick={handleDemoStart}
-            className="w-full py-4 bg-cyan-600 hover:bg-cyan-500 text-white rounded-full font-black text-xl transition-colors"
-          >
-            Play Demo (君が代)
-          </button>
         </div>
       )}
 

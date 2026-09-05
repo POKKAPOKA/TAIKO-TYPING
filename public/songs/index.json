@@ -1,0 +1,9 @@
+﻿[
+  {
+    "id": "kimigayo",
+    "title": "君が代",
+    "creator": "Admin",
+    "scorePath": "./songs/kimigayo/kimigayo.json",
+    "audioPath": "./songs/kimigayo/kimigayo.mp3"
+  }
+]
