@@ -4,19 +4,6 @@ import { gameEngine } from './engine/GameEngine';
 import NotesArea from './components/NotesArea';
 import EditorView from './components/editor/EditorView';
 
-const DUMMY_KIMIGAYO = {
-  musicTitle: "KIMIGAYO",
-  notes: [
-    { id: 1, time: 1000, endTime: 1500, word: "KIMI" },
-    { id: 2, time: 2000, endTime: 2500, word: "GAYO" },
-    { id: 3, time: 3000, endTime: 3500, word: "WA" },
-    { id: 4, time: 4500, endTime: 5000, word: "CHIYO" },
-    { id: 5, time: 5500, endTime: 6000, word: "NI" },
-    { id: 6, time: 7000, endTime: 7500, word: "YACHIYO" },
-    { id: 7, time: 8500, endTime: 9000, word: "NI" }
-  ]
-};
-
 function App() {
   const [appMode, setAppMode] = useState('menu'); // 'menu' | 'setup' | 'game' | 'editor'
 
@@ -49,11 +36,22 @@ function App() {
     gameEngine.start();
   };
 
-  const handleDemoStart = () => {
-    setLoadedScore(DUMMY_KIMIGAYO, "kimigayo.json");
-    setAudioUrl('./kimigayo.mp3', "kimigayo.mp3");
-    setAppMode('game');
-    setTimeout(() => gameEngine.start(), 0);
+  const handleDemoStart = async () => {
+    try {
+      const response = await fetch('./kimigayo.json');
+      if (!response.ok) {
+        throw new Error(`Failed to load demo score: ${response.status} ${response.statusText}`);
+      }
+      const data = await response.json();
+      
+      setLoadedScore(data, "kimigayo.json");
+      setAudioUrl('./kimigayo.mp3', "kimigayo.mp3");
+      setAppMode('game');
+      setTimeout(() => gameEngine.start(), 0);
+    } catch (error) {
+      console.error(error);
+      alert("デモデータの読み込みに失敗しました。\npublic フォルダに kimigayo.json と kimigayo.mp3 が配置されているか確認してください。");
+    }
   };
 
   const handleStop = () => {

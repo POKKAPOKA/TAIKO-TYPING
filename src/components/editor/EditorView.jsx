@@ -58,40 +58,86 @@ export default function EditorView({ onExit }) {
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, []);
 
-  // isPlaying に応じて Audio を操作
+  // isPlaying に応じて Audio または タイマーを操作
+  const mockStartTimeRef = useRef(0);
+  const mockStartCurrentTimeRef = useRef(0);
+
   useEffect(() => {
-    if (!audioRef.current) return;
+    const audioEl = audioRef.current;
+    const hasAudio = audioEl && audioEl.src && !audioEl.src.endsWith('null');
+
     if (isPlaying) {
-      audioRef.current.play().catch(e => {
-        console.error("Audio playback failed:", e);
-        setIsPlaying(false);
-      });
+      if (hasAudio) {
+        audioEl.play().catch(e => {
+          console.warn("Audio playback failed, falling back to silent mode:", e);
+          // 音声再生に失敗してもそのまま進める
+        });
+      }
+      mockStartTimeRef.current = performance.now();
+      mockStartCurrentTimeRef.current = useEditorStore.getState().currentTime;
     } else {
-      audioRef.current.pause();
+      if (hasAudio) {
+        audioEl.pause();
+      }
     }
   }, [isPlaying]);
 
-  // AudioのcurrentTimeと同期するループ
+  // currentTimeの同期ループ
   useEffect(() => {
     const syncLoop = () => {
-      if (isPlaying && audioRef.current) {
-        // audio.currentTime は秒なので ms に変換。オフセットを加味。
-        setCurrentTime((audioRef.current.currentTime * 1000) - useEditorStore.getState().offset);
+      const state = useEditorStore.getState();
+      const audioEl = audioRef.current;
+      const hasAudio = audioEl && audioEl.src && !audioEl.src.endsWith('null') && !audioEl.paused && !audioEl.error;
+
+      if (state.isPlaying) {
+        if (hasAudio) {
+          setCurrentTime((audioEl.currentTime * 1000) - state.offset);
+          if (audioEl.ended) {
+            state.setIsPlaying(false);
+          }
+        } else {
+          // 無音プレビュー
+          const elapsed = performance.now() - mockStartTimeRef.current;
+          const newTime = mockStartCurrentTimeRef.current + elapsed;
+          setCurrentTime(newTime);
+          
+          // 終了判定（最後のノーツ+5000ms）
+          let maxBeats = 0;
+          state.editorNotes.forEach(n => {
+            const beats = n.measure * 4 + n.beat + (n.durationBeats || 0);
+            if (beats > maxBeats) maxBeats = beats;
+          });
+          const fallbackDuration = maxBeats > 0 ? maxBeats * (60000 / state.bpm) + 5000 : 5000;
+          
+          if (newTime > fallbackDuration) {
+            state.setIsPlaying(false);
+          }
+        }
       }
       requestRef.current = requestAnimationFrame(syncLoop);
     };
     
     requestRef.current = requestAnimationFrame(syncLoop);
     return () => cancelAnimationFrame(requestRef.current);
-  }, [isPlaying, setCurrentTime]);
+  }, [setCurrentTime]);
 
   // seekRequest の監視（ルーラーからのシーク指示）
   const seekRequest = useEditorStore(state => state.seekRequest);
   useEffect(() => {
-    if (seekRequest !== null && audioRef.current) {
-      // 音楽の絶対時間(ms) = エディタ上の時間 + オフセット
-      audioRef.current.currentTime = (seekRequest + useEditorStore.getState().offset) / 1000;
+    if (seekRequest !== null) {
+      const audioEl = audioRef.current;
+      const hasAudio = audioEl && audioEl.src && !audioEl.src.endsWith('null');
+      
+      if (hasAudio) {
+        audioEl.currentTime = (seekRequest + useEditorStore.getState().offset) / 1000;
+      }
       setCurrentTime(seekRequest);
+      
+      if (useEditorStore.getState().isPlaying) {
+        mockStartTimeRef.current = performance.now();
+        mockStartCurrentTimeRef.current = seekRequest;
+      }
+      
       useEditorStore.getState().setSeekRequest(null);
     }
   }, [seekRequest, setCurrentTime]);
@@ -248,7 +294,7 @@ export default function EditorView({ onExit }) {
   };
 
   return (
-    <div className="min-h-screen bg-neutral-900 text-white flex flex-col items-center p-8 font-sans select-none w-full">
+    <div className="min-h-screen bg-neutral-900 text-white flex flex-col items-center p-8 font-sans select-none w-full overflow-y-auto">
       <audio ref={audioRef} src={audioUrl} />
       
       <div className="w-full flex justify-between items-center mb-8">

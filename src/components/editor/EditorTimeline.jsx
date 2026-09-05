@@ -37,12 +37,19 @@ export default function EditorTimeline() {
   }, [setTimelineWidth, fixedTimelineWidth]);
 
   const handleWheel = (e) => {
-    const timePerPage = fixedTimelineWidth / pxPerMs;
-    if (e.deltaY > 0) {
-      setScrollTimeOffset(scrollTimeOffset + timePerPage);
-    } else if (e.deltaY < 0) {
-      setScrollTimeOffset(scrollTimeOffset - timePerPage);
-    }
+    // deltaY を利用して細かくスクロールさせる。係数 0.5 などを掛ける。
+    // deltaY はピクセル単位。これを時間に変換してオフセットに足す。
+    if (!pxPerMs || Number.isNaN(pxPerMs)) return;
+    const deltaMs = (e.deltaY * 0.5) / pxPerMs;
+    if (Number.isNaN(deltaMs)) return;
+    
+    let newOffset = scrollTimeOffset + deltaMs;
+    if (Number.isNaN(newOffset)) newOffset = 0;
+    
+    // スクロールが極端なマイナスにいかないようにガード
+    if (newOffset < -10000) newOffset = -10000;
+    
+    setScrollTimeOffset(newOffset);
   };
 
   // --- ルーラーでのシーク処理 ---
@@ -69,6 +76,25 @@ export default function EditorTimeline() {
 
   const handleRulerPointerMove = (e) => {
     if (!rulerDragState.current.isDragging) return;
+
+    // スロットリング用の時刻管理 (シークバー用)
+    window._lastAutoScrollTimeRuler = window._lastAutoScrollTimeRuler || 0;
+    const now = performance.now();
+    const canScroll = now - window._lastAutoScrollTimeRuler > 500;
+
+    if (canScroll) {
+      if (e.clientX > window.innerWidth * 0.9) {
+        setScrollTimeOffset(useEditorStore.getState().scrollTimeOffset + (msPerBeat * 4));
+        window._lastAutoScrollTimeRuler = now;
+      } else if (e.clientX < window.innerWidth * 0.1) {
+        const store = useEditorStore.getState();
+        if (store.scrollTimeOffset >= (msPerBeat * 4)) {
+          setScrollTimeOffset(store.scrollTimeOffset - (msPerBeat * 4));
+          window._lastAutoScrollTimeRuler = now;
+        }
+      }
+    }
+
     const targetTime = calculateTimeFromEvent(e);
     setCurrentTime(targetTime);
   };

@@ -32,16 +32,25 @@ export const useEditorStore = create((set) => ({
   pastNotes: [],
   futureNotes: [],
 
-  setBpm: (bpm) => set({ bpm }),
-  setScrollTimeOffset: (offsetTime) => set({ scrollTimeOffset: Math.max(0, offsetTime) }),
+  setBpm: (bpm) => set({ bpm: Number.isNaN(bpm) ? 120 : bpm }),
+  setScrollTimeOffset: (offsetTime) => {
+    if (Number.isNaN(offsetTime)) return;
+    set({ scrollTimeOffset: Math.max(0, offsetTime) });
+  },
   setTimelineWidth: (width) => set({ timelineWidth: width }),
   setAudioUrl: (url) => set({ audioUrl: url }),
   setAudioPeaks: (peaks) => set({ audioPeaks: peaks }),
   setIsPlaying: (isPlaying) => set({ isPlaying }),
-  setCurrentTime: (time) => set({ currentTime: time }), 
-  setOffset: (offset) => set({ offset }),
+  setCurrentTime: (time) => {
+    if (!Number.isNaN(time)) set({ currentTime: time });
+  }, 
+  setOffset: (offset) => {
+    if (!Number.isNaN(offset)) set({ offset });
+  },
   setSelectedNoteId: (id) => set({ selectedNoteId: id }),
-  setSeekRequest: (time) => set({ seekRequest: time }),
+  setSeekRequest: (time) => {
+    if (!Number.isNaN(time)) set({ seekRequest: time });
+  },
 
   // 履歴保存の内部ヘルパー（最大50件）
   saveHistory: (state) => {

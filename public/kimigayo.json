@@ -1,0 +1,62 @@
+﻿{
+  "bpm": 60,
+  "offset": 950,
+  "notes": [
+    {
+      "id": 1788582350181,
+      "word": "君が代は",
+      "reading": "きみがよは",
+      "time": 10950,
+      "endTime": 19450,
+      "type": "normal"
+    },
+    {
+      "id": 1788582508081,
+      "word": "千代に八千代に",
+      "reading": "ちよにやちよに",
+      "time": 19950,
+      "endTime": 28950,
+      "type": "normal"
+    },
+    {
+      "id": 1788622051255,
+      "word": "さざれ",
+      "reading": "さざれ",
+      "time": 29450,
+      "endTime": 33950,
+      "type": "normal"
+    },
+    {
+      "id": 1788622114634,
+      "word": "石の",
+      "reading": "いしの",
+      "time": 33950,
+      "endTime": 38450,
+      "type": "normal"
+    },
+    {
+      "id": 1788622150748,
+      "word": "巌となりて",
+      "reading": "いわおとなりて",
+      "time": 39450,
+      "endTime": 48450,
+      "type": "normal"
+    },
+    {
+      "id": 1788622237820,
+      "word": "苔の",
+      "reading": "こけの",
+      "time": 49200,
+      "endTime": 54200,
+      "type": "normal"
+    },
+    {
+      "id": 1788622275411,
+      "word": "むすまで",
+      "reading": "むすまで",
+      "time": 54200,
+      "endTime": 64950,
+      "type": "normal"
+    }
+  ]
+}

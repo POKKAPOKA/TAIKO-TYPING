@@ -60,6 +60,9 @@ export class GameEngine {
     
     this.isFallbackMode = false;
     this.mockStartTime = performance.now();
+    
+    const lastNote = this.queue[this.queue.length - 1];
+    this.fallbackEndTime = (lastNote ? lastNote.endTime : 0) + 2000;
 
     if (this.audio) {
       this.audio.pause();
@@ -114,8 +117,17 @@ export class GameEngine {
 
     this.checkForceTransition();
 
-    const isAudioEnded = this.audio && this.audio.ended;
-    if (isAudioEnded || (!this.currentTarget && this.queue.length === 0)) {
+    let shouldEnd = false;
+    if (this.isFallbackMode) {
+      // フォールバック時は最後のノーツ+2000msまで
+      if (!this.currentTarget && this.queue.length === 0 && this.currentTime > this.fallbackEndTime) {
+        shouldEnd = true;
+      }
+    } else {
+      shouldEnd = this.audio && this.audio.ended;
+    }
+
+    if (shouldEnd) {
       this.stop();
       return;
     }

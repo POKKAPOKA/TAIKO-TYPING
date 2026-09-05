@@ -1,4 +1,5 @@
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { useEditorStore } from '../../store/editorStore';
 
 export default function EditorNote({ note, beatWidth, msPerBeat }) {
@@ -70,31 +71,33 @@ export default function EditorNote({ note, beatWidth, msPerBeat }) {
     const state = dragState.current;
     if (!state.mode || !noteRef.current) return;
     
-    // オートスクロール判定: マウスが画面の右端90%を超えたら
-    if (e.clientX > window.innerWidth * 0.9) {
-      const store = useEditorStore.getState();
-      // 固定幅(16拍分など)の時間をページとして送る
-      const fixedTimelineWidth = store.measureWidth * 4;
-      const msPerMeasure = msPerBeat * 4;
-      const pxPerMs = store.measureWidth / msPerMeasure;
-      const timePerPage = fixedTimelineWidth / pxPerMs;
-      
-      // オフセットを1小節(または1ページ)分進める (連打防止のためタイマー等を入れるか、単純に一定値足すか)
-      // ここではドラッグ中に一気に飛ばないよう、1拍分ずつ進めるなど調整可能。ここでは1小節(msPerMeasure)とする。
-      store.setScrollTimeOffset(store.scrollTimeOffset + msPerMeasure);
-      
-      // マウス開始位置もズラさないと、スクロールした分ノーツが吹っ飛ぶので補正する
-      state.startX -= (msPerMeasure * pxPerMs);
-    }
-    
-    // 逆に左端10%に行ったら戻る
-    if (e.clientX < window.innerWidth * 0.1) {
-      const store = useEditorStore.getState();
-      const msPerMeasure = msPerBeat * 4;
-      const pxPerMs = store.measureWidth / msPerMeasure;
-      if (store.scrollTimeOffset >= msPerMeasure) {
-        store.setScrollTimeOffset(store.scrollTimeOffset - msPerMeasure);
-        state.startX += (msPerMeasure * pxPerMs);
+    // スロットリング用の時刻管理
+    window._lastAutoScrollTime = window._lastAutoScrollTime || 0;
+    const now = performance.now();
+    const canScroll = now - window._lastAutoScrollTime > 500; // 500msに1回だけ
+
+    if (canScroll) {
+      // オートスクロール判定: マウスが画面の右端90%を超えたら
+      if (e.clientX > window.innerWidth * 0.9) {
+        const store = useEditorStore.getState();
+        const msPerMeasure = msPerBeat * 4;
+        const pxPerMs = store.measureWidth / msPerMeasure;
+        
+        store.setScrollTimeOffset(store.scrollTimeOffset + msPerMeasure);
+        state.startX -= (msPerMeasure * pxPerMs);
+        window._lastAutoScrollTime = now;
+      }
+      // 逆に左端10%に行ったら戻る
+      else if (e.clientX < window.innerWidth * 0.1) {
+        const store = useEditorStore.getState();
+        const msPerMeasure = msPerBeat * 4;
+        const pxPerMs = store.measureWidth / msPerMeasure;
+        
+        if (store.scrollTimeOffset >= msPerMeasure) {
+          store.setScrollTimeOffset(store.scrollTimeOffset - msPerMeasure);
+          state.startX += (msPerMeasure * pxPerMs);
+          window._lastAutoScrollTime = now;
+        }
       }
     }
 
@@ -165,7 +168,17 @@ export default function EditorNote({ note, beatWidth, msPerBeat }) {
     setIsEditing(true);
   };
 
-  // 画面外のものを弾く判定（少しでも被っていれば描画）
+  const [popupPos, setPopupPos] = useState({ top: 0, left: 0 });
+  useEffect(() => {
+    if (isEditing && noteRef.current) {
+      const rect = noteRef.current.getBoundingClientRect();
+      setPopupPos({ top: rect.top - 140, left: rect.left });
+    } else if (isEditing && !noteRef.current) {
+      setIsEditing(false); // 画面外に出て参照が消えたら編集モードを解除
+    }
+  }, [isEditing, initialX]); // initialX(スクロール等による再レンダリング)も含めることで座標を更新
+
+  // 画面外のものを弾く判定（少しでも被っていれば描画）※Hooksの後に配置すること！
   if (initialX + initialWidth < 0 || initialX > 3000) return null;
 
   // ボーダースタイル決定
@@ -191,7 +204,7 @@ export default function EditorNote({ note, beatWidth, msPerBeat }) {
         left: `${initialX}px`, 
         width: `${initialWidth}px`,
         border: `${borderWidth} solid ${borderColor}`,
-        zIndex: isSelected ? 30 : 10,
+        zIndex: isEditing ? 999 : (isSelected ? 30 : 10),
         boxSizing: 'border-box'
       }}
       onMouseDown={(e) => handleMouseDown(e, 'move')}
@@ -205,9 +218,13 @@ export default function EditorNote({ note, beatWidth, msPerBeat }) {
         className="flex-1 px-3 overflow-hidden text-neutral-900 font-black truncate h-full flex items-center"
         style={{ paddingLeft: `${textOffset}px` }}
       >
-        {isEditing && (
+        {isEditing && createPortal(
           <div 
-            className="absolute -top-32 left-0 bg-neutral-800 p-3 rounded-2xl z-50 flex flex-col gap-2 border-4 border-neutral-700 w-64"
+            className="fixed bg-neutral-800 p-3 rounded-2xl z-[100] flex flex-col gap-2 border-4 border-neutral-700 w-64 shadow-none overflow-y-auto max-h-64"
+            style={{
+              top: `${popupPos.top}px`,
+              left: `${popupPos.left}px`
+            }}
             onMouseDown={e => e.stopPropagation()}
             onDoubleClick={e => e.stopPropagation()}
           >
@@ -234,7 +251,8 @@ export default function EditorNote({ note, beatWidth, msPerBeat }) {
             >
               SAVE
             </button>
-          </div>
+          </div>,
+          document.body
         )}
         <span className={(isKpsWarning && !isSelected) ? 'text-white' : 'text-neutral-900'}>
           {note.word} {note.reading ? `(${note.reading})` : ''}
