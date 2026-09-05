@@ -53,10 +53,19 @@ function App() {
   };
 
   const getClearRank = () => {
-    if (score === maxScore && maxScore > 0) return { rank: "ALL JUSTICE", color: "text-yellow-400" };
-    if (missCount === 0 && score >= maxScore * 0.7) return { rank: "FULL COMBO", color: "text-green-400" };
-    if (score >= maxScore * 0.7) return { rank: "CLEAR", color: "text-cyan-400" };
-    return { rank: "FAILED", color: "text-red-500" };
+    // ミスがある場合は絶対に FULL COMBO / ALL JUSTICE にしない
+    if (missCount > 0) {
+      if (score >= maxScore * 0.7) return { rank: "CLEAR", color: "text-cyan-400" };
+      return { rank: "FAILED", color: "text-red-500" };
+    }
+    
+    // ミス0回の場合
+    if (score === maxScore && maxScore > 0) {
+      return { rank: "ALL JUSTICE", color: "text-yellow-400" };
+    }
+    
+    // ミス0回だが、スコアが理論値未満（ATTACKがある）
+    return { rank: "FULL COMBO", color: "text-green-400" };
   };
 
   if (appMode === 'editor') {
