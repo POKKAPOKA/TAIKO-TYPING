@@ -94,6 +94,7 @@ export default function NotesArea() {
       <div ref={containerRef} className="absolute inset-0">
         {allNotes.map((note) => {
           const isCurrent = currentTarget?.id === note.id;
+          const displayWord = note.word.length > 4 ? note.word.substring(0, 4) + '...' : note.word;
           return (
             <div
               key={note.id}
@@ -104,7 +105,7 @@ export default function NotesArea() {
               // 初期位置はCSSでは設定せず、requestAnimationFrameで上書きする
               style={{ left: `2000px` }}
             >
-              {note.word}
+              {displayWord}
             </div>
           );
         })}

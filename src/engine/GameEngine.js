@@ -18,6 +18,13 @@ export class GameEngine {
     this.update = this.update.bind(this);
   }
 
+  updateCurrentTarget(store, newTarget) {
+    this.currentTarget = newTarget;
+    store.setCurrentTarget(this.currentTarget);
+    store.setActiveWord(this.currentTarget ? this.currentTarget.word : null);
+    store.setTypedIndex(0);
+  }
+
   start() {
     const store = useGameStore.getState();
     const { loadedScore, audioUrl } = store;
@@ -27,17 +34,15 @@ export class GameEngine {
       return;
     }
 
-    store.reset();
+    store.resetPlayState();
     store.setStatus('playing');
     
     this.queue = [...loadedScore.notes].sort((a, b) => a.time - b.time).map(note => ({ ...note, typed: "" }));
     
     store.setMaxScore(this.queue.length * 100);
 
-    this.currentTarget = this.queue.shift() || null;
-    
+    this.updateCurrentTarget(store, this.queue.shift() || null);
     store.setWordQueue([...this.queue]);
-    store.setCurrentTarget(this.currentTarget);
     
     if (this.audio) {
       this.audio.pause();
@@ -60,7 +65,21 @@ export class GameEngine {
       this.audio.pause();
     }
     window.removeEventListener('keydown', this.handleKeyDown);
-    useGameStore.getState().setStatus('result');
+
+    const store = useGameStore.getState();
+
+    // 打ち残し（現在のターゲットが存在し、最後まで打たれていない場合）
+    if (this.currentTarget && this.currentTarget.typed.length < this.currentTarget.word.length) {
+      store.addDroppedCount();
+      store.setCombo(0);
+      store.setLastJudgment('MISS');
+      this.updateCurrentTarget(store, null);
+    } else {
+      store.setActiveWord(null);
+      store.setTypedIndex(0);
+    }
+
+    store.setStatus('result');
   }
 
   update() {
@@ -68,7 +87,8 @@ export class GameEngine {
     this.currentTime = this.audio.currentTime * 1000;
     this.checkForceTransition();
 
-    if (!this.currentTarget && this.queue.length === 0) {
+    // オーディオが終了しているか、全ノーツ完了で終了
+    if (this.audio.ended || (!this.currentTarget && this.queue.length === 0)) {
       this.stop();
       return;
     }
@@ -80,7 +100,10 @@ export class GameEngine {
     if (!this.currentTarget) return;
     const nextWordTime = this.queue.length > 0 ? this.queue[0].time : Infinity;
     
-    if (this.currentTime >= nextWordTime) {
+    // タイムリミット: 現在の単語の終了時刻+150ms、または次の単語の受付開始時刻（150ms前）の早い方
+    const timeLimit = Math.min(this.currentTarget.endTime + 150, nextWordTime - 150);
+    
+    if (this.currentTime >= timeLimit) {
       this.forceMissAndTransition();
     }
   }
@@ -90,40 +113,58 @@ export class GameEngine {
     
     store.setLastJudgment('MISS');
     store.setCombo(0);
-    store.addMissCount();
+    store.addDroppedCount(); // 時間切れによる打ちこぼし
     
-    this.currentTarget = this.queue.shift() || null;
-    
+    this.updateCurrentTarget(store, this.queue.shift() || null);
     store.setWordQueue([...this.queue]);
-    store.setCurrentTarget(this.currentTarget);
   }
 
   handleKeyDown(e) {
     if (!/^[a-zA-Z]$/.test(e.key)) return;
-    
-    const key = e.key.toUpperCase();
     if (!this.currentTarget) return;
+
+    // 現在の正確な時刻を取得し、タイムリミット超過時の遅延入力を完全にガードする
+    const currentTimeMs = this.audio ? this.audio.currentTime * 1000 : this.currentTime;
+    const nextWordTime = this.queue.length > 0 ? this.queue[0].time : Infinity;
+    const timeLimit = Math.min(this.currentTarget.endTime + 150, nextWordTime - 150);
+
+    if (currentTimeMs >= timeLimit) {
+      return; // タイムリミットを過ぎた入力は無視
+    }
+
+    const key = e.key.toUpperCase();
 
     const targetWord = this.currentTarget.word;
     const typedLen = this.currentTarget.typed.length;
     const nextChar = targetWord[typedLen];
 
     if (key !== nextChar) {
+      // 誤タイプ時は typoCount をインクリメント (コンボは継続)
+      useGameStore.getState().addTypoCount();
       return;
     }
 
     const isFirstHit = typedLen === 0;
     
     if (isFirstHit) {
-      const timeDiff = Math.abs(this.currentTime - this.currentTarget.time);
-      if (timeDiff > JUDGE_WINDOW.MISS) {
+      const targetTime = this.currentTarget.time;
+      const diff = Math.abs(targetTime - currentTimeMs);
+
+      // 単一フローで前後対称に確実な評価を行う
+      if (diff <= 50) {
+        this.applyJudgment('JUSTICE');
+      } else if (diff <= 100) {
+        this.applyJudgment('ATTACK');
+      } else if (diff <= 150) {
+        this.applyJudgment('MISS');
+      } else {
         // 150ms より外側の入力は完全に無視（空振り扱い）
         return;
       }
-      this.judgeRhythm(timeDiff);
     }
 
     this.currentTarget.typed += key;
+    useGameStore.getState().setTypedIndex(this.currentTarget.typed.length);
     
     if (this.currentTarget.typed.length === targetWord.length) {
       this.completeCurrentTarget();
@@ -132,18 +173,20 @@ export class GameEngine {
     }
   }
 
-  judgeRhythm(timeDiff) {
+  applyJudgment(judgment) {
     const store = useGameStore.getState();
 
-    if (timeDiff <= JUDGE_WINDOW.PERFECT) {
+    if (judgment === 'JUSTICE') {
       store.setLastJudgment('JUSTICE');
       store.addScore(100);
-    } else if (timeDiff <= JUDGE_WINDOW.GOOD) {
+      store.addJusticeCount();
+    } else if (judgment === 'ATTACK') {
       store.setLastJudgment('ATTACK');
       store.addScore(50);
-    } else if (timeDiff <= JUDGE_WINDOW.MISS) {
+      store.addAttackCount();
+    } else if (judgment === 'MISS') {
       store.setLastJudgment('MISS');
-      store.setCombo(0);
+      store.setCombo(0); // 1打目MISSでコンボリセット
       store.addMissCount();
     }
   }
@@ -151,13 +194,19 @@ export class GameEngine {
   completeCurrentTarget() {
     const store = useGameStore.getState();
     
-    // 単語を最後まで打ち切った瞬間のみコンボを加算
+    // 単語を最後まで打ち切った場合
+    store.addCompletedCount();
     store.setCombo(store.combo + 1);
+
+    // 譜面の理論上の要求KPSを計算して更新
+    const durationSec = (this.currentTarget.endTime - this.currentTarget.time) / 1000;
+    if (durationSec > 0) {
+      const kps = this.currentTarget.word.length / durationSec;
+      store.updateMaxKps(kps);
+    }
     
-    this.currentTarget = this.queue.shift() || null;
-    
+    this.updateCurrentTarget(store, this.queue.shift() || null);
     store.setWordQueue([...this.queue]);
-    store.setCurrentTarget(this.currentTarget);
   }
   
   getCurrentTime() {

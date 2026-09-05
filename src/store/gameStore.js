@@ -5,6 +5,12 @@ export const useGameStore = create((set) => ({
   combo: 0,
   maxCombo: 0,
   missCount: 0,
+  justiceCount: 0,
+  attackCount: 0,
+  completedCount: 0,
+  droppedCount: 0,
+  typoCount: 0,
+  maxKps: 0,
   maxScore: 0,
   status: 'idle', // 'idle' | 'playing' | 'result'
   
@@ -14,8 +20,8 @@ export const useGameStore = create((set) => ({
 
   // 現在ターゲットになっている単語の情報
   currentTarget: null,
-  // 例: { id: 1, word: "KASI", time: 3000, typed: "K" } 
-  // typedはすでに入力された文字列
+  activeWord: null,
+  typedIndex: 0,
 
   // 直近の判定結果（良、可、不可）表示用
   lastJudgment: null,
@@ -34,6 +40,14 @@ export const useGameStore = create((set) => ({
   })),
   
   addMissCount: () => set((state) => ({ missCount: state.missCount + 1 })),
+  addJusticeCount: () => set((state) => ({ justiceCount: state.justiceCount + 1 })),
+  addAttackCount: () => set((state) => ({ attackCount: state.attackCount + 1 })),
+  
+  addCompletedCount: () => set((state) => ({ completedCount: state.completedCount + 1 })),
+  addDroppedCount: () => set((state) => ({ droppedCount: state.droppedCount + 1 })),
+  addTypoCount: () => set((state) => ({ typoCount: state.typoCount + 1 })),
+  updateMaxKps: (kps) => set((state) => ({ maxKps: Math.max(state.maxKps, kps) })),
+  
   setMaxScore: (maxScore) => set({ maxScore }),
   
   setStatus: (status) => set({ status }),
@@ -42,18 +56,50 @@ export const useGameStore = create((set) => ({
   setAudioUrl: (url) => set({ audioUrl: url }),
   
   setCurrentTarget: (target) => set({ currentTarget: target }),
+  setActiveWord: (word) => set({ activeWord: word }),
+  setTypedIndex: (index) => set({ typedIndex: index }),
   
   setLastJudgment: (judgment) => set({ lastJudgment: judgment }),
 
   setWordQueue: (queue) => set({ wordQueue: queue }),
 
-  reset: () => set({
+  resetPlayState: () => set({
     score: 0,
     combo: 0,
     maxCombo: 0,
     missCount: 0,
+    justiceCount: 0,
+    attackCount: 0,
+    completedCount: 0,
+    droppedCount: 0,
+    typoCount: 0,
+    maxKps: 0,
     status: 'idle',
     currentTarget: null,
+    activeWord: null,
+    typedIndex: 0,
+    lastJudgment: null,
+    wordQueue: []
+  }),
+
+  clearSetup: () => set({
+    score: 0,
+    combo: 0,
+    maxCombo: 0,
+    missCount: 0,
+    justiceCount: 0,
+    attackCount: 0,
+    completedCount: 0,
+    droppedCount: 0,
+    typoCount: 0,
+    maxKps: 0,
+    maxScore: 0,
+    status: 'idle',
+    loadedScore: null,
+    audioUrl: null,
+    currentTarget: null,
+    activeWord: null,
+    typedIndex: 0,
     lastJudgment: null,
     wordQueue: []
   })
