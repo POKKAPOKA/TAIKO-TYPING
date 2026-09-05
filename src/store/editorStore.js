@@ -13,6 +13,7 @@ export const useEditorStore = create((set) => ({
 
   // 再生状態と設定
   audioUrl: './audio/track.mp3',
+  audioPeaks: [],
   isPlaying: false,
   currentTime: 0,
   offset: 0, // ms単位
@@ -35,6 +36,7 @@ export const useEditorStore = create((set) => ({
   setScrollTimeOffset: (offsetTime) => set({ scrollTimeOffset: Math.max(0, offsetTime) }),
   setTimelineWidth: (width) => set({ timelineWidth: width }),
   setAudioUrl: (url) => set({ audioUrl: url }),
+  setAudioPeaks: (peaks) => set({ audioPeaks: peaks }),
   setIsPlaying: (isPlaying) => set({ isPlaying }),
   setCurrentTime: (time) => set({ currentTime: time }), 
   setOffset: (offset) => set({ offset }),

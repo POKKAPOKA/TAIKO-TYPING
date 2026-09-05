@@ -101,7 +101,7 @@ export default function EditorView({ onExit }) {
     state.setIsPlaying(!state.isPlaying);
   };
 
-  const handleAudioChange = (e) => {
+  const handleAudioChange = async (e) => {
     const file = e.target.files[0];
     if (file) {
       const url = URL.createObjectURL(file);
@@ -112,6 +112,29 @@ export default function EditorView({ onExit }) {
       if (audioRef.current) {
         audioRef.current.src = url;
         audioRef.current.load();
+      }
+      
+      // 波形解析 (Web Audio API)
+      try {
+        const arrayBuffer = await file.arrayBuffer();
+        const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+        const audioBuffer = await audioContext.decodeAudioData(arrayBuffer);
+        
+        // 簡易的なPeak抽出 (チャンネル0のみ、一定間隔で最大値を取得)
+        const channelData = audioBuffer.getChannelData(0);
+        const samplesPerPixel = Math.floor(audioBuffer.sampleRate * 0.05); // 50msごとに1サンプル
+        const peaks = [];
+        for (let i = 0; i < channelData.length; i += samplesPerPixel) {
+          let max = 0;
+          for (let j = 0; j < samplesPerPixel && i + j < channelData.length; j++) {
+            const abs = Math.abs(channelData[i + j]);
+            if (abs > max) max = abs;
+          }
+          peaks.push(max);
+        }
+        useEditorStore.getState().setAudioPeaks(peaks);
+      } catch (err) {
+        console.error("Waveform generation failed:", err);
       }
     }
   };
@@ -125,7 +148,7 @@ export default function EditorView({ onExit }) {
     }
   };
 
-  const handleExport = () => {
+  const handleExport = async () => {
     const state = useEditorStore.getState();
     const currentBpm = state.bpm;
     const currentOffset = state.offset;
@@ -139,20 +162,39 @@ export default function EditorView({ onExit }) {
       return {
         id: note.id,
         word: note.word,
+        reading: note.reading || "",
         time: timeMs,
-        endTime: timeMs + durationMs, // 将来の拡張用
+        endTime: timeMs + durationMs,
         type: 'normal'
       };
     });
 
     const data = JSON.stringify({ bpm: currentBpm, offset: currentOffset, notes: compiledNotes }, null, 2);
-    const blob = new Blob([data], { type: 'application/json' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = 'score.json';
-    a.click();
-    URL.revokeObjectURL(url);
+    
+    try {
+      if (window.showSaveFilePicker) {
+        const fileHandle = await window.showSaveFilePicker({
+          suggestedName: 'score.json',
+          types: [{
+            description: 'JSON File',
+            accept: { 'application/json': ['.json'] },
+          }],
+        });
+        const writable = await fileHandle.createWritable();
+        await writable.write(data);
+        await writable.close();
+      } else {
+        const blob = new Blob([data], { type: 'application/json' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = 'score.json';
+        a.click();
+        URL.revokeObjectURL(url);
+      }
+    } catch (e) {
+      console.error("Export cancelled or failed:", e);
+    }
   };
 
   const handleImport = (e) => {
@@ -191,7 +233,8 @@ export default function EditorView({ onExit }) {
               measure,
               beat,
               durationBeats,
-              word: note.word || "WORD"
+              word: note.word || "WORD",
+              reading: note.reading || ""
             });
           });
         }

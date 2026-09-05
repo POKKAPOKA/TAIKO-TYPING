@@ -17,6 +17,8 @@ export const useGameStore = create((set) => ({
   // 読み込んだデータ
   loadedScore: null,
   audioUrl: null,
+  scoreFileName: null,
+  audioFileName: null,
 
   // 現在ターゲットになっている単語の情報
   currentTarget: null,
@@ -52,8 +54,8 @@ export const useGameStore = create((set) => ({
   
   setStatus: (status) => set({ status }),
   
-  setLoadedScore: (score) => set({ loadedScore: score }),
-  setAudioUrl: (url) => set({ audioUrl: url }),
+  setLoadedScore: (score, fileName) => set({ loadedScore: score, scoreFileName: fileName || null }),
+  setAudioUrl: (url, fileName) => set({ audioUrl: url, audioFileName: fileName || null }),
   
   setCurrentTarget: (target) => set({ currentTarget: target }),
   setActiveWord: (word) => set({ activeWord: word }),
@@ -97,6 +99,8 @@ export const useGameStore = create((set) => ({
     status: 'idle',
     loadedScore: null,
     audioUrl: null,
+    scoreFileName: null,
+    audioFileName: null,
     currentTarget: null,
     activeWord: null,
     typedIndex: 0,

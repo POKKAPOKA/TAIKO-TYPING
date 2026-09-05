@@ -9,6 +9,7 @@ export default function EditorNote({ note, beatWidth, msPerBeat }) {
 
   const [isEditing, setIsEditing] = useState(false);
   const [inputText, setInputText] = useState(note.word || '');
+  const [readingText, setReadingText] = useState(note.reading || '');
   
   const noteRef = useRef(null);
   
@@ -23,20 +24,19 @@ export default function EditorNote({ note, beatWidth, msPerBeat }) {
 
   // KPS計算
   const durationMs = note.durationBeats * msPerBeat;
-  const kps = (note.word && durationMs > 0) ? note.word.length / (durationMs / 1000) : 0;
+  const kps = (note.reading && durationMs > 0) ? note.reading.length / (durationMs / 1000) : ((note.word && durationMs > 0) ? note.word.length / (durationMs / 1000) : 0);
   const isKpsWarning = kps > 10;
 
-  // インライン編集完了時
-  const handleInputBlur = () => {
+  // 編集保存時
+  const handleSave = () => {
     setIsEditing(false);
-    if (inputText !== note.word) {
-      updateEditorNote(note.id, { word: inputText });
-    }
+    updateEditorNote(note.id, { word: inputText, reading: readingText });
   };
+  
   const handleInputKeyDown = (e) => {
     e.stopPropagation();
     if (e.key === 'Enter') {
-      e.target.blur();
+      handleSave();
     }
   };
 
@@ -70,6 +70,34 @@ export default function EditorNote({ note, beatWidth, msPerBeat }) {
     const state = dragState.current;
     if (!state.mode || !noteRef.current) return;
     
+    // オートスクロール判定: マウスが画面の右端90%を超えたら
+    if (e.clientX > window.innerWidth * 0.9) {
+      const store = useEditorStore.getState();
+      // 固定幅(16拍分など)の時間をページとして送る
+      const fixedTimelineWidth = store.measureWidth * 4;
+      const msPerMeasure = msPerBeat * 4;
+      const pxPerMs = store.measureWidth / msPerMeasure;
+      const timePerPage = fixedTimelineWidth / pxPerMs;
+      
+      // オフセットを1小節(または1ページ)分進める (連打防止のためタイマー等を入れるか、単純に一定値足すか)
+      // ここではドラッグ中に一気に飛ばないよう、1拍分ずつ進めるなど調整可能。ここでは1小節(msPerMeasure)とする。
+      store.setScrollTimeOffset(store.scrollTimeOffset + msPerMeasure);
+      
+      // マウス開始位置もズラさないと、スクロールした分ノーツが吹っ飛ぶので補正する
+      state.startX -= (msPerMeasure * pxPerMs);
+    }
+    
+    // 逆に左端10%に行ったら戻る
+    if (e.clientX < window.innerWidth * 0.1) {
+      const store = useEditorStore.getState();
+      const msPerMeasure = msPerBeat * 4;
+      const pxPerMs = store.measureWidth / msPerMeasure;
+      if (store.scrollTimeOffset >= msPerMeasure) {
+        store.setScrollTimeOffset(store.scrollTimeOffset - msPerMeasure);
+        state.startX += (msPerMeasure * pxPerMs);
+      }
+    }
+
     const deltaX = e.clientX - state.startX;
     const deltaBeats = deltaX / beatWidth;
 
@@ -177,23 +205,40 @@ export default function EditorNote({ note, beatWidth, msPerBeat }) {
         className="flex-1 px-3 overflow-hidden text-neutral-900 font-black truncate h-full flex items-center"
         style={{ paddingLeft: `${textOffset}px` }}
       >
-        {isEditing ? (
-          <input
-            autoFocus
-            type="text"
-            className="w-full bg-transparent border-b-2 border-neutral-900 text-neutral-900 outline-none font-black"
-            value={inputText}
-            onChange={(e) => setInputText(e.target.value.toUpperCase())}
-            onBlur={handleInputBlur}
-            onKeyDown={handleInputKeyDown}
-            onMouseDown={(e) => e.stopPropagation()}
-            onDoubleClick={(e) => e.stopPropagation()}
-          />
-        ) : (
-          <span className={(isKpsWarning && !isSelected) ? 'text-white' : 'text-neutral-900'}>
-            {note.word}
-          </span>
+        {isEditing && (
+          <div 
+            className="absolute -top-32 left-0 bg-neutral-800 p-3 rounded-2xl z-50 flex flex-col gap-2 border-4 border-neutral-700 w-64"
+            onMouseDown={e => e.stopPropagation()}
+            onDoubleClick={e => e.stopPropagation()}
+          >
+            <input
+              autoFocus
+              type="text"
+              placeholder="表示テキスト (漢字等)"
+              className="w-full bg-neutral-900 border-none text-white px-3 py-2 rounded-xl outline-none font-bold"
+              value={inputText}
+              onChange={(e) => setInputText(e.target.value)}
+              onKeyDown={handleInputKeyDown}
+            />
+            <input
+              type="text"
+              placeholder="タイピング用 (ひらがな)"
+              className="w-full bg-neutral-900 border-none text-white px-3 py-2 rounded-xl outline-none font-bold"
+              value={readingText}
+              onChange={(e) => setReadingText(e.target.value)}
+              onKeyDown={handleInputKeyDown}
+            />
+            <button 
+              className="w-full bg-cyan-500 hover:bg-cyan-400 text-neutral-900 rounded-xl py-2 font-black transition-colors" 
+              onClick={handleSave}
+            >
+              SAVE
+            </button>
+          </div>
         )}
+        <span className={(isKpsWarning && !isSelected) ? 'text-white' : 'text-neutral-900'}>
+          {note.word} {note.reading ? `(${note.reading})` : ''}
+        </span>
       </div>
 
       {!isEditing && (

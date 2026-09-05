@@ -156,11 +156,32 @@ export default function EditorTimeline() {
       <div
         ref={containerRef}
         data-is-timeline-bg="true"
-        className="w-full flex-grow relative cursor-crosshair"
+        className="w-full flex-grow relative cursor-crosshair overflow-hidden"
         onWheel={handleWheel}
         onClick={handleTimelineClick}
         style={{ ...gridBackground }}
       >
+        {/* 波形表示 */}
+        {useEditorStore.getState().audioPeaks?.length > 0 && (
+          <svg className="absolute inset-0 w-full h-full pointer-events-none opacity-20" preserveAspectRatio="none">
+            <polyline
+              fill="none"
+              stroke="#06b6d4" // cyan-500
+              strokeWidth="2"
+              points={useEditorStore.getState().audioPeaks.map((peak, index) => {
+                // 1 peak は 50ms。絶対時間は index * 50 ms。
+                const absoluteMs = index * 50;
+                // px位置は (絶対時間 - スクロールオフセット) * pxPerMs
+                const x = (absoluteMs - scrollTimeOffset) * pxPerMs;
+                // y はコンテナの中央から peak に応じて上下に振る（0 ~ 1の値をピクセルに）
+                const y = 100 - (peak * 100); // 簡易的に高さ200pxを想定して計算。ここではSVGのビューポートに依存せず直接書くより、%か viewBox が良いか？
+                return `${x},${y}`;
+              }).join(' ')}
+              style={{ transform: 'translateY(50%)', transformOrigin: 'center' }}
+            />
+          </svg>
+        )}
+
         <div className="absolute bottom-4 left-4 text-neutral-500 font-mono text-sm bg-neutral-950 px-3 py-1 rounded-full z-20 pointer-events-none">
           TIME: {Math.round(scrollTimeOffset)} ms
         </div>

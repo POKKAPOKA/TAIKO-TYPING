@@ -4,6 +4,19 @@ import { gameEngine } from './engine/GameEngine';
 import NotesArea from './components/NotesArea';
 import EditorView from './components/editor/EditorView';
 
+const DUMMY_KIMIGAYO = {
+  musicTitle: "KIMIGAYO",
+  notes: [
+    { id: 1, time: 1000, endTime: 1500, word: "KIMI" },
+    { id: 2, time: 2000, endTime: 2500, word: "GAYO" },
+    { id: 3, time: 3000, endTime: 3500, word: "WA" },
+    { id: 4, time: 4500, endTime: 5000, word: "CHIYO" },
+    { id: 5, time: 5500, endTime: 6000, word: "NI" },
+    { id: 6, time: 7000, endTime: 7500, word: "YACHIYO" },
+    { id: 7, time: 8500, endTime: 9000, word: "NI" }
+  ]
+};
+
 function App() {
   const [appMode, setAppMode] = useState('menu'); // 'menu' | 'setup' | 'game' | 'editor'
 
@@ -23,6 +36,8 @@ function App() {
   const maxKps = useGameStore(state => state.maxKps);
   const activeWord = useGameStore(state => state.activeWord);
   const typedIndex = useGameStore(state => state.typedIndex);
+  const scoreFileName = useGameStore(state => state.scoreFileName);
+  const audioFileName = useGameStore(state => state.audioFileName);
   
   const setLoadedScore = useGameStore(state => state.setLoadedScore);
   const setAudioUrl = useGameStore(state => state.setAudioUrl);
@@ -32,6 +47,13 @@ function App() {
   const handleStartGame = () => {
     setAppMode('game');
     gameEngine.start();
+  };
+
+  const handleDemoStart = () => {
+    setLoadedScore(DUMMY_KIMIGAYO, "kimigayo.json");
+    setAudioUrl('./kimigayo.mp3', "kimigayo.mp3");
+    setAppMode('game');
+    setTimeout(() => gameEngine.start(), 0);
   };
 
   const handleStop = () => {
@@ -58,7 +80,7 @@ function App() {
       try {
         const json = JSON.parse(event.target.result);
         if (json.notes && Array.isArray(json.notes)) {
-          setLoadedScore(json);
+          setLoadedScore(json, file.name);
         }
       } catch (err) {
         alert("無効な譜面ファイルです");
@@ -70,7 +92,7 @@ function App() {
   const handleAudioLoad = (e) => {
     const file = e.target.files[0];
     if (file) {
-      setAudioUrl(URL.createObjectURL(file));
+      setAudioUrl(URL.createObjectURL(file), file.name);
     }
   };
 
@@ -118,12 +140,12 @@ function App() {
           
           <div className="w-full flex flex-col gap-4">
             <label className={`cursor-pointer w-full text-center py-4 rounded-full font-bold transition-colors ${loadedScore ? 'bg-green-500 text-neutral-900' : 'bg-neutral-700 hover:bg-neutral-600 text-white'}`}>
-              {loadedScore ? '譜面ロード完了' : 'LOAD SCORE (score.json)'}
+              {loadedScore ? `Load Score (${scoreFileName})` : 'LOAD SCORE (score.json)'}
               <input type="file" accept=".json" className="hidden" onChange={handleScoreLoad} />
             </label>
 
             <label className={`cursor-pointer w-full text-center py-4 rounded-full font-bold transition-colors ${audioUrl ? 'bg-green-500 text-neutral-900' : 'bg-neutral-700 hover:bg-neutral-600 text-white'}`}>
-              {audioUrl ? '音楽ロード完了' : 'LOAD AUDIO (.mp3, .wav)'}
+              {audioUrl ? `Load Audio (${audioFileName})` : 'LOAD AUDIO (.mp3, .wav)'}
               <input type="file" accept="audio/*" className="hidden" onChange={handleAudioLoad} />
             </label>
           </div>
@@ -143,6 +165,15 @@ function App() {
               START
             </button>
           </div>
+
+          <div className="w-full border-t border-neutral-700 my-2"></div>
+          
+          <button 
+            onClick={handleDemoStart}
+            className="w-full py-4 bg-cyan-600 hover:bg-cyan-500 text-white rounded-full font-black text-xl transition-colors"
+          >
+            Play Demo (君が代)
+          </button>
         </div>
       )}
 
