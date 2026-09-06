@@ -56,7 +56,7 @@ export default function SongSelect({ onBack, onStartGame }) {
 
   return (
     <div className="min-h-screen bg-neutral-900 text-white flex flex-col items-center p-8 font-sans select-none w-full">
-      <div className="w-full max-w-4xl flex justify-between items-center mb-12">
+      <div className="w-full max-w-4xl flex justify-between items-center mb-6">
         <h1 className="text-4xl font-black text-cyan-400 tracking-wider">SELECT SONG</h1>
         <button 
           onClick={onBack}
@@ -64,6 +64,10 @@ export default function SongSelect({ onBack, onStartGame }) {
         >
           BACK TO MENU
         </button>
+      </div>
+      
+      <div className="w-full max-w-4xl text-neutral-400 font-bold tracking-widest text-sm text-center bg-neutral-800 p-4 rounded-xl border-2 border-neutral-700 mb-8">
+        遊び方：ノーツが判定枠に重なったら、表示されている最初の文字をタイピングしてください
       </div>
 
       <div className="w-full max-w-4xl flex flex-col gap-4">

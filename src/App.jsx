@@ -146,17 +146,50 @@ function App() {
         <div className="bg-neutral-800 rounded-3xl p-8 flex flex-col items-center gap-8 w-full max-w-xl">
           <h2 className="text-2xl font-black text-white">CUSTOM PLAY SETUP</h2>
           
-          <div className="w-full flex flex-col gap-4">
-            <label className={`cursor-pointer w-full text-center py-4 rounded-full font-bold transition-colors ${loadedScore ? 'bg-green-500 text-neutral-900' : 'bg-neutral-700 hover:bg-neutral-600 text-white'}`}>
-              {loadedScore ? `Load Score (${scoreFileName})` : 'LOAD SCORE (score.json)'}
-              <input type="file" accept=".json" className="hidden" onChange={handleScoreLoad} />
-            </label>
-
-            <label className={`cursor-pointer w-full text-center py-4 rounded-full font-bold transition-colors ${audioUrl ? 'bg-green-500 text-neutral-900' : 'bg-neutral-700 hover:bg-neutral-600 text-white'}`}>
-              {audioUrl ? `Load Audio (${audioFileName})` : 'LOAD AUDIO (.mp3, .wav)'}
-              <input type="file" accept="audio/*" className="hidden" onChange={handleAudioLoad} />
-            </label>
+          <div className="text-neutral-400 font-bold tracking-widest text-sm text-center bg-neutral-900 p-4 rounded-xl border-2 border-neutral-700 w-full">
+            遊び方：ノーツが判定枠に重なったら、表示されている最初の文字をタイピングしてください
           </div>
+          
+          {loadedScore && audioUrl ? (
+            <div className="w-full flex flex-col gap-6">
+              <div className="bg-cyan-900/30 border-2 border-cyan-800 p-6 rounded-2xl flex flex-col gap-2 text-center">
+                <div className="text-cyan-400 font-bold mb-2">セットアップ済みデータ</div>
+                <div className="text-white font-mono">{scoreFileName}</div>
+                <div className="text-white font-mono">{audioFileName}</div>
+              </div>
+              
+              <button 
+                onClick={handleStartGame}
+                className="w-full py-6 bg-orange-500 hover:bg-orange-400 text-neutral-900 rounded-full font-black text-3xl transition-colors"
+              >
+                START
+              </button>
+              
+              <div className="flex flex-col gap-3 mt-4 pt-6 border-t-2 border-neutral-700">
+                <div className="text-neutral-500 font-bold text-center text-sm">別のファイルに変更する</div>
+                <label className="cursor-pointer w-full text-center py-3 bg-neutral-700 hover:bg-neutral-600 text-white rounded-full font-bold transition-colors">
+                  LOAD SCORE (.json)
+                  <input type="file" accept=".json" className="hidden" onChange={handleScoreLoad} />
+                </label>
+                <label className="cursor-pointer w-full text-center py-3 bg-neutral-700 hover:bg-neutral-600 text-white rounded-full font-bold transition-colors">
+                  LOAD AUDIO (.mp3, .wav)
+                  <input type="file" accept="audio/*" className="hidden" onChange={handleAudioLoad} />
+                </label>
+              </div>
+            </div>
+          ) : (
+            <div className="w-full flex flex-col gap-4">
+              <label className={`cursor-pointer w-full text-center py-4 rounded-full font-bold transition-colors ${loadedScore ? 'bg-green-500 text-neutral-900' : 'bg-neutral-700 hover:bg-neutral-600 text-white'}`}>
+                {loadedScore ? `Score Loaded (${scoreFileName})` : 'LOAD SCORE (score.json)'}
+                <input type="file" accept=".json" className="hidden" onChange={handleScoreLoad} />
+              </label>
+  
+              <label className={`cursor-pointer w-full text-center py-4 rounded-full font-bold transition-colors ${audioUrl ? 'bg-green-500 text-neutral-900' : 'bg-neutral-700 hover:bg-neutral-600 text-white'}`}>
+                {audioUrl ? `Audio Loaded (${audioFileName})` : 'LOAD AUDIO (.mp3, .wav)'}
+                <input type="file" accept="audio/*" className="hidden" onChange={handleAudioLoad} />
+              </label>
+            </div>
+          )}
 
           <div className="flex gap-4 w-full mt-4">
             <button 
@@ -165,13 +198,15 @@ function App() {
             >
               BACK
             </button>
-            <button 
-              onClick={handleStartGame}
-              disabled={!loadedScore || !audioUrl}
-              className="flex-1 py-4 bg-orange-500 hover:bg-orange-400 disabled:bg-neutral-700 disabled:text-neutral-500 text-neutral-900 rounded-full font-black transition-colors"
-            >
-              START
-            </button>
+            {!(loadedScore && audioUrl) && (
+              <button 
+                onClick={handleStartGame}
+                disabled={!loadedScore || !audioUrl}
+                className="flex-1 py-4 bg-orange-500 hover:bg-orange-400 disabled:bg-neutral-700 disabled:text-neutral-500 text-neutral-900 rounded-full font-black transition-colors"
+              >
+                START
+              </button>
+            )}
           </div>
         </div>
       )}
