@@ -43,6 +43,9 @@ export default function SongSelect({ onBack, onStartGame }) {
       setLoadedScore(data, scoreFileName);
       setAudioUrl(song.audioPath, audioFileName);
       
+      const store = useGameStore.getState();
+      if(store.setIsLocalPlay) store.setIsLocalPlay(false);
+      
       onStartGame();
       setTimeout(() => gameEngine.start(), 0);
     } catch (err) {

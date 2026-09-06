@@ -22,8 +22,11 @@ export const useEditorStore = create((set) => ({
   // 構造: { id, measure, beat, durationBeats, word }
   editorNotes: [],
 
-  // 選択状態
-  selectedNoteId: null,
+  // 選択状態 (複数選択対応)
+  selectedNoteIds: [],
+  
+  // クリップボード状態
+  clipboardNotes: [],
 
   // シーク状態
   seekRequest: null, // ms単位でのシーク要求
@@ -47,7 +50,8 @@ export const useEditorStore = create((set) => ({
   setOffset: (offset) => {
     if (!Number.isNaN(offset)) set({ offset });
   },
-  setSelectedNoteId: (id) => set({ selectedNoteId: id }),
+  setSelectedNoteIds: (ids) => set({ selectedNoteIds: ids }),
+  setClipboardNotes: (notes) => set({ clipboardNotes: notes }),
   setSeekRequest: (time) => {
     if (!Number.isNaN(time)) set({ seekRequest: time });
   },

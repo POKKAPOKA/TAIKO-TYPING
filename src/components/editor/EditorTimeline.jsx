@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useEditorStore } from '../../store/editorStore';
 import EditorNote from './EditorNote';
 import EditorSeekBar from './EditorSeekBar';
@@ -158,6 +158,71 @@ export default function EditorTimeline() {
     backgroundPosition: `-${(scrollTimeOffset / msPerBeat) * beatWidth}px 0, -${(scrollTimeOffset / msPerBeat) * beatWidth}px 0, -${(scrollTimeOffset / msPerBeat) * beatWidth}px 0`
   };
 
+  const [marquee, setMarquee] = useState(null);
+
+  const handleTimelinePointerDown = (e) => {
+    // 右クリックでMarquee選択開始
+    if (e.button === 2) {
+      e.preventDefault();
+      const rect = containerRef.current.getBoundingClientRect();
+      const x = e.clientX - rect.left;
+      const y = e.clientY - rect.top;
+      setMarquee({ startX: x, startY: y, currentX: x, currentY: y });
+      
+      const onMove = (moveEvent) => {
+        const moveX = moveEvent.clientX - rect.left;
+        const moveY = moveEvent.clientY - rect.top;
+        setMarquee(prev => prev ? { ...prev, currentX: moveX, currentY: moveY } : null);
+      };
+      
+      const onUp = (upEvent) => {
+        window.removeEventListener('pointermove', onMove);
+        window.removeEventListener('pointerup', onUp);
+        
+        setMarquee(currentMarquee => {
+          if (currentMarquee) {
+            // 選択判定
+            const left = Math.min(currentMarquee.startX, currentMarquee.currentX);
+            const right = Math.max(currentMarquee.startX, currentMarquee.currentX);
+            const top = Math.min(currentMarquee.startY, currentMarquee.currentY);
+            const bottom = Math.max(currentMarquee.startY, currentMarquee.currentY);
+            
+            const store = useEditorStore.getState();
+            const containerHeight = rect.height;
+            const noteYTop = (containerHeight / 2) - 32;
+            const noteYBottom = (containerHeight / 2) + 32;
+            
+            const selectedIds = [];
+            store.editorNotes.forEach(note => {
+              const noteTotalBeats = (note.measure * 4) + note.beat;
+              const scrollBeats = store.scrollTimeOffset / msPerBeat;
+              const noteXLeft = (noteTotalBeats - scrollBeats) * beatWidth;
+              const noteXRight = noteXLeft + (note.durationBeats * beatWidth);
+              
+              const intersectX = left < noteXRight && right > noteXLeft;
+              const intersectY = top < noteYBottom && bottom > noteYTop;
+              
+              if (intersectX && intersectY) {
+                selectedIds.push(note.id);
+              }
+            });
+            
+            if (upEvent.ctrlKey || upEvent.metaKey) {
+              const newSet = new Set([...store.selectedNoteIds, ...selectedIds]);
+              store.setSelectedNoteIds(Array.from(newSet));
+            } else {
+              store.setSelectedNoteIds(selectedIds);
+            }
+          }
+          return null;
+        });
+      };
+      
+      window.addEventListener('pointermove', onMove);
+      window.addEventListener('pointerup', onUp);
+    }
+  };
+
   return (
     <div 
       className="bg-neutral-900 rounded-3xl overflow-hidden border-4 border-neutral-700 relative mx-auto flex-shrink-0 flex flex-col"
@@ -185,6 +250,8 @@ export default function EditorTimeline() {
         className="w-full flex-grow relative cursor-crosshair overflow-hidden"
         onWheel={handleWheel}
         onClick={handleTimelineClick}
+        onPointerDown={handleTimelinePointerDown}
+        onContextMenu={e => e.preventDefault()}
         style={{ ...gridBackground }}
       >
         {/* 波形表示 */}
@@ -200,12 +267,25 @@ export default function EditorTimeline() {
                 // px位置は (絶対時間 - スクロールオフセット) * pxPerMs
                 const x = (absoluteMs - scrollTimeOffset) * pxPerMs;
                 // y はコンテナの中央から peak に応じて上下に振る（0 ~ 1の値をピクセルに）
-                const y = 100 - (peak * 100); // 簡易的に高さ200pxを想定して計算。ここではSVGのビューポートに依存せず直接書くより、%か viewBox が良いか？
+                const y = 100 - (peak * 100); 
                 return `${x},${y}`;
               }).join(' ')}
               style={{ transform: 'translateY(50%)', transformOrigin: 'center' }}
             />
           </svg>
+        )}
+
+        {/* Marquee UI */}
+        {marquee && (
+          <div 
+            className="absolute bg-blue-500/20 border border-blue-500 rounded-sm pointer-events-none z-50"
+            style={{
+              left: Math.min(marquee.startX, marquee.currentX),
+              top: Math.min(marquee.startY, marquee.currentY),
+              width: Math.abs(marquee.currentX - marquee.startX),
+              height: Math.abs(marquee.currentY - marquee.startY)
+            }}
+          />
         )}
 
         <div className="absolute bottom-4 left-4 text-neutral-500 font-mono text-sm bg-neutral-950 px-3 py-1 rounded-full z-20 pointer-events-none">

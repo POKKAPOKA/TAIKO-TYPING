@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import EditorTimeline from './EditorTimeline';
 import { useEditorStore } from '../../store/editorStore';
 
@@ -14,14 +14,24 @@ export default function EditorView({ onExit }) {
   const audioUrl = useEditorStore(state => state.audioUrl);
   const setAudioUrl = useEditorStore(state => state.setAudioUrl);
 
+  const [isMaximized, setIsMaximized] = useState(false);
+  const [toastMessage, setToastMessage] = useState(null);
+
   const requestRef = useRef();
   const audioRef = useRef(null);
+  
+  const showToast = (message) => {
+    setToastMessage(message);
+    setTimeout(() => setToastMessage(null), 3000);
+  };
 
   // スペースキーでの再生トグルと Audio 初期化、キーボードショートカット
   useEffect(() => {
     const handleKeyDown = (e) => {
       // Input 要素入力中はカスタムショートカットを無効化（ブラウザ標準動作に任せる）
       if (e.target.tagName.toLowerCase() === 'input') return;
+      
+      const state = useEditorStore.getState();
       
       // 再生トグル (Space)
       if (e.code === 'Space') {
@@ -31,27 +41,74 @@ export default function EditorView({ onExit }) {
 
       // 削除 (Delete / Backspace)
       if (e.key === 'Delete' || e.key === 'Backspace') {
-        const state = useEditorStore.getState();
-        if (state.selectedNoteId) {
+        if (state.selectedNoteIds && state.selectedNoteIds.length > 0) {
           e.preventDefault();
-          state.removeEditorNote(state.selectedNoteId);
+          state.selectedNoteIds.forEach(id => {
+            state.removeEditorNote(id);
+          });
+          state.setSelectedNoteIds([]);
         }
       }
 
-      // Undo / Redo
+      // Undo / Redo / Copy / Paste
       const isMac = navigator.platform.toUpperCase().indexOf('MAC') >= 0;
       const cmdKey = isMac ? e.metaKey : e.ctrlKey;
       
-      if (cmdKey && e.key.toLowerCase() === 'z') {
-        e.preventDefault();
-        if (e.shiftKey) {
-          useEditorStore.getState().redo();
-        } else {
-          useEditorStore.getState().undo();
+      if (cmdKey) {
+        if (e.key.toLowerCase() === 'z') {
+          e.preventDefault();
+          if (e.shiftKey) {
+            state.redo();
+          } else {
+            state.undo();
+          }
+        } else if (e.key.toLowerCase() === 'y') {
+          e.preventDefault();
+          state.redo();
+        } else if (e.key.toLowerCase() === 'c') {
+          // コピー
+          if (state.selectedNoteIds.length > 0) {
+            e.preventDefault();
+            const notesToCopy = state.editorNotes.filter(n => state.selectedNoteIds.includes(n.id));
+            state.setClipboardNotes(notesToCopy);
+          }
+        } else if (e.key.toLowerCase() === 'v') {
+          // ペースト
+          if (state.clipboardNotes && state.clipboardNotes.length > 0) {
+            e.preventDefault();
+            
+            // クリップボード内で一番早い時間を特定
+            let minBeats = Infinity;
+            state.clipboardNotes.forEach(n => {
+              const b = n.measure * 4 + n.beat;
+              if (b < minBeats) minBeats = b;
+            });
+            
+            // 現在のシークバー位置を基準（ビート）
+            const currentBeats = (state.currentTime / (60000 / state.bpm));
+            
+            const newSelectedIds = [];
+            state.clipboardNotes.forEach(note => {
+              const originalBeats = note.measure * 4 + note.beat;
+              const diffBeats = originalBeats - minBeats;
+              const newTotalBeats = currentBeats + diffBeats;
+              
+              const newMeasure = Math.floor(newTotalBeats / 4);
+              const newBeat = newTotalBeats % 4;
+              const newId = Date.now() + Math.floor(Math.random() * 1000000) + Math.random();
+              
+              const newNote = {
+                ...note,
+                id: newId,
+                measure: newMeasure,
+                beat: newBeat,
+              };
+              state.addEditorNote(newNote);
+              newSelectedIds.push(newId);
+            });
+            state.setSelectedNoteIds(newSelectedIds);
+          }
         }
-      } else if (cmdKey && e.key.toLowerCase() === 'y') {
-        e.preventDefault();
-        useEditorStore.getState().redo();
       }
     };
     window.addEventListener('keydown', handleKeyDown);
@@ -238,6 +295,7 @@ export default function EditorView({ onExit }) {
         a.click();
         URL.revokeObjectURL(url);
       }
+      showToast("保存完了！トップの『創作譜面を遊ぶ』からファイルを読み込んでテストプレイしてみよう");
     } catch (e) {
       console.error("Export cancelled or failed:", e);
     }
@@ -294,20 +352,28 @@ export default function EditorView({ onExit }) {
   };
 
   return (
-    <div className="min-h-screen bg-neutral-900 text-white flex flex-col items-center p-8 font-sans select-none w-full overflow-y-auto">
+    <div className={`bg-neutral-900 text-white flex flex-col items-center font-sans select-none w-full overflow-y-auto ${isMaximized ? 'fixed inset-0 z-50 p-2' : 'min-h-screen p-8'}`}>
+      {toastMessage && (
+        <div className="fixed top-8 left-1/2 -translate-x-1/2 bg-cyan-600 text-white px-6 py-3 rounded-xl font-bold z-[1000] pointer-events-none transition-opacity duration-300">
+          {toastMessage}
+        </div>
+      )}
+      
       <audio ref={audioRef} src={audioUrl} />
       
-      <div className="w-full flex justify-between items-center mb-8">
-        <h1 className="text-4xl font-black text-cyan-400 tracking-wider">BEATMAP EDITOR</h1>
-        <button 
-          onClick={onExit}
-          className="px-6 py-2 bg-neutral-700 hover:bg-neutral-600 text-white rounded-full font-bold transition-colors"
-        >
-          BACK TO GAME
-        </button>
-      </div>
+      {!isMaximized && (
+        <div className="w-full flex justify-between items-center mb-8">
+          <h1 className="text-4xl font-black text-cyan-400 tracking-wider">BEATMAP EDITOR</h1>
+          <button 
+            onClick={onExit}
+            className="px-6 py-2 bg-neutral-700 hover:bg-neutral-600 text-white rounded-full font-bold transition-colors"
+          >
+            BACK TO GAME
+          </button>
+        </div>
+      )}
 
-      <div className="w-full bg-neutral-800 rounded-3xl p-6 border-b-4 border-neutral-900 flex-grow flex flex-col">
+      <div className={`w-full bg-neutral-800 p-6 flex-grow flex flex-col ${isMaximized ? 'rounded-xl h-full' : 'rounded-3xl border-b-4 border-neutral-900'}`}>
         {/* コントロールバー */}
         <div className="flex justify-between items-center mb-6 px-4">
           <div className="flex gap-4 items-center">
@@ -329,6 +395,21 @@ export default function EditorView({ onExit }) {
                <span>LOAD AUDIO</span>
                <input type="file" accept="audio/*" className="hidden" onChange={handleAudioChange} />
              </label>
+             
+             <button
+               onClick={() => setIsMaximized(!isMaximized)}
+               className="px-4 py-2 bg-neutral-700 hover:bg-neutral-600 text-white rounded-full font-bold transition-colors ml-2"
+             >
+               {isMaximized ? 'RESTORE' : 'MAXIMIZE'}
+             </button>
+             {isMaximized && (
+               <button 
+                 onClick={onExit}
+                 className="px-6 py-2 bg-neutral-700 hover:bg-neutral-600 text-white rounded-full font-bold transition-colors ml-2"
+               >
+                 EXIT
+               </button>
+             )}
           </div>
           
           <div className="flex gap-4 items-center">
@@ -370,7 +451,7 @@ export default function EditorView({ onExit }) {
         </div>
 
         {/* タイムライン領域 */}
-        <div className="flex-grow w-full overflow-x-auto p-4">
+        <div className="flex-grow w-full overflow-x-auto p-4 flex flex-col relative h-full">
           <EditorTimeline />
         </div>
       </div>

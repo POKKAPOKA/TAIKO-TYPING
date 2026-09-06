@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useGameStore } from './store/gameStore';
 import { gameEngine } from './engine/GameEngine';
 import NotesArea from './components/NotesArea';
@@ -8,6 +8,7 @@ import SongSelect from './components/SongSelect';
 
 function App() {
   const [appMode, setAppMode] = useState('menu'); // 'menu' | 'setup' | 'game' | 'editor' | 'songSelect'
+  const [showGuide, setShowGuide] = useState(false);
 
   const score = useGameStore(state => state.score);
   const maxCombo = useGameStore(state => state.maxCombo);
@@ -27,13 +28,28 @@ function App() {
   const typedIndex = useGameStore(state => state.typedIndex);
   const scoreFileName = useGameStore(state => state.scoreFileName);
   const audioFileName = useGameStore(state => state.audioFileName);
+  const isLocalPlay = useGameStore(state => state.isLocalPlay);
   
   const setLoadedScore = useGameStore(state => state.setLoadedScore);
   const setAudioUrl = useGameStore(state => state.setAudioUrl);
   const resetPlayState = useGameStore(state => state.resetPlayState);
   const clearSetup = useGameStore(state => state.clearSetup);
+  const setIsLocalPlay = useGameStore(state => state.setIsLocalPlay);
+
+  useEffect(() => {
+    if (appMode === 'game' && status === 'playing') {
+      setShowGuide(true);
+      const timer = setTimeout(() => {
+        setShowGuide(false);
+      }, 5000);
+      return () => clearTimeout(timer);
+    } else {
+      setShowGuide(false);
+    }
+  }, [appMode, status]);
 
   const handleStartGame = () => {
+    setIsLocalPlay(true);
     setAppMode('game');
     gameEngine.start();
   };
@@ -109,19 +125,19 @@ function App() {
             onClick={() => setAppMode('songSelect')}
             className="px-12 py-4 bg-orange-500 hover:bg-orange-400 text-neutral-900 rounded-full font-black text-2xl transition-colors"
           >
-            PLAY GAME
+            公式譜面で遊ぶ
           </button>
           <button 
             onClick={() => setAppMode('setup')}
             className="px-12 py-4 bg-cyan-600 hover:bg-cyan-500 text-white rounded-full font-black text-2xl transition-colors"
           >
-            CUSTOM PLAY (LOCAL)
+            創作譜面を遊ぶ
           </button>
           <button 
             onClick={() => setAppMode('editor')}
             className="px-12 py-4 bg-neutral-700 hover:bg-neutral-600 text-white rounded-full font-black text-2xl transition-colors"
           >
-            OPEN EDITOR
+            創作譜面を作る
           </button>
         </div>
       )}
@@ -183,6 +199,11 @@ function App() {
           </div>
 
           <div className="w-full max-w-4xl bg-neutral-800 rounded-b-3xl p-8 flex flex-col items-center justify-center min-h-[160px] relative">
+            {showGuide && (
+              <div className="absolute top-4 text-neutral-500 font-bold tracking-widest text-sm transition-opacity duration-1000 opacity-50">
+                遊び方：ノーツが判定枠に重なったら、表示されている最初の文字をタイピングしてください
+              </div>
+            )}
             {activeWord ? (
               <div className="text-6xl font-mono tracking-widest mt-2">
                 <span className="text-neutral-600">{activeWord.substring(0, typedIndex)}</span>
@@ -199,7 +220,7 @@ function App() {
       )}
 
       {appMode === 'game' && status === 'result' && (
-        <div className="bg-neutral-800 p-12 rounded-3xl w-full max-w-3xl flex flex-col items-center gap-10 my-4">
+        <div className="bg-neutral-800 p-12 rounded-3xl w-full max-w-3xl flex flex-col items-center gap-10 my-4 relative">
           <div className="text-center">
             <div className="text-neutral-400 font-bold tracking-widest mb-2">CLEAR RANK</div>
             <h2 className={`text-6xl font-black tracking-widest ${getClearRank().color}`}>
@@ -261,6 +282,12 @@ function App() {
               <div className="font-mono text-5xl text-cyan-400">{maxKps.toFixed(2)}</div>
             </div>
           </div>
+          
+          {isLocalPlay && (
+            <div className="w-full bg-cyan-900/30 border-2 border-cyan-800 text-cyan-400 p-4 rounded-xl text-center font-bold">
+              開発者に作成データを共有して公式譜面にしてみよう！
+            </div>
+          )}
 
           <div className="flex gap-4 w-full mt-4">
             <button 

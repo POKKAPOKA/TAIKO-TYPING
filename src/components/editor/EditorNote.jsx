@@ -5,8 +5,8 @@ import { useEditorStore } from '../../store/editorStore';
 export default function EditorNote({ note, beatWidth, msPerBeat }) {
   const updateEditorNote = useEditorStore(state => state.updateEditorNote);
   const scrollTimeOffset = useEditorStore(state => state.scrollTimeOffset);
-  const selectedNoteId = useEditorStore(state => state.selectedNoteId);
-  const setSelectedNoteId = useEditorStore(state => state.setSelectedNoteId);
+  const selectedNoteIds = useEditorStore(state => state.selectedNoteIds);
+  const setSelectedNoteIds = useEditorStore(state => state.setSelectedNoteIds);
 
   const [isEditing, setIsEditing] = useState(false);
   const [inputText, setInputText] = useState(note.word || '');
@@ -14,7 +14,7 @@ export default function EditorNote({ note, beatWidth, msPerBeat }) {
   
   const noteRef = useRef(null);
   
-  const isSelected = selectedNoteId === note.id;
+  const isSelected = selectedNoteIds.includes(note.id);
 
   // 初期位置計算
   const noteTotalBeats = (note.measure * 4) + note.beat;
@@ -53,7 +53,19 @@ export default function EditorNote({ note, beatWidth, msPerBeat }) {
     e.stopPropagation(); // 伝播防止
     if (isEditing) return;
     
-    setSelectedNoteId(note.id); // 選択状態にする
+    if (e.ctrlKey || e.metaKey) {
+      if (selectedNoteIds.includes(note.id)) {
+        setSelectedNoteIds(selectedNoteIds.filter(id => id !== note.id));
+        return; // 選択解除時はドラッグを開始しない
+      } else {
+        setSelectedNoteIds([...selectedNoteIds, note.id]);
+      }
+    } else {
+      if (!selectedNoteIds.includes(note.id)) {
+        setSelectedNoteIds([note.id]);
+      }
+    }
+    
     window._isEditorDragging = true; // グローバルドラッグフラグON
 
     dragState.current = {

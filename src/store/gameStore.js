@@ -19,6 +19,7 @@ export const useGameStore = create((set) => ({
   audioUrl: null,
   scoreFileName: null,
   audioFileName: null,
+  isLocalPlay: false,
 
   // 現在ターゲットになっている単語の情報
   currentTarget: null,
@@ -56,6 +57,7 @@ export const useGameStore = create((set) => ({
   
   setLoadedScore: (score, fileName) => set({ loadedScore: score, scoreFileName: fileName || null }),
   setAudioUrl: (url, fileName) => set({ audioUrl: url, audioFileName: fileName || null }),
+  setIsLocalPlay: (isLocal) => set({ isLocalPlay: isLocal }),
   
   setCurrentTarget: (target) => set({ currentTarget: target }),
   setActiveWord: (word) => set({ activeWord: word }),
