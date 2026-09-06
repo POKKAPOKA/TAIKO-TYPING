@@ -35,12 +35,23 @@ export const useEditorStore = create((set) => ({
   pastNotes: [],
   futureNotes: [],
 
+  // ズーム状態
+  zoomLevel: 1.0,
+
   setBpm: (bpm) => set({ bpm: Number.isNaN(bpm) ? 120 : bpm }),
   setScrollTimeOffset: (offsetTime) => {
     if (Number.isNaN(offsetTime)) return;
     set({ scrollTimeOffset: Math.max(0, offsetTime) });
   },
   setTimelineWidth: (width) => set({ timelineWidth: width }),
+  setZoomLevel: (level) => {
+    let newLevel = Number(level);
+    if (Number.isNaN(newLevel)) return;
+    newLevel = Math.max(0.1, Math.min(3.0, newLevel));
+    set({ zoomLevel: newLevel });
+  },
+  audioDuration: 60000,
+  setAudioDuration: (duration) => set({ audioDuration: duration }),
   setAudioUrl: (url) => set({ audioUrl: url }),
   setAudioPeaks: (peaks) => set({ audioPeaks: peaks }),
   setIsPlaying: (isPlaying) => set({ isPlaying }),

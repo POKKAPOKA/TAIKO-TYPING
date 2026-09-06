@@ -13,6 +13,8 @@ export default function EditorView({ onExit }) {
   const setBpm = useEditorStore(state => state.setBpm);
   const audioUrl = useEditorStore(state => state.audioUrl);
   const setAudioUrl = useEditorStore(state => state.setAudioUrl);
+  const zoomLevel = useEditorStore(state => state.zoomLevel);
+  const setZoomLevel = useEditorStore(state => state.setZoomLevel);
 
   const [isMaximized, setIsMaximized] = useState(false);
   const [toastMessage, setToastMessage] = useState(null);
@@ -359,7 +361,15 @@ export default function EditorView({ onExit }) {
         </div>
       )}
       
-      <audio ref={audioRef} src={audioUrl} />
+      <audio 
+        ref={audioRef} 
+        src={audioUrl} 
+        onLoadedMetadata={(e) => {
+          if (e.target.duration && !Number.isNaN(e.target.duration) && e.target.duration !== Infinity) {
+            useEditorStore.getState().setAudioDuration(e.target.duration * 1000);
+          }
+        }}
+      />
       
       {!isMaximized && (
         <div className="w-full flex justify-between items-center mb-8">
@@ -413,6 +423,31 @@ export default function EditorView({ onExit }) {
           </div>
           
           <div className="flex gap-4 items-center">
+             {/* ズーム調整 */}
+             <div className="flex items-center gap-2 bg-neutral-900 px-4 py-2 rounded-full border-2 border-neutral-700">
+               <span className="text-neutral-400 font-bold text-sm">ZOOM</span>
+               <button 
+                 onClick={() => setZoomLevel(zoomLevel - 0.1)}
+                 className="w-6 h-6 flex items-center justify-center bg-neutral-700 hover:bg-neutral-600 rounded-full text-white font-bold"
+               >-</button>
+               <input 
+                 type="range"
+                 min="0.1"
+                 max="3.0"
+                 step="0.1"
+                 value={zoomLevel}
+                 onChange={(e) => setZoomLevel(e.target.value)}
+                 className="w-24 accent-cyan-500 bg-neutral-700 h-2 rounded-full appearance-none outline-none"
+               />
+               <button 
+                 onClick={() => setZoomLevel(zoomLevel + 0.1)}
+                 className="w-6 h-6 flex items-center justify-center bg-neutral-700 hover:bg-neutral-600 rounded-full text-white font-bold"
+               >+</button>
+               <span className="text-cyan-400 font-mono font-bold w-10 text-right">
+                 {Math.round(zoomLevel * 100)}%
+               </span>
+             </div>
+
              {/* BPM / Offset 調整 (フラットデザイン) */}
              <div className="flex items-center gap-2 bg-neutral-900 px-4 py-2 rounded-full border-2 border-neutral-700">
                <span className="text-neutral-400 font-bold text-sm">BPM</span>

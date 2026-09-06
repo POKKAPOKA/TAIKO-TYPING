@@ -18,9 +18,7 @@ export default function EditorNote({ note, beatWidth, msPerBeat }) {
 
   // 初期位置計算
   const noteTotalBeats = (note.measure * 4) + note.beat;
-  const scrollBeats = scrollTimeOffset / msPerBeat;
-  
-  const initialX = (noteTotalBeats - scrollBeats) * beatWidth;
+  const initialX = noteTotalBeats * beatWidth;
   const initialWidth = note.durationBeats * beatWidth;
 
   // KPS計算
@@ -89,25 +87,13 @@ export default function EditorNote({ note, beatWidth, msPerBeat }) {
     const canScroll = now - window._lastAutoScrollTime > 500; // 500msに1回だけ
 
     if (canScroll) {
-      // オートスクロール判定: マウスが画面の右端90%を超えたら
-      if (e.clientX > window.innerWidth * 0.9) {
-        const store = useEditorStore.getState();
-        const msPerMeasure = msPerBeat * 4;
-        const pxPerMs = store.measureWidth / msPerMeasure;
-        
-        store.setScrollTimeOffset(store.scrollTimeOffset + msPerMeasure);
-        state.startX -= (msPerMeasure * pxPerMs);
-        window._lastAutoScrollTime = now;
-      }
-      // 逆に左端10%に行ったら戻る
-      else if (e.clientX < window.innerWidth * 0.1) {
-        const store = useEditorStore.getState();
-        const msPerMeasure = msPerBeat * 4;
-        const pxPerMs = store.measureWidth / msPerMeasure;
-        
-        if (store.scrollTimeOffset >= msPerMeasure) {
-          store.setScrollTimeOffset(store.scrollTimeOffset - msPerMeasure);
-          state.startX += (msPerMeasure * pxPerMs);
+      const viewport = noteRef.current.closest('.overflow-x-auto');
+      if (viewport) {
+        if (e.clientX > window.innerWidth * 0.9) {
+          viewport.scrollBy({ left: beatWidth * 4, behavior: 'smooth' });
+          window._lastAutoScrollTime = now;
+        } else if (e.clientX < window.innerWidth * 0.1) {
+          viewport.scrollBy({ left: -(beatWidth * 4), behavior: 'smooth' });
           window._lastAutoScrollTime = now;
         }
       }
@@ -120,7 +106,7 @@ export default function EditorNote({ note, beatWidth, msPerBeat }) {
       const newTotalBeatsUnsnapped = state.originalTotalBeats + deltaBeats;
       const snappedBeats = Math.max(0, Math.round(newTotalBeatsUnsnapped / 0.25) * 0.25);
       
-      const newX = (snappedBeats - useEditorStore.getState().scrollTimeOffset / msPerBeat) * beatWidth;
+      const newX = snappedBeats * beatWidth;
       
       noteRef.current.style.left = `${newX}px`;
       noteRef.current.dataset.newTotalBeats = snappedBeats;

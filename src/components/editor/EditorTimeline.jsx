@@ -18,10 +18,15 @@ export default function EditorTimeline() {
   
   const timelineWidth = useEditorStore(state => state.timelineWidth);
   const setTimelineWidth = useEditorStore(state => state.setTimelineWidth);
-  const measureWidth = useEditorStore(state => state.measureWidth);
+  const baseMeasureWidth = useEditorStore(state => state.measureWidth);
+  const zoomLevel = useEditorStore(state => state.zoomLevel);
   const setCurrentTime = useEditorStore(state => state.setCurrentTime);
   const setSeekRequest = useEditorStore(state => state.setSeekRequest);
   const setIsPlaying = useEditorStore(state => state.setIsPlaying);
+
+  const audioDuration = useEditorStore(state => state.audioDuration);
+
+  const measureWidth = baseMeasureWidth * zoomLevel;
 
   const msPerBeat = 60000 / bpm;
   const msPerMeasure = msPerBeat * BEATS_PER_MEASURE;
@@ -30,33 +35,74 @@ export default function EditorTimeline() {
   const beatWidth = measureWidth / BEATS_PER_MEASURE;
   const note16Width = beatWidth / 4;
 
-  const fixedTimelineWidth = measureWidth * 4;
+  let maxNoteBeats = 0;
+  editorNotes.forEach(n => {
+    const beats = n.measure * 4 + n.beat + (n.durationBeats || 0);
+    if (beats > maxNoteBeats) maxNoteBeats = beats;
+  });
+  const fallbackDuration = Math.max(30000, maxNoteBeats * msPerBeat + 5000);
+  const effectiveDuration = audioDuration || fallbackDuration;
+
+  const continuousTimelineWidth = Math.max(effectiveDuration * pxPerMs, window.innerWidth * 2);
 
   useEffect(() => {
-    setTimelineWidth(fixedTimelineWidth);
-  }, [setTimelineWidth, fixedTimelineWidth]);
+    setTimelineWidth(continuousTimelineWidth);
+  }, [setTimelineWidth, continuousTimelineWidth]);
 
-  const handleWheel = (e) => {
-    // deltaY を利用して細かくスクロールさせる。係数 0.5 などを掛ける。
-    // deltaY はピクセル単位。これを時間に変換してオフセットに足す。
-    if (!pxPerMs || Number.isNaN(pxPerMs)) return;
-    const deltaMs = (e.deltaY * 0.5) / pxPerMs;
-    if (Number.isNaN(deltaMs)) return;
+  const viewportRef = useRef(null);
+
+  // 外部から（Stop & Resetなど）scrollTimeOffset が 0 にリセットされた場合の同期
+  useEffect(() => {
+    if (scrollTimeOffset === 0 && viewportRef.current && viewportRef.current.scrollLeft > 0) {
+      viewportRef.current.scrollLeft = 0;
+    }
+  }, [scrollTimeOffset]);
+
+  useEffect(() => {
+    const handleNativeWheel = (e) => {
+      if (e.ctrlKey || e.metaKey) {
+        e.preventDefault();
+        const store = useEditorStore.getState();
+        
+        // 現在の画面中央の時間 (ms)
+        const centerTimeMs = (viewportRef.current.scrollLeft + viewportRef.current.clientWidth / 2) / (store.measureWidth * store.zoomLevel / (60000 / store.bpm * 4));
+
+        let newLevel = store.zoomLevel - (e.deltaY * 0.005);
+        newLevel = Math.max(0.1, Math.min(3.0, newLevel));
+        store.setZoomLevel(newLevel);
+        
+        // ズーム後の pxPerMs を再計算
+        const newZoomedMeasureWidth = store.measureWidth * newLevel;
+        const newPxPerMs = newZoomedMeasureWidth / (60000 / store.bpm * 4);
+        
+        // 中央時間が同じになるように scrollLeft を補正
+        requestAnimationFrame(() => {
+          if (viewportRef.current) {
+            viewportRef.current.scrollLeft = centerTimeMs * newPxPerMs - viewportRef.current.clientWidth / 2;
+          }
+        });
+      } else {
+        // 横スクロールに変換
+        if (viewportRef.current) {
+          viewportRef.current.scrollLeft += e.deltaY;
+        }
+      }
+    };
     
-    let newOffset = scrollTimeOffset + deltaMs;
-    if (Number.isNaN(newOffset)) newOffset = 0;
-    
-    // スクロールが極端なマイナスにいかないようにガード
-    if (newOffset < -10000) newOffset = -10000;
-    
-    setScrollTimeOffset(newOffset);
-  };
+    const vp = viewportRef.current;
+    if (vp) {
+      vp.addEventListener('wheel', handleNativeWheel, { passive: false });
+    }
+    return () => {
+      if (vp) vp.removeEventListener('wheel', handleNativeWheel);
+    };
+  }, []);
 
   // --- ルーラーでのシーク処理 ---
   const calculateTimeFromEvent = (e) => {
     const rect = rulerRef.current.getBoundingClientRect();
     const offsetX = e.clientX - rect.left;
-    const absoluteBeats = (offsetX / beatWidth) + (scrollTimeOffset / msPerBeat);
+    const absoluteBeats = offsetX / beatWidth;
     return absoluteBeats * msPerBeat;
   };
 
@@ -80,18 +126,15 @@ export default function EditorTimeline() {
     // スロットリング用の時刻管理 (シークバー用)
     window._lastAutoScrollTimeRuler = window._lastAutoScrollTimeRuler || 0;
     const now = performance.now();
-    const canScroll = now - window._lastAutoScrollTimeRuler > 500;
+    const canScroll = now - window._lastAutoScrollTimeRuler > 100; // 100msに1回
 
     if (canScroll) {
       if (e.clientX > window.innerWidth * 0.9) {
-        setScrollTimeOffset(useEditorStore.getState().scrollTimeOffset + (msPerBeat * 4));
+        if (viewportRef.current) viewportRef.current.scrollBy({ left: beatWidth * 4, behavior: 'smooth' });
         window._lastAutoScrollTimeRuler = now;
       } else if (e.clientX < window.innerWidth * 0.1) {
-        const store = useEditorStore.getState();
-        if (store.scrollTimeOffset >= (msPerBeat * 4)) {
-          setScrollTimeOffset(store.scrollTimeOffset - (msPerBeat * 4));
-          window._lastAutoScrollTimeRuler = now;
-        }
+        if (viewportRef.current) viewportRef.current.scrollBy({ left: -(beatWidth * 4), behavior: 'smooth' });
+        window._lastAutoScrollTimeRuler = now;
       }
     }
 
@@ -124,14 +167,14 @@ export default function EditorTimeline() {
     if (e.target !== containerRef.current && !e.target.dataset.isTimelineBg) return;
 
     // 背景クリックで選択解除
-    useEditorStore.getState().setSelectedNoteId(null);
+    useEditorStore.getState().setSelectedNoteIds([]);
 
-    // コンテナ内の相対X座標
+    // コンテナ内の相対X座標（＝絶対X座標）
     const rect = containerRef.current.getBoundingClientRect();
     const offsetX = e.clientX - rect.left;
     
     // オフセットXを拍(beat)に変換
-    const absoluteBeats = (offsetX / beatWidth) + (scrollTimeOffset / msPerBeat);
+    const absoluteBeats = offsetX / beatWidth;
     
     // 0.25(16分音符)単位にスナップ
     const snappedBeats = Math.max(0, Math.round(absoluteBeats / 0.25) * 0.25);
@@ -155,7 +198,7 @@ export default function EditorTimeline() {
       linear-gradient(to right, rgba(255,255,255,0.05) 1px, transparent 1px)
     `,
     backgroundSize: `${measureWidth}px 100%, ${beatWidth}px 100%, ${note16Width}px 100%`,
-    backgroundPosition: `-${(scrollTimeOffset / msPerBeat) * beatWidth}px 0, -${(scrollTimeOffset / msPerBeat) * beatWidth}px 0, -${(scrollTimeOffset / msPerBeat) * beatWidth}px 0`
+    backgroundPosition: `0 0, 0 0, 0 0`
   };
 
   const [marquee, setMarquee] = useState(null);
@@ -195,8 +238,7 @@ export default function EditorTimeline() {
             const selectedIds = [];
             store.editorNotes.forEach(note => {
               const noteTotalBeats = (note.measure * 4) + note.beat;
-              const scrollBeats = store.scrollTimeOffset / msPerBeat;
-              const noteXLeft = (noteTotalBeats - scrollBeats) * beatWidth;
+              const noteXLeft = noteTotalBeats * beatWidth;
               const noteXRight = noteXLeft + (note.durationBeats * beatWidth);
               
               const intersectX = left < noteXRight && right > noteXLeft;
@@ -225,30 +267,36 @@ export default function EditorTimeline() {
 
   return (
     <div 
-      className="bg-neutral-900 rounded-3xl overflow-hidden border-4 border-neutral-700 relative mx-auto flex-shrink-0 flex flex-col"
-      style={{
-        width: `${fixedTimelineWidth}px`,
-        minWidth: `${fixedTimelineWidth}px`,
-        boxSizing: 'content-box',
-        height: '100%',
-        minHeight: '280px'
+      ref={viewportRef}
+      className="w-full h-full overflow-x-auto overflow-y-hidden bg-neutral-900 rounded-3xl border-4 border-neutral-700 relative"
+      onScroll={(e) => {
+        if (!pxPerMs || Number.isNaN(pxPerMs)) return;
+        setScrollTimeOffset(e.target.scrollLeft / pxPerMs);
       }}
     >
-      {/* ルーラー領域 */}
       <div 
-        ref={rulerRef}
-        className="w-full h-8 bg-neutral-800 border-b-2 border-neutral-700 cursor-text flex-shrink-0 relative"
-        onPointerDown={handleRulerPointerDown}
+        className="relative mx-auto flex-shrink-0 flex flex-col"
+        style={{
+          width: `${continuousTimelineWidth}px`,
+          minWidth: `${continuousTimelineWidth}px`,
+          boxSizing: 'content-box',
+          height: '100%',
+          minHeight: '280px'
+        }}
       >
-        {/* スクロールに応じた目盛りを描画してもよいが、今回はシンプルな帯として扱う */}
-      </div>
+        {/* ルーラー領域 */}
+        <div 
+          ref={rulerRef}
+          className="w-full h-8 bg-neutral-800 border-b-2 border-neutral-700 cursor-text flex-shrink-0 relative"
+          onPointerDown={handleRulerPointerDown}
+        >
+          {/* シンプルな帯 */}
+        </div>
 
-      {/* タイムライン領域 */}
       <div
         ref={containerRef}
         data-is-timeline-bg="true"
         className="w-full flex-grow relative cursor-crosshair overflow-hidden"
-        onWheel={handleWheel}
         onClick={handleTimelineClick}
         onPointerDown={handleTimelinePointerDown}
         onContextMenu={e => e.preventDefault()}
@@ -262,11 +310,8 @@ export default function EditorTimeline() {
               stroke="#06b6d4" // cyan-500
               strokeWidth="2"
               points={useEditorStore.getState().audioPeaks.map((peak, index) => {
-                // 1 peak は 50ms。絶対時間は index * 50 ms。
                 const absoluteMs = index * 50;
-                // px位置は (絶対時間 - スクロールオフセット) * pxPerMs
-                const x = (absoluteMs - scrollTimeOffset) * pxPerMs;
-                // y はコンテナの中央から peak に応じて上下に振る（0 ~ 1の値をピクセルに）
+                const x = absoluteMs * pxPerMs;
                 const y = 100 - (peak * 100); 
                 return `${x},${y}`;
               }).join(' ')}
@@ -303,6 +348,7 @@ export default function EditorTimeline() {
             msPerBeat={msPerBeat}
           />
         ))}
+      </div>
       </div>
     </div>
   );

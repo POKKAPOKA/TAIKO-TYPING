@@ -11,38 +11,33 @@ export default function EditorSeekBar() {
   useEffect(() => {
     const updatePosition = () => {
       const state = useEditorStore.getState();
-      const { bpm, measureWidth, scrollTimeOffset, currentTime, timelineWidth, isPlaying, setScrollTimeOffset } = state;
+      const { bpm, measureWidth, zoomLevel, scrollTimeOffset, currentTime, timelineWidth, isPlaying, setScrollTimeOffset } = state;
       
+      const zoomedMeasureWidth = measureWidth * zoomLevel;
       const msPerBeat = 60000 / bpm;
-      const beatWidth = measureWidth / BEATS_PER_MEASURE;
+      const beatWidth = zoomedMeasureWidth / BEATS_PER_MEASURE;
       
-      // 現在の総拍数とスクロール位置の総拍数
+      // 現在の総拍数
       const currentBeats = currentTime / msPerBeat;
-      const scrollBeats = scrollTimeOffset / msPerBeat;
 
-      // シークバーのX座標
-      let xPos = (currentBeats - scrollBeats) * beatWidth;
-
-      // 自動ページネーション: 右端を超えたら次のページへ
-      if (isPlaying && xPos > timelineWidth) {
-        // 次のページへパッと切り替わる
-        const timePerPage = (timelineWidth / beatWidth) * msPerBeat;
-        const newOffset = scrollTimeOffset + timePerPage;
-        
-        // 状態を更新 (Zustand)
-        setScrollTimeOffset(newOffset);
-        
-        // xPos を再計算
-        xPos = (currentBeats - (newOffset / msPerBeat)) * beatWidth;
-      }
+      // シークバーの絶対X座標
+      const xPos = currentBeats * beatWidth;
 
       // DOM更新
       if (barRef.current) {
         barRef.current.style.transform = `translateX(${xPos}px)`;
-        if (xPos < 0 || xPos > timelineWidth) {
-          barRef.current.style.opacity = '0';
-        } else {
-          barRef.current.style.opacity = '1';
+        barRef.current.style.opacity = '1';
+
+        // プレイ中に画面右端を超えたら、自動でビューポートをスクロール
+        if (isPlaying) {
+          const viewport = barRef.current.parentElement.parentElement;
+          if (viewport && viewport.scrollLeft !== undefined) {
+            const scrollLeft = viewport.scrollLeft;
+            const width = viewport.clientWidth;
+            if (xPos < scrollLeft || xPos > scrollLeft + width * 0.9) {
+              viewport.scrollLeft = xPos - width * 0.1;
+            }
+          }
         }
       }
       
