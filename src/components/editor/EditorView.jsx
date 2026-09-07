@@ -16,7 +16,6 @@ export default function EditorView({ onExit }) {
   const zoomLevel = useEditorStore(state => state.zoomLevel);
   const setZoomLevel = useEditorStore(state => state.setZoomLevel);
 
-  const [isMaximized, setIsMaximized] = useState(false);
   const [toastMessage, setToastMessage] = useState(null);
 
   const requestRef = useRef();
@@ -354,7 +353,7 @@ export default function EditorView({ onExit }) {
   };
 
   return (
-    <div className={`bg-neutral-900 text-white flex flex-col items-center font-sans select-none w-full overflow-y-auto ${isMaximized ? 'fixed inset-0 z-50 p-2' : 'min-h-screen p-8'}`}>
+    <div className="fixed inset-0 z-50 bg-neutral-900 text-white flex flex-col font-sans select-none overflow-hidden p-2">
       {toastMessage && (
         <div className="fixed top-8 left-1/2 -translate-x-1/2 bg-cyan-600 text-white px-6 py-3 rounded-xl font-bold z-[1000] pointer-events-none transition-opacity duration-300">
           {toastMessage}
@@ -371,85 +370,39 @@ export default function EditorView({ onExit }) {
         }}
       />
       
-      {!isMaximized && (
-        <div className="w-full flex justify-between items-center mb-8">
-          <h1 className="text-4xl font-black text-cyan-400 tracking-wider">BEATMAP EDITOR</h1>
-          <button 
-            onClick={onExit}
-            className="px-6 py-2 bg-neutral-700 hover:bg-neutral-600 text-white rounded-full font-bold transition-colors"
-          >
-            BACK TO GAME
-          </button>
-        </div>
-      )}
-
-      <div className={`w-full bg-neutral-800 p-6 flex-grow flex flex-col ${isMaximized ? 'rounded-xl h-full' : 'rounded-3xl border-b-4 border-neutral-900'}`}>
+      <div className="w-full bg-neutral-800 p-2 flex-grow flex flex-col rounded-xl h-full border-b-4 border-neutral-900">
         {/* コントロールバー */}
-        <div className="flex justify-between items-center mb-6 px-4">
-          <div className="flex gap-4 items-center">
+        <div className="flex flex-wrap justify-between items-center mb-2 px-2 gap-4">
+          <div className="flex flex-wrap gap-2 items-center">
+             <button 
+               onClick={onExit}
+               className="px-6 py-2 bg-neutral-700 hover:bg-neutral-600 text-white rounded-full font-bold transition-colors mr-2 flex-shrink-0"
+             >
+               BACK
+             </button>
              <button
                onClick={togglePlay}
-               className={`px-8 py-2 rounded-full font-black transition-colors ${isPlaying ? 'bg-red-500 text-white' : 'bg-green-500 text-neutral-900'}`}
+               className={`px-8 py-2 rounded-full font-black transition-colors flex-shrink-0 ${isPlaying ? 'bg-red-500 text-white' : 'bg-green-500 text-neutral-900'}`}
              >
                {isPlaying ? 'PAUSE' : 'PLAY'}
              </button>
              <button
                onClick={handleStopReset}
-               className="px-6 py-2 bg-neutral-700 hover:bg-neutral-600 text-white rounded-full font-bold transition-colors"
+               className="px-6 py-2 bg-neutral-700 hover:bg-neutral-600 text-white rounded-full font-bold transition-colors flex-shrink-0"
              >
                STOP & RESET
              </button>
              
              {/* オーディオ読み込み */}
-             <label className="cursor-pointer bg-neutral-700 hover:bg-neutral-600 px-4 py-2 rounded-full font-bold transition-colors flex items-center gap-2">
+             <label className="cursor-pointer bg-neutral-700 hover:bg-neutral-600 px-4 py-2 rounded-full font-bold transition-colors flex items-center gap-2 flex-shrink-0">
                <span>LOAD AUDIO</span>
                <input type="file" accept="audio/*" className="hidden" onChange={handleAudioChange} />
              </label>
-             
-             <button
-               onClick={() => setIsMaximized(!isMaximized)}
-               className="px-4 py-2 bg-neutral-700 hover:bg-neutral-600 text-white rounded-full font-bold transition-colors ml-2"
-             >
-               {isMaximized ? 'RESTORE' : 'MAXIMIZE'}
-             </button>
-             {isMaximized && (
-               <button 
-                 onClick={onExit}
-                 className="px-6 py-2 bg-neutral-700 hover:bg-neutral-600 text-white rounded-full font-bold transition-colors ml-2"
-               >
-                 EXIT
-               </button>
-             )}
           </div>
           
-          <div className="flex gap-4 items-center">
-             {/* ズーム調整 */}
-             <div className="flex items-center gap-2 bg-neutral-900 px-4 py-2 rounded-full border-2 border-neutral-700">
-               <span className="text-neutral-400 font-bold text-sm">ZOOM</span>
-               <button 
-                 onClick={() => setZoomLevel(zoomLevel - 0.1)}
-                 className="w-6 h-6 flex items-center justify-center bg-neutral-700 hover:bg-neutral-600 rounded-full text-white font-bold"
-               >-</button>
-               <input 
-                 type="range"
-                 min="0.1"
-                 max="3.0"
-                 step="0.1"
-                 value={zoomLevel}
-                 onChange={(e) => setZoomLevel(e.target.value)}
-                 className="w-24 accent-cyan-500 bg-neutral-700 h-2 rounded-full appearance-none outline-none"
-               />
-               <button 
-                 onClick={() => setZoomLevel(zoomLevel + 0.1)}
-                 className="w-6 h-6 flex items-center justify-center bg-neutral-700 hover:bg-neutral-600 rounded-full text-white font-bold"
-               >+</button>
-               <span className="text-cyan-400 font-mono font-bold w-10 text-right">
-                 {Math.round(zoomLevel * 100)}%
-               </span>
-             </div>
-
+          <div className="flex flex-wrap gap-2 items-center">
              {/* BPM / Offset 調整 (フラットデザイン) */}
-             <div className="flex items-center gap-2 bg-neutral-900 px-4 py-2 rounded-full border-2 border-neutral-700">
+             <div className="flex items-center gap-2 bg-neutral-900 px-4 py-2 rounded-full border-2 border-neutral-700 flex-shrink-0">
                <span className="text-neutral-400 font-bold text-sm">BPM</span>
                <input 
                  type="number" 
@@ -459,7 +412,7 @@ export default function EditorView({ onExit }) {
                />
              </div>
              
-             <div className="flex items-center gap-2 bg-neutral-900 px-4 py-2 rounded-full border-2 border-neutral-700">
+             <div className="flex items-center gap-2 bg-neutral-900 px-4 py-2 rounded-full border-2 border-neutral-700 flex-shrink-0">
                <span className="text-neutral-400 font-bold text-sm">OFFSET</span>
                <input 
                  type="number" 
@@ -474,11 +427,11 @@ export default function EditorView({ onExit }) {
              {/* Export / Import */}
              <button
                onClick={handleExport}
-               className="px-4 py-2 bg-neutral-700 hover:bg-neutral-600 text-white rounded-full font-bold transition-colors ml-4"
+               className="px-4 py-2 bg-neutral-700 hover:bg-neutral-600 text-white rounded-full font-bold transition-colors ml-2 flex-shrink-0"
              >
                EXPORT
              </button>
-             <label className="cursor-pointer bg-neutral-700 hover:bg-neutral-600 px-4 py-2 rounded-full font-bold transition-colors flex items-center">
+             <label className="cursor-pointer bg-neutral-700 hover:bg-neutral-600 px-4 py-2 rounded-full font-bold transition-colors flex items-center flex-shrink-0">
                <span>IMPORT</span>
                <input type="file" accept=".json" className="hidden" onChange={handleImport} />
              </label>
@@ -486,7 +439,7 @@ export default function EditorView({ onExit }) {
         </div>
 
         {/* タイムライン領域 */}
-        <div className="flex-grow w-full overflow-x-auto p-4 flex flex-col relative h-full">
+        <div className="flex-grow w-full overflow-hidden p-0 flex flex-col relative h-full">
           <EditorTimeline />
         </div>
       </div>

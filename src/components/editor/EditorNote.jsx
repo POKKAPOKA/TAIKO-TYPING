@@ -176,9 +176,7 @@ export default function EditorNote({ note, beatWidth, msPerBeat }) {
     }
   }, [isEditing, initialX]); // initialX(スクロール等による再レンダリング)も含めることで座標を更新
 
-  // 画面外のものを弾く判定（少しでも被っていれば描画）※Hooksの後に配置すること！
-  if (initialX + initialWidth < 0 || initialX > 3000) return null;
-
+  // 画面外カリング処理はネイティブスクロールへ移行したため削除
   // ボーダースタイル決定
   let borderColor = '#06b6d4'; // cyan-500
   let borderWidth = '4px';
@@ -209,53 +207,53 @@ export default function EditorNote({ note, beatWidth, msPerBeat }) {
       onDoubleClick={handleDoubleClick}
       onClick={(e) => {
         e.stopPropagation();
-        setSelectedNoteId(note.id);
+        setSelectedNoteIds([note.id]);
       }}
     >
       <div 
         className="flex-1 px-3 overflow-hidden text-neutral-900 font-black truncate h-full flex items-center"
-        style={{ paddingLeft: `${textOffset}px` }}
       >
-        {isEditing && createPortal(
-          <div 
-            className="fixed bg-neutral-800 p-3 rounded-2xl z-[100] flex flex-col gap-2 border-4 border-neutral-700 w-64 shadow-none overflow-y-auto max-h-64"
-            style={{
-              top: `${popupPos.top}px`,
-              left: `${popupPos.left}px`
-            }}
-            onMouseDown={e => e.stopPropagation()}
-            onDoubleClick={e => e.stopPropagation()}
-          >
-            <input
-              autoFocus
-              type="text"
-              placeholder="表示テキスト (漢字等)"
-              className="w-full bg-neutral-900 border-none text-white px-3 py-2 rounded-xl outline-none font-bold"
-              value={inputText}
-              onChange={(e) => setInputText(e.target.value)}
-              onKeyDown={handleInputKeyDown}
-            />
-            <input
-              type="text"
-              placeholder="タイピング用 (ひらがな)"
-              className="w-full bg-neutral-900 border-none text-white px-3 py-2 rounded-xl outline-none font-bold"
-              value={readingText}
-              onChange={(e) => setReadingText(e.target.value)}
-              onKeyDown={handleInputKeyDown}
-            />
-            <button 
-              className="w-full bg-cyan-500 hover:bg-cyan-400 text-neutral-900 rounded-xl py-2 font-black transition-colors" 
-              onClick={handleSave}
-            >
-              SAVE
-            </button>
-          </div>,
-          document.body
-        )}
         <span className={(isKpsWarning && !isSelected) ? 'text-white' : 'text-neutral-900'}>
           {note.word} {note.reading ? `(${note.reading})` : ''}
         </span>
       </div>
+
+      {isEditing && (
+        <div 
+          className="absolute bg-neutral-800 p-3 rounded-2xl z-[100] flex flex-col gap-2 border-4 border-neutral-700 w-64 shadow-none"
+          style={{
+            bottom: '100%',
+            marginBottom: '8px',
+            left: '0'
+          }}
+          onMouseDown={e => e.stopPropagation()}
+          onDoubleClick={e => e.stopPropagation()}
+        >
+          <input
+            autoFocus
+            type="text"
+            placeholder="表示テキスト (漢字等)"
+            className="w-full bg-neutral-900 border-none text-white px-3 py-2 rounded-xl outline-none font-bold"
+            value={inputText}
+            onChange={(e) => setInputText(e.target.value)}
+            onKeyDown={handleInputKeyDown}
+          />
+          <input
+            type="text"
+            placeholder="タイピング用 (ひらがな)"
+            className="w-full bg-neutral-900 border-none text-white px-3 py-2 rounded-xl outline-none font-bold"
+            value={readingText}
+            onChange={(e) => setReadingText(e.target.value)}
+            onKeyDown={handleInputKeyDown}
+          />
+          <button 
+            className="w-full bg-cyan-500 hover:bg-cyan-400 text-neutral-900 rounded-xl py-2 font-black transition-colors" 
+            onClick={handleSave}
+          >
+            SAVE
+          </button>
+        </div>
+      )}
 
       {!isEditing && (
         <div 
