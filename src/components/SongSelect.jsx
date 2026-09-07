@@ -57,12 +57,12 @@ export default function SongSelect({ onBack, onStartGame }) {
   return (
     <div className="min-h-screen bg-neutral-900 text-white flex flex-col items-center p-8 font-sans select-none w-full">
       <div className="w-full max-w-4xl flex justify-between items-center mb-6">
-        <h1 className="text-4xl font-black text-cyan-400 tracking-wider">SELECT SONG</h1>
+        <h1 className="text-4xl font-black text-cyan-400 tracking-wider">曲を選ぶ</h1>
         <button 
           onClick={onBack}
           className="px-6 py-2 bg-neutral-700 hover:bg-neutral-600 text-white rounded-full font-bold transition-colors"
         >
-          BACK TO MENU
+          メニューに戻る
         </button>
       </div>
       
@@ -71,12 +71,12 @@ export default function SongSelect({ onBack, onStartGame }) {
       </div>
 
       <div className="w-full max-w-4xl flex flex-col gap-4">
-        {loading && <div className="text-xl text-neutral-400">Loading songs...</div>}
+        {loading && <div className="text-xl text-neutral-400">曲を読み込み中...</div>}
         
         {error && <div className="text-xl text-red-400">{error}</div>}
         
         {!loading && !error && songs.length === 0 && (
-          <div className="text-xl text-neutral-400">No songs available.</div>
+          <div className="text-xl text-neutral-400">曲が見つかりませんでした。</div>
         )}
 
         {!loading && !error && songs.map(song => (
@@ -87,10 +87,15 @@ export default function SongSelect({ onBack, onStartGame }) {
           >
             <div className="flex flex-col">
               <span className="text-2xl font-black text-white">{song.title}</span>
-              <span className="text-sm font-bold text-neutral-400 mt-1">Creator: {song.creator}</span>
+              <div className="flex flex-wrap items-center gap-x-4 gap-y-1 mt-2">
+                <span className="text-sm font-bold text-neutral-400">譜面制作: {song.creator}</span>
+                <span className="text-yellow-400 font-bold whitespace-nowrap text-sm tracking-[0.1em]">
+                  {'★'.repeat(song.difficulty || 1)}{'☆'.repeat(10 - (song.difficulty || 1))}
+                </span>
+              </div>
             </div>
-            <div className="text-cyan-400 font-black tracking-widest bg-cyan-950 px-4 py-2 rounded-full">
-              PLAY
+            <div className="text-cyan-400 font-black tracking-widest bg-cyan-950 px-6 py-2 rounded-full whitespace-nowrap">
+              あそぶ
             </div>
           </div>
         ))}

@@ -378,24 +378,24 @@ export default function EditorView({ onExit }) {
                onClick={onExit}
                className="px-6 py-2 bg-neutral-700 hover:bg-neutral-600 text-white rounded-full font-bold transition-colors mr-2 flex-shrink-0"
              >
-               BACK
+               もどる
              </button>
              <button
                onClick={togglePlay}
                className={`px-8 py-2 rounded-full font-black transition-colors flex-shrink-0 ${isPlaying ? 'bg-red-500 text-white' : 'bg-green-500 text-neutral-900'}`}
              >
-               {isPlaying ? 'PAUSE' : 'PLAY'}
+               {isPlaying ? '一時停止' : '再生'}
              </button>
              <button
                onClick={handleStopReset}
                className="px-6 py-2 bg-neutral-700 hover:bg-neutral-600 text-white rounded-full font-bold transition-colors flex-shrink-0"
              >
-               STOP & RESET
+               停止＆リセット
              </button>
              
              {/* オーディオ読み込み */}
              <label className="cursor-pointer bg-neutral-700 hover:bg-neutral-600 px-4 py-2 rounded-full font-bold transition-colors flex items-center gap-2 flex-shrink-0">
-               <span>LOAD AUDIO</span>
+               <span>音源読み込み</span>
                <input type="file" accept="audio/*" className="hidden" onChange={handleAudioChange} />
              </label>
           </div>
@@ -413,7 +413,7 @@ export default function EditorView({ onExit }) {
              </div>
              
              <div className="flex items-center gap-2 bg-neutral-900 px-4 py-2 rounded-full border-2 border-neutral-700 flex-shrink-0">
-               <span className="text-neutral-400 font-bold text-sm">OFFSET</span>
+               <span className="text-neutral-400 font-bold text-sm">オフセット</span>
                <input 
                  type="number" 
                  step="10"
@@ -429,10 +429,10 @@ export default function EditorView({ onExit }) {
                onClick={handleExport}
                className="px-4 py-2 bg-neutral-700 hover:bg-neutral-600 text-white rounded-full font-bold transition-colors ml-2 flex-shrink-0"
              >
-               EXPORT
+               保存
              </button>
              <label className="cursor-pointer bg-neutral-700 hover:bg-neutral-600 px-4 py-2 rounded-full font-bold transition-colors flex items-center flex-shrink-0">
-               <span>IMPORT</span>
+               <span>読み込み</span>
                <input type="file" accept=".json" className="hidden" onChange={handleImport} />
              </label>
           </div>
