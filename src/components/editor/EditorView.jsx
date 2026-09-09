@@ -20,6 +20,7 @@ export default function EditorView({ onExit }) {
 
   const requestRef = useRef();
   const audioRef = useRef(null);
+  const handleExportRef = useRef(null);
   
   const showToast = (message) => {
     setToastMessage(message);
@@ -29,13 +30,17 @@ export default function EditorView({ onExit }) {
   // スペースキーでの再生トグルと Audio 初期化、キーボードショートカット
   useEffect(() => {
     const handleKeyDown = (e) => {
-      // Input 要素入力中はカスタムショートカットを無効化（ブラウザ標準動作に任せる）
-      if (e.target.tagName.toLowerCase() === 'input') return;
+      // Input 要素入力中やボタンフォーカス中はカスタムショートカットを無効化（ブラウザ標準動作に任せる）
+      const tagName = e.target.tagName.toLowerCase();
+      const isInput = tagName === 'input' || tagName === 'textarea';
+      const isButton = tagName === 'button';
       
+      if (isInput) return; // 入力欄ではすべてのショートカットを無効化
+
       const state = useEditorStore.getState();
       
       // 再生トグル (Space)
-      if (e.code === 'Space') {
+      if (e.code === 'Space' && !isButton) {
         e.preventDefault();
         togglePlay();
       }
@@ -44,36 +49,46 @@ export default function EditorView({ onExit }) {
       if (e.key === 'Delete' || e.key === 'Backspace') {
         if (state.selectedNoteIds && state.selectedNoteIds.length > 0) {
           e.preventDefault();
-          state.selectedNoteIds.forEach(id => {
-            state.removeEditorNote(id);
-          });
+          state.removeMultipleNotes(state.selectedNoteIds);
           state.setSelectedNoteIds([]);
+          showToast("削除しました");
         }
       }
 
-      // Undo / Redo / Copy / Paste
-      const isMac = navigator.platform.toUpperCase().indexOf('MAC') >= 0;
-      const cmdKey = isMac ? e.metaKey : e.ctrlKey;
+      // Undo / Redo / Copy / Paste / Save / Select All
+      const cmdKey = e.ctrlKey || e.metaKey;
       
       if (cmdKey) {
-        if (e.key.toLowerCase() === 'z') {
+        if (e.code === 'KeyA') {
+          // 全選択 (Ctrl + A)
+          e.preventDefault();
+          const allNoteIds = state.editorNotes.map(n => n.id);
+          state.setSelectedNoteIds(allNoteIds);
+        } else if (e.code === 'KeyS') {
+          // 上書き保存 (クイックセーブ)
+          e.preventDefault();
+          if (handleExportRef.current) handleExportRef.current();
+        } else if (e.code === 'KeyZ') {
           e.preventDefault();
           if (e.shiftKey) {
             state.redo();
+            showToast("やり直しました");
           } else {
             state.undo();
+            showToast("元に戻しました");
           }
-        } else if (e.key.toLowerCase() === 'y') {
+        } else if (e.code === 'KeyY') {
           e.preventDefault();
           state.redo();
-        } else if (e.key.toLowerCase() === 'c') {
+          showToast("やり直しました");
+        } else if (e.code === 'KeyC') {
           // コピー
           if (state.selectedNoteIds.length > 0) {
             e.preventDefault();
             const notesToCopy = state.editorNotes.filter(n => state.selectedNoteIds.includes(n.id));
             state.setClipboardNotes(notesToCopy);
           }
-        } else if (e.key.toLowerCase() === 'v') {
+        } else if (e.code === 'KeyV') {
           // ペースト
           if (state.clipboardNotes && state.clipboardNotes.length > 0) {
             e.preventDefault();
@@ -88,32 +103,30 @@ export default function EditorView({ onExit }) {
             // 現在のシークバー位置を基準（ビート）
             const currentBeats = (state.currentTime / (60000 / state.bpm));
             
-            const newSelectedIds = [];
-            state.clipboardNotes.forEach(note => {
+            const newNotes = [];
+            state.clipboardNotes.forEach((note, index) => {
               const originalBeats = note.measure * 4 + note.beat;
               const diffBeats = originalBeats - minBeats;
               const newTotalBeats = currentBeats + diffBeats;
               
               const newMeasure = Math.floor(newTotalBeats / 4);
               const newBeat = newTotalBeats % 4;
-              const newId = Date.now() + Math.floor(Math.random() * 1000000) + Math.random();
+              const newId = Date.now() + index; // ユニークなID
               
-              const newNote = {
+              newNotes.push({
                 ...note,
                 id: newId,
                 measure: newMeasure,
                 beat: newBeat,
-              };
-              state.addEditorNote(newNote);
-              newSelectedIds.push(newId);
+              });
             });
-            state.setSelectedNoteIds(newSelectedIds);
+            state.addMultipleNotes(newNotes);
           }
         }
       }
     };
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
+    document.addEventListener('keydown', handleKeyDown);
+    return () => document.removeEventListener('keydown', handleKeyDown);
   }, []);
 
   // isPlaying に応じて Audio または タイマーを操作
@@ -252,13 +265,12 @@ export default function EditorView({ onExit }) {
     }
   };
 
-  const handleExport = async () => {
+  const generateSaveData = () => {
     const state = useEditorStore.getState();
     const currentBpm = state.bpm;
     const currentOffset = state.offset;
     const msPerBeat = 60000 / currentBpm;
 
-    // ゲームエンジン向けの絶対時間へコンパイル
     const compiledNotes = state.editorNotes.map(note => {
       const totalBeats = (note.measure * 4) + note.beat;
       const timeMs = (totalBeats * msPerBeat) + currentOffset;
@@ -273,8 +285,34 @@ export default function EditorView({ onExit }) {
       };
     });
 
-    const data = JSON.stringify({ bpm: currentBpm, offset: currentOffset, notes: compiledNotes }, null, 2);
-    
+    return JSON.stringify({ bpm: currentBpm, offset: currentOffset, notes: compiledNotes }, null, 2);
+  };
+
+  const writeToFileHandle = async (fileHandle, data) => {
+    if (await fileHandle.queryPermission({ mode: 'readwrite' }) !== 'granted') {
+      const permission = await fileHandle.requestPermission({ mode: 'readwrite' });
+      if (permission !== 'granted') {
+        throw new Error('Permission denied');
+      }
+    }
+    const writable = await fileHandle.createWritable();
+    await writable.write(data);
+    await writable.close();
+  };
+
+  const fallbackDownload = (data) => {
+    const blob = new Blob([data], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'score.json';
+    a.click();
+    URL.revokeObjectURL(url);
+    showToast("保存完了！トップの『創作譜面を遊ぶ』からファイルを読み込んでテストプレイしてみよう");
+  };
+
+  const handleSaveAs = async () => {
+    const data = generateSaveData();
     try {
       if (window.showSaveFilePicker) {
         const fileHandle = await window.showSaveFilePicker({
@@ -284,23 +322,40 @@ export default function EditorView({ onExit }) {
             accept: { 'application/json': ['.json'] },
           }],
         });
-        const writable = await fileHandle.createWritable();
-        await writable.write(data);
-        await writable.close();
+        useEditorStore.getState().setFileHandle(fileHandle);
+        await writeToFileHandle(fileHandle, data);
+        showToast("別名で保存しました");
       } else {
-        const blob = new Blob([data], { type: 'application/json' });
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = 'score.json';
-        a.click();
-        URL.revokeObjectURL(url);
+        fallbackDownload(data);
       }
-      showToast("保存完了！トップの『創作譜面を遊ぶ』からファイルを読み込んでテストプレイしてみよう");
     } catch (e) {
-      console.error("Export cancelled or failed:", e);
+      if (e.name !== 'AbortError') {
+        console.error("Save As failed:", e);
+        showToast("保存に失敗しました");
+      }
     }
   };
+
+  const handleSave = async () => {
+    const state = useEditorStore.getState();
+    const data = generateSaveData();
+    
+    if (window.showSaveFilePicker && state.fileHandle) {
+      try {
+        await writeToFileHandle(state.fileHandle, data);
+        showToast("上書き保存しました");
+      } catch (e) {
+        if (e.name !== 'AbortError') {
+          console.error("Save failed:", e);
+          showToast("保存に失敗しました。SAVE AS を試してください。");
+        }
+      }
+    } else {
+      handleSaveAs();
+    }
+  };
+  
+  handleExportRef.current = handleSave;
 
   const handleImport = (e) => {
     const file = e.target.files[0];
@@ -424,15 +479,21 @@ export default function EditorView({ onExit }) {
                <span className="text-neutral-500 text-sm font-mono">ms</span>
              </div>
              
-             {/* Export / Import */}
+             {/* Save / Load */}
              <button
-               onClick={handleExport}
-               className="px-4 py-2 bg-neutral-700 hover:bg-neutral-600 text-white rounded-full font-bold transition-colors ml-2 flex-shrink-0"
+               onClick={handleSave}
+               className="px-4 py-2 bg-orange-500 hover:bg-orange-400 text-neutral-900 rounded-full font-bold transition-colors ml-2 flex-shrink-0"
              >
-               保存
+               SAVE
+             </button>
+             <button
+               onClick={handleSaveAs}
+               className="px-4 py-2 bg-neutral-700 hover:bg-neutral-600 text-white rounded-full font-bold transition-colors flex-shrink-0"
+             >
+               SAVE AS
              </button>
              <label className="cursor-pointer bg-neutral-700 hover:bg-neutral-600 px-4 py-2 rounded-full font-bold transition-colors flex items-center flex-shrink-0">
-               <span>読み込み</span>
+               <span>IMPORT</span>
                <input type="file" accept=".json" className="hidden" onChange={handleImport} />
              </label>
           </div>

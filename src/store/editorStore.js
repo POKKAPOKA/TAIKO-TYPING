@@ -38,6 +38,11 @@ export const useEditorStore = create((set) => ({
   // ズーム状態
   zoomLevel: 1.0,
 
+  // ファイルハンドル (クイックセーブ用)
+  fileHandle: null,
+
+  setFileHandle: (handle) => set({ fileHandle: handle }),
+
   setBpm: (bpm) => set({ bpm: Number.isNaN(bpm) ? 120 : bpm }),
   setScrollTimeOffset: (offsetTime) => {
     if (Number.isNaN(offsetTime)) return;
@@ -76,18 +81,38 @@ export const useEditorStore = create((set) => ({
   addEditorNote: (note) => set((state) => ({ 
     ...state.saveHistory(state),
     editorNotes: [...state.editorNotes, note],
-    selectedNoteId: note.id // 追加されたノーツを選択状態にする
+    selectedNoteIds: [note.id] // 追加されたノーツを選択状態にする
+  })),
+
+  addMultipleNotes: (notes) => set((state) => ({
+    ...state.saveHistory(state),
+    editorNotes: [...state.editorNotes, ...notes],
+    selectedNoteIds: notes.map(n => n.id)
   })),
   
   updateEditorNote: (id, updates) => set((state) => ({
     ...state.saveHistory(state),
     editorNotes: state.editorNotes.map(n => n.id === id ? { ...n, ...updates } : n)
   })),
+
+  updateMultipleNotes: (updatesArray) => set((state) => {
+    const updateMap = new Map(updatesArray.map(u => [u.id, u.updates]));
+    return {
+      ...state.saveHistory(state),
+      editorNotes: state.editorNotes.map(n => updateMap.has(n.id) ? { ...n, ...updateMap.get(n.id) } : n)
+    };
+  }),
   
   removeEditorNote: (id) => set((state) => ({
     ...state.saveHistory(state),
     editorNotes: state.editorNotes.filter(n => n.id !== id),
-    selectedNoteId: state.selectedNoteId === id ? null : state.selectedNoteId
+    selectedNoteIds: state.selectedNoteIds.filter(selectedId => selectedId !== id)
+  })),
+
+  removeMultipleNotes: (ids) => set((state) => ({
+    ...state.saveHistory(state),
+    editorNotes: state.editorNotes.filter(n => !ids.includes(n.id)),
+    selectedNoteIds: state.selectedNoteIds.filter(selectedId => !ids.includes(selectedId))
   })),
   
   clearEditorNotes: () => set((state) => ({ 

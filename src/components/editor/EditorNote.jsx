@@ -106,10 +106,24 @@ export default function EditorNote({ note, beatWidth, msPerBeat }) {
       const newTotalBeatsUnsnapped = state.originalTotalBeats + deltaBeats;
       const snappedBeats = Math.max(0, Math.round(newTotalBeatsUnsnapped / 0.25) * 0.25);
       
-      const newX = snappedBeats * beatWidth;
-      
-      noteRef.current.style.left = `${newX}px`;
-      noteRef.current.dataset.newTotalBeats = snappedBeats;
+      const diffBeats = snappedBeats - state.originalTotalBeats;
+      const isMultiMove = selectedNoteIds.includes(note.id) && selectedNoteIds.length > 1;
+
+      if (isMultiMove) {
+        selectedNoteIds.forEach(id => {
+          const el = document.getElementById(`editor-note-${id}`);
+          if (el) {
+            const origBeats = parseFloat(el.dataset.originalBeats);
+            const targetBeats = Math.max(0, origBeats + diffBeats);
+            el.style.left = `${targetBeats * beatWidth}px`;
+            el.dataset.newTotalBeats = targetBeats;
+          }
+        });
+      } else {
+        const newX = snappedBeats * beatWidth;
+        noteRef.current.style.left = `${newX}px`;
+        noteRef.current.dataset.newTotalBeats = snappedBeats;
+      }
 
     } else if (state.mode === 'resize') {
       const newDurationUnsnapped = state.originalDurationBeats + deltaBeats;
@@ -137,28 +151,55 @@ export default function EditorNote({ note, beatWidth, msPerBeat }) {
     const state = dragState.current;
     if (!state.mode || !noteRef.current) return;
 
-    let updates = {};
-
-    if (state.mode === 'move' && noteRef.current.dataset.newTotalBeats) {
-      const newTotalBeats = parseFloat(noteRef.current.dataset.newTotalBeats);
-      if (newTotalBeats !== noteTotalBeats) {
-        updates.measure = Math.floor(newTotalBeats / 4);
-        updates.beat = newTotalBeats % 4;
+    if (state.mode === 'move') {
+      const isMultiMove = selectedNoteIds.includes(note.id) && selectedNoteIds.length > 1;
+      
+      if (isMultiMove) {
+        const updatesArray = [];
+        selectedNoteIds.forEach(id => {
+          const el = document.getElementById(`editor-note-${id}`);
+          if (el && el.dataset.newTotalBeats) {
+            const newTotalBeats = parseFloat(el.dataset.newTotalBeats);
+            const origBeats = parseFloat(el.dataset.originalBeats);
+            if (newTotalBeats !== origBeats) {
+              updatesArray.push({
+                id,
+                updates: {
+                  measure: Math.floor(newTotalBeats / 4),
+                  beat: newTotalBeats % 4
+                }
+              });
+            }
+            delete el.dataset.newTotalBeats;
+          }
+        });
+        
+        if (updatesArray.length > 0) {
+          useEditorStore.getState().updateMultipleNotes(updatesArray);
+        }
+      } else {
+        if (noteRef.current.dataset.newTotalBeats) {
+          const newTotalBeats = parseFloat(noteRef.current.dataset.newTotalBeats);
+          if (newTotalBeats !== noteTotalBeats) {
+            updateEditorNote(note.id, {
+              measure: Math.floor(newTotalBeats / 4),
+              beat: newTotalBeats % 4
+            });
+          }
+          delete noteRef.current.dataset.newTotalBeats;
+        }
       }
-    } else if (state.mode === 'resize' && noteRef.current.dataset.newDurationBeats) {
-      const newDuration = parseFloat(noteRef.current.dataset.newDurationBeats);
-      if (newDuration !== note.durationBeats) {
-        updates.durationBeats = newDuration;
+    } else if (state.mode === 'resize') {
+      if (noteRef.current.dataset.newDurationBeats) {
+        const newDuration = parseFloat(noteRef.current.dataset.newDurationBeats);
+        if (newDuration !== note.durationBeats) {
+          updateEditorNote(note.id, { durationBeats: newDuration });
+        }
+        delete noteRef.current.dataset.newDurationBeats;
       }
     }
 
-    delete noteRef.current.dataset.newTotalBeats;
-    delete noteRef.current.dataset.newDurationBeats;
     dragState.current.mode = null;
-
-    if (Object.keys(updates).length > 0) {
-      updateEditorNote(note.id, updates);
-    }
   };
 
   const handleDoubleClick = (e) => {
@@ -193,6 +234,8 @@ export default function EditorNote({ note, beatWidth, msPerBeat }) {
   return (
     <div 
       ref={noteRef}
+      id={`editor-note-${note.id}`}
+      data-original-beats={noteTotalBeats}
       className={`absolute top-1/2 -translate-y-1/2 h-16 rounded-xl flex items-center select-none
         ${isKpsWarning && !isSelected ? 'bg-red-500' : isSelected ? 'bg-amber-100/90' : 'bg-cyan-500'}
       `}
