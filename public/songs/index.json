@@ -6,5 +6,13 @@
     "difficulty": 1,
     "scorePath": "./songs/kimigayo/kimigayo.json",
     "audioPath": "./songs/kimigayo/kimigayo.mp3"
+  },
+  {
+    "id": "senrohatudukuyodokomademo",
+    "title": "線路は続くよどこまでも",
+    "creator": "Admin",
+    "difficulty": 9,
+    "scorePath": "./songs/senrohatudukuyodokomademo/senrohatudukuyodokomademo.json",
+    "audioPath": "./songs/senrohatudukuyodokomademo/senrohatudukuyodokomademo.mp3"
   }
 ]

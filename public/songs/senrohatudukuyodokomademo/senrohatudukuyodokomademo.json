@@ -1,0 +1,310 @@
+{
+  "bpm": 120,
+  "offset": 0,
+  "notes": [
+    {
+      "id": 1789423775857,
+      "word": "I‘ve",
+      "reading": "IVE",
+      "time": 8000,
+      "endTime": 8750,
+      "type": "normal"
+    },
+    {
+      "id": 1789423920222,
+      "word": "Been",
+      "reading": "BEEN",
+      "time": 8750,
+      "endTime": 9000,
+      "type": "normal"
+    },
+    {
+      "id": 1789424125339,
+      "word": "railroad",
+      "reading": "RAILROAD",
+      "time": 10000,
+      "endTime": 12000,
+      "type": "normal"
+    },
+    {
+      "id": 1789424238032,
+      "word": "all de",
+      "reading": "ALLDE",
+      "time": 12000,
+      "endTime": 13000,
+      "type": "normal"
+    },
+    {
+      "id": 1789424273336,
+      "word": "live long",
+      "reading": "LIVELONG",
+      "time": 13000,
+      "endTime": 14000,
+      "type": "normal"
+    },
+    {
+      "id": 1789424296458,
+      "word": "day",
+      "reading": "DAY",
+      "time": 14000,
+      "endTime": 16000,
+      "type": "normal"
+    },
+    {
+      "id": 1789424334935,
+      "word": "I‘ve",
+      "reading": "IVE",
+      "time": 16000,
+      "endTime": 16750,
+      "type": "normal"
+    },
+    {
+      "id": 1789424361478,
+      "word": "railroad",
+      "reading": "RAILROAD",
+      "time": 18000,
+      "endTime": 19750,
+      "type": "normal"
+    },
+    {
+      "id": 1789424431957,
+      "word": "to",
+      "reading": "TO",
+      "time": 19750,
+      "endTime": 20000,
+      "type": "normal"
+    },
+    {
+      "id": 1789424461580,
+      "word": "pass de",
+      "reading": "PASSDE",
+      "time": 20000,
+      "endTime": 21000,
+      "type": "normal"
+    },
+    {
+      "id": 1789424541056,
+      "word": "time a",
+      "reading": "TIMEA",
+      "time": 21000,
+      "endTime": 22000,
+      "type": "normal"
+    },
+    {
+      "id": 1789424610756,
+      "word": "way",
+      "reading": "WAY",
+      "time": 22000,
+      "endTime": 24000,
+      "type": "normal"
+    },
+    {
+      "id": 1789424688381,
+      "word": "Doan",
+      "reading": "DOAN",
+      "time": 24000,
+      "endTime": 24750,
+      "type": "normal"
+    },
+    {
+      "id": 1789424725395,
+      "word": "yo",
+      "reading": "YO",
+      "time": 24750,
+      "endTime": 25000,
+      "type": "normal"
+    },
+    {
+      "id": 1789424747926,
+      "word": "hyar de",
+      "reading": "HYARDE",
+      "time": 25000,
+      "endTime": 25500,
+      "type": "normal"
+    },
+    {
+      "id": 1789424789886,
+      "word": "whistle",
+      "reading": "WHISTLE",
+      "time": 25500,
+      "endTime": 26000,
+      "type": "normal"
+    },
+    {
+      "id": 1789424817779,
+      "word": "blow",
+      "reading": "BLOW",
+      "time": 26000,
+      "endTime": 27125,
+      "type": "normal"
+    },
+    {
+      "id": 1789424846261,
+      "word": "in",
+      "reading": "IN",
+      "time": 27125,
+      "endTime": 28000,
+      "type": "normal"
+    },
+    {
+      "id": 1789424891549,
+      "word": "rise",
+      "reading": "RISE",
+      "time": 28000,
+      "endTime": 28500,
+      "type": "normal"
+    },
+    {
+      "id": 1789424926968,
+      "word": "up so",
+      "reading": "UPSO",
+      "time": 28500,
+      "endTime": 29000,
+      "type": "normal"
+    },
+    {
+      "id": 1789424962581,
+      "word": "early",
+      "reading": "EARLY",
+      "time": 29000,
+      "endTime": 29500,
+      "type": "normal"
+    },
+    {
+      "id": 1789425020390,
+      "word": "in the",
+      "reading": "INTHE",
+      "time": 29500,
+      "endTime": 30000,
+      "type": "normal"
+    },
+    {
+      "id": 1789425033959,
+      "word": "mawn",
+      "reading": "MAWN",
+      "time": 30000,
+      "endTime": 31500,
+      "type": "normal"
+    },
+    {
+      "id": 1789425149717,
+      "word": "workin",
+      "reading": "WORKIN",
+      "time": 9000,
+      "endTime": 9500,
+      "type": "normal"
+    },
+    {
+      "id": 1789425172160,
+      "word": "on de",
+      "reading": "ONDE",
+      "time": 9500,
+      "endTime": 10000,
+      "type": "normal"
+    },
+    {
+      "id": 1789425197667,
+      "word": "Been",
+      "reading": "BEEN",
+      "time": 16750,
+      "endTime": 17000,
+      "type": "normal"
+    },
+    {
+      "id": 1789425204936,
+      "word": "workin",
+      "reading": "WORKIN",
+      "time": 17000,
+      "endTime": 17500,
+      "type": "normal"
+    },
+    {
+      "id": 1789425212906,
+      "word": "on de",
+      "reading": "ONDE",
+      "time": 17500,
+      "endTime": 18000,
+      "type": "normal"
+    },
+    {
+      "id": 1789425264725,
+      "word": "Doan",
+      "reading": "DOAN",
+      "time": 32000,
+      "endTime": 32750,
+      "type": "normal"
+    },
+    {
+      "id": 1789425307603,
+      "word": "yo",
+      "reading": "YO",
+      "time": 32750,
+      "endTime": 33000,
+      "type": "normal"
+    },
+    {
+      "id": 1789425328490,
+      "word": "hyar de",
+      "reading": "HYARDE",
+      "time": 33000,
+      "endTime": 33500,
+      "type": "normal"
+    },
+    {
+      "id": 1789425361939,
+      "word": "capn",
+      "reading": "CAPN",
+      "time": 33500,
+      "endTime": 34000,
+      "type": "normal"
+    },
+    {
+      "id": 1789425381718,
+      "word": "shou",
+      "reading": "SHOU",
+      "time": 34000,
+      "endTime": 35000,
+      "type": "normal"
+    },
+    {
+      "id": 1789425406597,
+      "word": "tin",
+      "reading": "TIN",
+      "time": 35000,
+      "endTime": 36000,
+      "type": "normal"
+    },
+    {
+      "id": 1789425426786,
+      "word": "Dinah",
+      "reading": "DINAH",
+      "time": 36000,
+      "endTime": 37000,
+      "type": "normal"
+    },
+    {
+      "id": 1789425457830,
+      "word": "blow",
+      "reading": "BLOW",
+      "time": 37000,
+      "endTime": 37500,
+      "type": "normal"
+    },
+    {
+      "id": 1789425476126,
+      "word": "yo",
+      "reading": "YO",
+      "time": 37500,
+      "endTime": 38000,
+      "type": "normal"
+    },
+    {
+      "id": 1789425487166,
+      "word": "hawn",
+      "reading": "HAWN",
+      "time": 38000,
+      "endTime": 39500,
+      "type": "normal"
+    }
+  ]
+}
