@@ -22,5 +22,13 @@
     "difficulty": 4,
     "scorePath": "./songs/harugakita/harugakita.json",
     "audioPath": "./songs/harugakita/harugakita.mp3"
+  },
+  {
+    "id": "koinobori",
+    "title": "こいのぼり",
+    "creator": "ほかほか",
+    "difficulty": 3,
+    "scorePath": "./songs/koinobori/koinobori.json",
+    "audioPath": "./songs/koinobori/koinobori.mp3"
   }
 ]
