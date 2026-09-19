@@ -22,6 +22,11 @@ export default function EditorView({ onExit }) {
   const [replaceText, setReplaceText] = useState("");
   const [replaceTarget, setReplaceTarget] = useState("both");
 
+  // 一括追加モーダル用
+  const [showBulkAddModal, setShowBulkAddModal] = useState(false);
+  const [bulkAddText, setBulkAddText] = useState("");
+  const [bulkAddInterval, setBulkAddInterval] = useState(0.25); // 16分音符: 0.25拍, 8分音符: 0.5拍
+
   const requestRef = useRef();
   const audioRef = useRef(null);
   const handleExportRef = useRef(null);
@@ -63,7 +68,11 @@ export default function EditorView({ onExit }) {
       const cmdKey = e.ctrlKey || e.metaKey;
       
       if (cmdKey) {
-        if (e.code === 'KeyH') {
+        if (e.code === 'KeyM') {
+          // 連続ノーツ一括追加 (Ctrl + M)
+          e.preventDefault();
+          setShowBulkAddModal(true);
+        } else if (e.code === 'KeyH') {
           // 一括置換 (Ctrl + H)
           if (state.selectedNoteIds && state.selectedNoteIds.length > 0) {
             e.preventDefault();
@@ -466,11 +475,120 @@ export default function EditorView({ onExit }) {
     setReplaceText("");
   };
 
+  const handleBulkAddSubmit = (e) => {
+    e.preventDefault();
+    if (!bulkAddText) return;
+    
+    const state = useEditorStore.getState();
+    const chunks = bulkAddText.match(/.[ぁ-ぉゃ-ょっ]*/g) || [];
+    if (chunks.length === 0) return;
+
+    let currentBeats = (state.currentTime / (60000 / state.bpm));
+    currentBeats = Math.round(currentBeats * 4) / 4;
+
+    const stepBeats = Number(bulkAddInterval) || 0.25;
+    let beatOffset = 0;
+    const newNotes = [];
+
+    chunks.forEach((chunk) => {
+      if (chunk.trim() === '' || chunk === '　') {
+        beatOffset += stepBeats;
+        return;
+      }
+      
+      const beatTime = currentBeats + beatOffset;
+      newNotes.push({
+        id: Date.now() + Math.random(),
+        measure: Math.floor(beatTime / 4),
+        beat: beatTime % 4,
+        durationBeats: 0.25,
+        word: chunk,
+        reading: chunk,
+      });
+      beatOffset += stepBeats;
+    });
+
+    if (newNotes.length > 0) {
+      state.addMultipleNotes(newNotes);
+      showToast(`${newNotes.length}件の連続ノーツを追加しました`);
+    }
+
+    setShowBulkAddModal(false);
+    setBulkAddText("");
+  };
+
   return (
     <div className="fixed inset-0 z-50 bg-neutral-900 text-white flex flex-col font-sans select-none overflow-hidden p-2">
       {toastMessage && (
-        <div className="fixed top-8 left-1/2 -translate-x-1/2 bg-cyan-600 text-white px-6 py-3 rounded-xl font-bold z-[1000] pointer-events-none transition-opacity duration-300">
+        <div className="fixed top-8 left-1/2 -translate-x-1/2 bg-cyan-600 text-white px-6 py-3 rounded-xl font-bold z-[1000] pointer-events-none transition-opacity duration-300 shadow-none">
           {toastMessage}
+        </div>
+      )}
+
+      {showBulkAddModal && (
+        <div className="fixed inset-0 z-[2000] flex items-center justify-center bg-black/50 backdrop-blur-sm">
+          <form 
+            onSubmit={handleBulkAddSubmit}
+            className="bg-neutral-800 p-6 rounded-2xl w-[28rem] flex flex-col gap-4 shadow-none"
+          >
+            <h2 className="text-xl font-bold text-white mb-2">連続ノーツ一括追加</h2>
+            <div className="flex flex-col gap-2">
+              <label className="text-sm font-bold text-neutral-400">追加する文字列 (小文字は結合、空白は休符)</label>
+              <input
+                type="text"
+                autoFocus
+                value={bulkAddText}
+                onChange={(e) => setBulkAddText(e.target.value)}
+                className="bg-neutral-900 border-2 border-neutral-700 text-white rounded-xl px-4 py-2 font-bold outline-none focus:border-cyan-500 transition-colors shadow-none"
+                placeholder="例: ちゃっと あい"
+              />
+            </div>
+            
+            <div className="flex flex-col gap-2 mt-2">
+              <label className="text-sm font-bold text-neutral-400">配置間隔</label>
+              <div className="flex gap-4">
+                <label className="flex items-center gap-2 cursor-pointer">
+                  <input
+                    type="radio"
+                    name="bulkAddInterval"
+                    value={0.5}
+                    checked={bulkAddInterval === 0.5}
+                    onChange={() => setBulkAddInterval(0.5)}
+                    className="accent-cyan-500"
+                  />
+                  <span className="font-bold">8分音符</span>
+                </label>
+                <label className="flex items-center gap-2 cursor-pointer">
+                  <input
+                    type="radio"
+                    name="bulkAddInterval"
+                    value={0.25}
+                    checked={bulkAddInterval === 0.25}
+                    onChange={() => setBulkAddInterval(0.25)}
+                    className="accent-cyan-500"
+                  />
+                  <span className="font-bold">16分音符</span>
+                </label>
+              </div>
+            </div>
+
+            <div className="flex justify-end gap-3 mt-4">
+              <button
+                type="button"
+                onClick={() => { setShowBulkAddModal(false); setBulkAddText(""); }}
+                className="px-4 py-2 bg-neutral-700 hover:bg-neutral-600 rounded-xl font-bold transition-colors shadow-none"
+              >
+                キャンセル
+              </button>
+              <button
+                type="submit"
+                disabled={!bulkAddText}
+                className="px-6 py-2 bg-cyan-600 hover:bg-cyan-500 disabled:opacity-50 disabled:cursor-not-allowed rounded-xl font-bold transition-colors shadow-none"
+              >
+                追加する
+              </button>
+            </div>
+          </form>
         </div>
       )}
 
