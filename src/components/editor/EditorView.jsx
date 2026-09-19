@@ -17,6 +17,10 @@ export default function EditorView({ onExit }) {
   const setZoomLevel = useEditorStore(state => state.setZoomLevel);
 
   const [toastMessage, setToastMessage] = useState(null);
+  const [showReplaceModal, setShowReplaceModal] = useState(false);
+  const [findText, setFindText] = useState("");
+  const [replaceText, setReplaceText] = useState("");
+  const [replaceTarget, setReplaceTarget] = useState("both");
 
   const requestRef = useRef();
   const audioRef = useRef(null);
@@ -59,7 +63,13 @@ export default function EditorView({ onExit }) {
       const cmdKey = e.ctrlKey || e.metaKey;
       
       if (cmdKey) {
-        if (e.code === 'KeyA') {
+        if (e.code === 'KeyH') {
+          // 一括置換 (Ctrl + H)
+          if (state.selectedNoteIds && state.selectedNoteIds.length > 0) {
+            e.preventDefault();
+            setShowReplaceModal(true);
+          }
+        } else if (e.code === 'KeyA') {
           // 全選択 (Ctrl + A)
           e.preventDefault();
           const allNoteIds = state.editorNotes.map(n => n.id);
@@ -407,11 +417,148 @@ export default function EditorView({ onExit }) {
     e.target.value = null;
   };
 
+  const handleReplaceSubmit = (e) => {
+    e.preventDefault();
+    if (!findText) return;
+    
+    const state = useEditorStore.getState();
+    if (!state.selectedNoteIds || state.selectedNoteIds.length === 0) {
+      setShowReplaceModal(false);
+      return;
+    }
+
+    const updates = [];
+    let replaceCount = 0;
+
+    state.selectedNoteIds.forEach(id => {
+      const note = state.editorNotes.find(n => n.id === id);
+      if (note) {
+        let hasChanges = false;
+        const noteUpdates = {};
+
+        if ((replaceTarget === 'word' || replaceTarget === 'both') && note.word.includes(findText)) {
+          noteUpdates.word = note.word.split(findText).join(replaceText);
+          hasChanges = true;
+        }
+
+        if ((replaceTarget === 'reading' || replaceTarget === 'both') && note.reading && note.reading.includes(findText)) {
+          noteUpdates.reading = note.reading.split(findText).join(replaceText);
+          hasChanges = true;
+        }
+
+        if (hasChanges) {
+          updates.push({ id, updates: noteUpdates });
+          replaceCount++;
+        }
+      }
+    });
+
+    if (updates.length > 0) {
+      state.updateMultipleNotes(updates);
+      showToast(`${replaceCount}件のノーツを置換しました`);
+    } else {
+      showToast("対象の文字列が見つかりませんでした");
+    }
+
+    setShowReplaceModal(false);
+    setFindText("");
+    setReplaceText("");
+  };
+
   return (
     <div className="fixed inset-0 z-50 bg-neutral-900 text-white flex flex-col font-sans select-none overflow-hidden p-2">
       {toastMessage && (
         <div className="fixed top-8 left-1/2 -translate-x-1/2 bg-cyan-600 text-white px-6 py-3 rounded-xl font-bold z-[1000] pointer-events-none transition-opacity duration-300">
           {toastMessage}
+        </div>
+      )}
+
+      {showReplaceModal && (
+        <div className="fixed inset-0 z-[2000] flex items-center justify-center bg-black/50 backdrop-blur-sm">
+          <form 
+            onSubmit={handleReplaceSubmit}
+            className="bg-neutral-800 p-6 rounded-2xl w-[28rem] flex flex-col gap-4 shadow-none"
+          >
+            <h2 className="text-xl font-bold text-white mb-2">一括置換</h2>
+            <div className="flex flex-col gap-2">
+              <label className="text-sm font-bold text-neutral-400">検索する文字列 (Find)</label>
+              <input
+                type="text"
+                autoFocus
+                value={findText}
+                onChange={(e) => setFindText(e.target.value)}
+                className="bg-neutral-900 border-2 border-neutral-700 text-white rounded-xl px-4 py-2 font-bold outline-none focus:border-cyan-500 transition-colors"
+              />
+            </div>
+            <div className="flex flex-col gap-2">
+              <label className="text-sm font-bold text-neutral-400">置換後の文字列 (Replace)</label>
+              <input
+                type="text"
+                value={replaceText}
+                onChange={(e) => setReplaceText(e.target.value)}
+                className="bg-neutral-900 border-2 border-neutral-700 text-white rounded-xl px-4 py-2 font-bold outline-none focus:border-orange-500 transition-colors"
+              />
+            </div>
+            
+            <div className="flex flex-col gap-2">
+              <label className="text-sm font-bold text-neutral-400">置換対象</label>
+              <div className="flex gap-4">
+                <label className="flex items-center gap-2 cursor-pointer">
+                  <input 
+                    type="radio" 
+                    name="replaceTarget" 
+                    value="both"
+                    checked={replaceTarget === 'both'}
+                    onChange={() => setReplaceTarget('both')}
+                    className="accent-cyan-500"
+                  />
+                  <span className="text-sm font-bold">両方</span>
+                </label>
+                <label className="flex items-center gap-2 cursor-pointer">
+                  <input 
+                    type="radio" 
+                    name="replaceTarget" 
+                    value="word"
+                    checked={replaceTarget === 'word'}
+                    onChange={() => setReplaceTarget('word')}
+                    className="accent-cyan-500"
+                  />
+                  <span className="text-sm font-bold">表示文字のみ</span>
+                </label>
+                <label className="flex items-center gap-2 cursor-pointer">
+                  <input 
+                    type="radio" 
+                    name="replaceTarget" 
+                    value="reading"
+                    checked={replaceTarget === 'reading'}
+                    onChange={() => setReplaceTarget('reading')}
+                    className="accent-cyan-500"
+                  />
+                  <span className="text-sm font-bold">タイピング(ひらがな)のみ</span>
+                </label>
+              </div>
+            </div>
+
+            <div className="flex justify-end gap-2 mt-4">
+              <button
+                type="button"
+                onClick={() => {
+                  setShowReplaceModal(false);
+                  setFindText("");
+                  setReplaceText("");
+                }}
+                className="px-6 py-2 bg-neutral-700 hover:bg-neutral-600 text-white rounded-full font-bold transition-colors"
+              >
+                キャンセル
+              </button>
+              <button
+                type="submit"
+                className="px-6 py-2 bg-cyan-500 hover:bg-cyan-400 text-neutral-900 rounded-full font-bold transition-colors"
+              >
+                置換実行
+              </button>
+            </div>
+          </form>
         </div>
       )}
       

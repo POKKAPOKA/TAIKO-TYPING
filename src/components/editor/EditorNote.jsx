@@ -12,6 +12,12 @@ export default function EditorNote({ note, beatWidth, msPerBeat }) {
   const [inputText, setInputText] = useState(note.word || '');
   const [readingText, setReadingText] = useState(note.reading || '');
   
+  // 外部からのStore変更（一括置換など）を検知してローカルステートに同期する
+  useEffect(() => {
+    setInputText(note.word || '');
+    setReadingText(note.reading || '');
+  }, [note.word, note.reading]);
+  
   const noteRef = useRef(null);
   
   const isSelected = selectedNoteIds.includes(note.id);

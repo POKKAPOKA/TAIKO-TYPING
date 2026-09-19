@@ -14,5 +14,13 @@
     "difficulty": 9,
     "scorePath": "./songs/senrohatudukuyodokomademo/senrohatudukuyodokomademo.json",
     "audioPath": "./songs/senrohatudukuyodokomademo/senrohatudukuyodokomademo.mp3"
+  },
+  {
+    "id": "harugakita",
+    "title": "春が来た",
+    "creator": "ほかほか",
+    "difficulty": 4,
+    "scorePath": "./songs/harugakita/harugakita.json",
+    "audioPath": "./songs/harugakita/harugakita.mp3"
   }
 ]

@@ -158,11 +158,16 @@ export default function EditorTimeline() {
   };
   // -----------------------------
 
+  const pointerDownTarget = useRef(null);
+
   // タイムライン背景のクリック
   const handleTimelineClick = (e) => {
     // ドラッグ直後等のためにフラグを見る
     if (window._isEditorDragging) return;
     
+    // mousedownの要素とmouseup(click)の要素が異なる場合は配置しない（入力欄のテキスト選択対策）
+    if (pointerDownTarget.current !== e.target) return;
+
     // Noteやハンドルなどをクリックした場合は配置しない
     if (e.target !== containerRef.current && !e.target.dataset.isTimelineBg) return;
 
@@ -204,6 +209,7 @@ export default function EditorTimeline() {
   const [marquee, setMarquee] = useState(null);
 
   const handleTimelinePointerDown = (e) => {
+    pointerDownTarget.current = e.target;
     // 右クリックでMarquee選択開始
     if (e.button === 2) {
       e.preventDefault();
