@@ -30,5 +30,13 @@
     "difficulty": 3,
     "scorePath": "./songs/koinobori/koinobori.json",
     "audioPath": "./songs/koinobori/koinobori.mp3"
+  },
+  {
+    "id": "usagitokame",
+    "title": "うさぎとかめ",
+    "creator": "ほかほか",
+    "difficulty": 7,
+    "scorePath": "./songs/usagitokame/usagitokame.json",
+    "audioPath": "./songs/usagitokame/usagitokame.mp3"
   }
 ]

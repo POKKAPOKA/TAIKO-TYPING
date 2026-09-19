@@ -1,0 +1,1558 @@
+{
+  "bpm": 120,
+  "offset": -40,
+  "notes": [
+    {
+      "id": 1789816426145,
+      "word": "も",
+      "reading": "も",
+      "time": 460,
+      "endTime": 835,
+      "type": "normal"
+    },
+    {
+      "id": 1789816443671,
+      "word": "し",
+      "reading": "し",
+      "time": 835,
+      "endTime": 960,
+      "type": "normal"
+    },
+    {
+      "id": 1789816491227,
+      "word": "も",
+      "reading": "も",
+      "time": 960,
+      "endTime": 1335,
+      "type": "normal"
+    },
+    {
+      "id": 1789816491228,
+      "word": "し",
+      "reading": "し",
+      "time": 1335,
+      "endTime": 1460,
+      "type": "normal"
+    },
+    {
+      "id": 1789816498555,
+      "word": "か",
+      "reading": "か",
+      "time": 1460,
+      "endTime": 1835,
+      "type": "normal"
+    },
+    {
+      "id": 1789816498556,
+      "word": "め",
+      "reading": "め",
+      "time": 1835,
+      "endTime": 1960,
+      "type": "normal"
+    },
+    {
+      "id": 1789816529524,
+      "word": "よ",
+      "reading": "よ",
+      "time": 1960,
+      "endTime": 2460,
+      "type": "normal"
+    },
+    {
+      "id": 1789816549741,
+      "word": "か",
+      "reading": "か",
+      "time": 2460,
+      "endTime": 2835,
+      "type": "normal"
+    },
+    {
+      "id": 1789816549742,
+      "word": "め",
+      "reading": "め",
+      "time": 2835,
+      "endTime": 2960,
+      "type": "normal"
+    },
+    {
+      "id": 1789816556470,
+      "word": "さ",
+      "reading": "さ",
+      "time": 2966.25,
+      "endTime": 3341.25,
+      "type": "normal"
+    },
+    {
+      "id": 1789816556471,
+      "word": "ん",
+      "reading": "ん",
+      "time": 3341.25,
+      "endTime": 3466.25,
+      "type": "normal"
+    },
+    {
+      "id": 1789816572769,
+      "word": "よ",
+      "reading": "よ",
+      "time": 3460,
+      "endTime": 4210,
+      "type": "normal"
+    },
+    {
+      "id": 1789816600601,
+      "word": "せ",
+      "reading": "せ",
+      "time": 4460,
+      "endTime": 4835,
+      "type": "normal"
+    },
+    {
+      "id": 1789816600602,
+      "word": "か",
+      "reading": "か",
+      "time": 4835,
+      "endTime": 4960,
+      "type": "normal"
+    },
+    {
+      "id": 1789816600603,
+      "word": "い",
+      "reading": "い",
+      "time": 4960,
+      "endTime": 5335,
+      "type": "normal"
+    },
+    {
+      "id": 1789816600604,
+      "word": "の",
+      "reading": "の",
+      "time": 5335,
+      "endTime": 5460,
+      "type": "normal"
+    },
+    {
+      "id": 1789816600605,
+      "word": "う",
+      "reading": "う",
+      "time": 5460,
+      "endTime": 5835,
+      "type": "normal"
+    },
+    {
+      "id": 1789816600606,
+      "word": "ち",
+      "reading": "ち",
+      "time": 5835,
+      "endTime": 5960,
+      "type": "normal"
+    },
+    {
+      "id": 1789816600607,
+      "word": "に",
+      "reading": "に",
+      "time": 5960,
+      "endTime": 6460,
+      "type": "normal"
+    },
+    {
+      "id": 1789816600608,
+      "word": "お",
+      "reading": "お",
+      "time": 6460,
+      "endTime": 6835,
+      "type": "normal"
+    },
+    {
+      "id": 1789816600609,
+      "word": "ま",
+      "reading": "ま",
+      "time": 6835,
+      "endTime": 6960,
+      "type": "normal"
+    },
+    {
+      "id": 1789816600610,
+      "word": "え",
+      "reading": "え",
+      "time": 6966.25,
+      "endTime": 7341.25,
+      "type": "normal"
+    },
+    {
+      "id": 1789816600611,
+      "word": "ほ",
+      "reading": "ほ",
+      "time": 7341.25,
+      "endTime": 7466.25,
+      "type": "normal"
+    },
+    {
+      "id": 1789816600612,
+      "word": "ど",
+      "reading": "ど",
+      "time": 7460,
+      "endTime": 8210,
+      "type": "normal"
+    },
+    {
+      "id": 1789817065024,
+      "word": "あ",
+      "reading": "あ",
+      "time": 8457.059319268496,
+      "endTime": 8832.059319268496,
+      "type": "normal"
+    },
+    {
+      "id": 1789817065025,
+      "word": "ゆ",
+      "reading": "ゆ",
+      "time": 8832.059319268496,
+      "endTime": 8957.059319268496,
+      "type": "normal"
+    },
+    {
+      "id": 1789817065026,
+      "word": "み",
+      "reading": "み",
+      "time": 8957.059319268496,
+      "endTime": 9332.059319268496,
+      "type": "normal"
+    },
+    {
+      "id": 1789817065027,
+      "word": "の",
+      "reading": "の",
+      "time": 9332.059319268496,
+      "endTime": 9457.059319268496,
+      "type": "normal"
+    },
+    {
+      "id": 1789817065028,
+      "word": "の",
+      "reading": "の",
+      "time": 9457.059319268496,
+      "endTime": 9832.059319268496,
+      "type": "normal"
+    },
+    {
+      "id": 1789817065029,
+      "word": "ろ",
+      "reading": "ろ",
+      "time": 9832.059319268496,
+      "endTime": 9957.059319268496,
+      "type": "normal"
+    },
+    {
+      "id": 1789817065030,
+      "word": "い",
+      "reading": "い",
+      "time": 9957.059319268496,
+      "endTime": 10457.059319268496,
+      "type": "normal"
+    },
+    {
+      "id": 1789817065031,
+      "word": "も",
+      "reading": "も",
+      "time": 10457.059319268496,
+      "endTime": 10832.059319268496,
+      "type": "normal"
+    },
+    {
+      "id": 1789817065032,
+      "word": "の",
+      "reading": "の",
+      "time": 10832.059319268496,
+      "endTime": 10957.059319268496,
+      "type": "normal"
+    },
+    {
+      "id": 1789817065033,
+      "word": "は",
+      "reading": "は",
+      "time": 10963.309319268496,
+      "endTime": 11338.309319268496,
+      "type": "normal"
+    },
+    {
+      "id": 1789817065034,
+      "word": "な",
+      "reading": "な",
+      "time": 11338.309319268496,
+      "endTime": 11463.309319268496,
+      "type": "normal"
+    },
+    {
+      "id": 1789817065035,
+      "word": "い",
+      "reading": "い",
+      "time": 11460,
+      "endTime": 12210,
+      "type": "normal"
+    },
+    {
+      "id": 1789817065036,
+      "word": "ど",
+      "reading": "ど",
+      "time": 12457.059319268496,
+      "endTime": 12832.059319268496,
+      "type": "normal"
+    },
+    {
+      "id": 1789817065037,
+      "word": "う",
+      "reading": "う",
+      "time": 12832.059319268496,
+      "endTime": 12957.059319268496,
+      "type": "normal"
+    },
+    {
+      "id": 1789817065038,
+      "word": "し",
+      "reading": "し",
+      "time": 12957.059319268496,
+      "endTime": 13332.059319268496,
+      "type": "normal"
+    },
+    {
+      "id": 1789817065039,
+      "word": "て",
+      "reading": "て",
+      "time": 13335,
+      "endTime": 13460,
+      "type": "normal"
+    },
+    {
+      "id": 1789817065040,
+      "word": "そ",
+      "reading": "そ",
+      "time": 13460,
+      "endTime": 13835,
+      "type": "normal"
+    },
+    {
+      "id": 1789817065041,
+      "word": "ん",
+      "reading": "ん",
+      "time": 13832.059319268496,
+      "endTime": 13957.059319268496,
+      "type": "normal"
+    },
+    {
+      "id": 1789817065043,
+      "word": "の",
+      "reading": "の",
+      "time": 14457.059319268496,
+      "endTime": 14832.059319268496,
+      "type": "normal"
+    },
+    {
+      "id": 1789817065044,
+      "word": "ろ",
+      "reading": "ろ",
+      "time": 14832.059319268496,
+      "endTime": 14957.059319268496,
+      "type": "normal"
+    },
+    {
+      "id": 1789817065045,
+      "word": "い",
+      "reading": "い",
+      "time": 14963.309319268496,
+      "endTime": 15338.309319268496,
+      "type": "normal"
+    },
+    {
+      "id": 1789817065046,
+      "word": "の",
+      "reading": "の",
+      "time": 15338.309319268496,
+      "endTime": 15463.309319268496,
+      "type": "normal"
+    },
+    {
+      "id": 1789817065047,
+      "word": "か",
+      "reading": "か",
+      "time": 15457.059319268496,
+      "endTime": 16207.059319268496,
+      "type": "normal"
+    },
+    {
+      "id": 1789817251784,
+      "word": "な",
+      "reading": "な",
+      "time": 13960,
+      "endTime": 14335,
+      "type": "normal"
+    },
+    {
+      "id": 1789817251785,
+      "word": "に",
+      "reading": "に",
+      "time": 14332.059319268496,
+      "endTime": 14457.059319268496,
+      "type": "normal"
+    },
+    {
+      "id": 1789817511671,
+      "word": "な",
+      "reading": "な",
+      "time": 16460,
+      "endTime": 16710,
+      "type": "normal"
+    },
+    {
+      "id": 1789817532154,
+      "word": "あ",
+      "reading": "あ",
+      "time": 16710,
+      "endTime": 16960,
+      "type": "normal"
+    },
+    {
+      "id": 1789817546215,
+      "word": "ん",
+      "reading": "ん",
+      "time": 16960,
+      "endTime": 17335,
+      "type": "normal"
+    },
+    {
+      "id": 1789817556991,
+      "word": "と",
+      "reading": "と",
+      "time": 17335,
+      "endTime": 17460,
+      "type": "normal"
+    },
+    {
+      "id": 1789817569689,
+      "word": "おっ",
+      "reading": "おっ",
+      "time": 17460,
+      "endTime": 17835,
+      "type": "normal"
+    },
+    {
+      "id": 1789817617069,
+      "word": "しゃ",
+      "reading": "しゃ",
+      "time": 17835,
+      "endTime": 17960,
+      "type": "normal"
+    },
+    {
+      "id": 1789817629108,
+      "word": "る",
+      "reading": "る",
+      "time": 17960,
+      "endTime": 18460,
+      "type": "normal"
+    },
+    {
+      "id": 1789817676324,
+      "word": "う",
+      "reading": "う",
+      "time": 18460,
+      "endTime": 18835,
+      "type": "normal"
+    },
+    {
+      "id": 1789817686587,
+      "word": "さ",
+      "reading": "さ",
+      "time": 18835,
+      "endTime": 18960,
+      "type": "normal"
+    },
+    {
+      "id": 1789817706353,
+      "word": "ぎ",
+      "reading": "ぎ",
+      "time": 18960,
+      "endTime": 19335,
+      "type": "normal"
+    },
+    {
+      "id": 1789817724223,
+      "word": "さ",
+      "reading": "さ",
+      "time": 19335,
+      "endTime": 19460,
+      "type": "normal"
+    },
+    {
+      "id": 1789817730659,
+      "word": "ん",
+      "reading": "ん",
+      "time": 19460,
+      "endTime": 20210,
+      "type": "normal"
+    },
+    {
+      "id": 1789817844212,
+      "word": "そ",
+      "reading": "そ",
+      "time": 20460,
+      "endTime": 20835,
+      "type": "normal"
+    },
+    {
+      "id": 1789817855458,
+      "word": "ん",
+      "reading": "ん",
+      "time": 20835,
+      "endTime": 20960,
+      "type": "normal"
+    },
+    {
+      "id": 1789817863423,
+      "word": "な",
+      "reading": "な",
+      "time": 20960,
+      "endTime": 21335,
+      "type": "normal"
+    },
+    {
+      "id": 1789817882220,
+      "word": "ら",
+      "reading": "ら",
+      "time": 21335,
+      "endTime": 21460,
+      "type": "normal"
+    },
+    {
+      "id": 1789817899723,
+      "word": "お",
+      "reading": "お",
+      "time": 21460,
+      "endTime": 21710,
+      "type": "normal"
+    },
+    {
+      "id": 1789817950988,
+      "word": "ま",
+      "reading": "ま",
+      "time": 21710,
+      "endTime": 21835,
+      "type": "normal"
+    },
+    {
+      "id": 1789817963659,
+      "word": "え",
+      "reading": "え",
+      "time": 21835,
+      "endTime": 21960,
+      "type": "normal"
+    },
+    {
+      "id": 1789817971453,
+      "word": "と",
+      "reading": "と",
+      "time": 21960,
+      "endTime": 22460,
+      "type": "normal"
+    },
+    {
+      "id": 1789817992052,
+      "word": "か",
+      "reading": "か",
+      "time": 22460,
+      "endTime": 22835,
+      "type": "normal"
+    },
+    {
+      "id": 1789817992053,
+      "word": "け",
+      "reading": "け",
+      "time": 22835,
+      "endTime": 22960,
+      "type": "normal"
+    },
+    {
+      "id": 1789817992054,
+      "word": "く",
+      "reading": "く",
+      "time": 22960,
+      "endTime": 23335,
+      "type": "normal"
+    },
+    {
+      "id": 1789817992055,
+      "word": "ら",
+      "reading": "ら",
+      "time": 23335,
+      "endTime": 23460,
+      "type": "normal"
+    },
+    {
+      "id": 1789817992056,
+      "word": "べ",
+      "reading": "べ",
+      "time": 23460,
+      "endTime": 24210,
+      "type": "normal"
+    },
+    {
+      "id": 1789818099113,
+      "word": "む",
+      "reading": "む",
+      "time": 24460,
+      "endTime": 24835,
+      "type": "normal"
+    },
+    {
+      "id": 1789818108760,
+      "word": "こ",
+      "reading": "こ",
+      "time": 24835,
+      "endTime": 24960,
+      "type": "normal"
+    },
+    {
+      "id": 1789818116845,
+      "word": "う",
+      "reading": "う",
+      "time": 24960,
+      "endTime": 25335,
+      "type": "normal"
+    },
+    {
+      "id": 1789818129440,
+      "word": "の",
+      "reading": "の",
+      "time": 25335,
+      "endTime": 25460,
+      "type": "normal"
+    },
+    {
+      "id": 1789818165821,
+      "word": "こ",
+      "reading": "こ",
+      "time": 25460,
+      "endTime": 25835,
+      "type": "normal"
+    },
+    {
+      "id": 1789818213675,
+      "word": "や",
+      "reading": "や",
+      "time": 25835,
+      "endTime": 25960,
+      "type": "normal"
+    },
+    {
+      "id": 1789818226942,
+      "word": "ま",
+      "reading": "ま",
+      "time": 25960,
+      "endTime": 26335,
+      "type": "normal"
+    },
+    {
+      "id": 1789818238345,
+      "word": "の",
+      "reading": "の",
+      "time": 26335,
+      "endTime": 26460,
+      "type": "normal"
+    },
+    {
+      "id": 1789818271526,
+      "word": "ふ",
+      "reading": "ふ",
+      "time": 26460,
+      "endTime": 26835,
+      "type": "normal"
+    },
+    {
+      "id": 1789818299876,
+      "word": "も",
+      "reading": "も",
+      "time": 26835,
+      "endTime": 26960,
+      "type": "normal"
+    },
+    {
+      "id": 1789818340212,
+      "word": "と",
+      "reading": "と",
+      "time": 26960,
+      "endTime": 27335,
+      "type": "normal"
+    },
+    {
+      "id": 1789818373775,
+      "word": "ま",
+      "reading": "ま",
+      "time": 27335,
+      "endTime": 27460,
+      "type": "normal"
+    },
+    {
+      "id": 1789818384500,
+      "word": "で",
+      "reading": "で",
+      "time": 27460,
+      "endTime": 28210,
+      "type": "normal"
+    },
+    {
+      "id": 1789818425465,
+      "word": "ど",
+      "reading": "ど",
+      "time": 28460,
+      "endTime": 28835,
+      "type": "normal"
+    },
+    {
+      "id": 1789818434425,
+      "word": "ち",
+      "reading": "ち",
+      "time": 28835,
+      "endTime": 28960,
+      "type": "normal"
+    },
+    {
+      "id": 1789818483786,
+      "word": "ら",
+      "reading": "ら",
+      "time": 28960,
+      "endTime": 29335,
+      "type": "normal"
+    },
+    {
+      "id": 1789818884613,
+      "word": "が",
+      "reading": "が",
+      "time": 29335,
+      "endTime": 29460,
+      "type": "normal"
+    },
+    {
+      "id": 1789818897659,
+      "word": "さ",
+      "reading": "さ",
+      "time": 29460,
+      "endTime": 29835,
+      "type": "normal"
+    },
+    {
+      "id": 1789818902183,
+      "word": "き",
+      "reading": "き",
+      "time": 29835,
+      "endTime": 29960,
+      "type": "normal"
+    },
+    {
+      "id": 1789818924061,
+      "word": "に",
+      "reading": "に",
+      "time": 29960,
+      "endTime": 30460,
+      "type": "normal"
+    },
+    {
+      "id": 1789818953472,
+      "word": "か",
+      "reading": "か",
+      "time": 30460,
+      "endTime": 30835,
+      "type": "normal"
+    },
+    {
+      "id": 1789818953473,
+      "word": "け",
+      "reading": "け",
+      "time": 30835,
+      "endTime": 30960,
+      "type": "normal"
+    },
+    {
+      "id": 1789818953474,
+      "word": "つ",
+      "reading": "つ",
+      "time": 30960,
+      "endTime": 31335,
+      "type": "normal"
+    },
+    {
+      "id": 1789818953475,
+      "word": "く",
+      "reading": "く",
+      "time": 31335,
+      "endTime": 31460,
+      "type": "normal"
+    },
+    {
+      "id": 1789818953478,
+      "word": "か",
+      "reading": "か",
+      "time": 31460,
+      "endTime": 32210,
+      "type": "normal"
+    },
+    {
+      "id": 1789819029710,
+      "word": "ど",
+      "reading": "ど",
+      "time": 32460,
+      "endTime": 32835,
+      "type": "normal"
+    },
+    {
+      "id": 1789819029711,
+      "word": "ん",
+      "reading": "ん",
+      "time": 32835,
+      "endTime": 32960,
+      "type": "normal"
+    },
+    {
+      "id": 1789819029712,
+      "word": "な",
+      "reading": "な",
+      "time": 32960,
+      "endTime": 33335,
+      "type": "normal"
+    },
+    {
+      "id": 1789819029713,
+      "word": "に",
+      "reading": "に",
+      "time": 33335,
+      "endTime": 33460,
+      "type": "normal"
+    },
+    {
+      "id": 1789819029714,
+      "word": "か",
+      "reading": "か",
+      "time": 33460,
+      "endTime": 33835,
+      "type": "normal"
+    },
+    {
+      "id": 1789819029715,
+      "word": "め",
+      "reading": "め",
+      "time": 33835,
+      "endTime": 33960,
+      "type": "normal"
+    },
+    {
+      "id": 1789819029716,
+      "word": "が",
+      "reading": "が",
+      "time": 33960,
+      "endTime": 34460,
+      "type": "normal"
+    },
+    {
+      "id": 1789819029717,
+      "word": "い",
+      "reading": "い",
+      "time": 34460,
+      "endTime": 34835,
+      "type": "normal"
+    },
+    {
+      "id": 1789819029718,
+      "word": "そ",
+      "reading": "そ",
+      "time": 34835,
+      "endTime": 34960,
+      "type": "normal"
+    },
+    {
+      "id": 1789819029719,
+      "word": "い",
+      "reading": "い",
+      "time": 34966.25,
+      "endTime": 35341.25,
+      "type": "normal"
+    },
+    {
+      "id": 1789819029720,
+      "word": "で",
+      "reading": "で",
+      "time": 35341.25,
+      "endTime": 35466.25,
+      "type": "normal"
+    },
+    {
+      "id": 1789819029721,
+      "word": "も",
+      "reading": "も",
+      "time": 35460,
+      "endTime": 36210,
+      "type": "normal"
+    },
+    {
+      "id": 1789819029722,
+      "word": "ど",
+      "reading": "ど",
+      "time": 36460,
+      "endTime": 36835,
+      "type": "normal"
+    },
+    {
+      "id": 1789819029723,
+      "word": "う",
+      "reading": "う",
+      "time": 36835,
+      "endTime": 36960,
+      "type": "normal"
+    },
+    {
+      "id": 1789819029724,
+      "word": "せ",
+      "reading": "せ",
+      "time": 36960,
+      "endTime": 37460,
+      "type": "normal"
+    },
+    {
+      "id": 1789819029726,
+      "word": "晩",
+      "reading": "ばん",
+      "time": 37460,
+      "endTime": 37835,
+      "type": "normal"
+    },
+    {
+      "id": 1789819029727,
+      "word": "ま",
+      "reading": "ま",
+      "time": 37835,
+      "endTime": 37960,
+      "type": "normal"
+    },
+    {
+      "id": 1789819029728,
+      "word": "で",
+      "reading": "で",
+      "time": 37960,
+      "endTime": 38460,
+      "type": "normal"
+    },
+    {
+      "id": 1789819029729,
+      "word": "か",
+      "reading": "か",
+      "time": 38460,
+      "endTime": 38835,
+      "type": "normal"
+    },
+    {
+      "id": 1789819029730,
+      "word": "か",
+      "reading": "か",
+      "time": 38835,
+      "endTime": 38960,
+      "type": "normal"
+    },
+    {
+      "id": 1789819029731,
+      "word": "る",
+      "reading": "る",
+      "time": 38960,
+      "endTime": 39335,
+      "type": "normal"
+    },
+    {
+      "id": 1789819029732,
+      "word": "だ",
+      "reading": "だ",
+      "time": 39335,
+      "endTime": 39460,
+      "type": "normal"
+    },
+    {
+      "id": 1789819029733,
+      "word": "ろ",
+      "reading": "ろ",
+      "time": 39460,
+      "endTime": 39960,
+      "type": "normal"
+    },
+    {
+      "id": 1789819029734,
+      "word": "こ",
+      "reading": "こ",
+      "time": 40457.0593192685,
+      "endTime": 40832.0593192685,
+      "type": "normal"
+    },
+    {
+      "id": 1789819029735,
+      "word": "こ",
+      "reading": "こ",
+      "time": 40832.0593192685,
+      "endTime": 40957.0593192685,
+      "type": "normal"
+    },
+    {
+      "id": 1789819029736,
+      "word": "ら",
+      "reading": "ら",
+      "time": 40957.0593192685,
+      "endTime": 41332.0593192685,
+      "type": "normal"
+    },
+    {
+      "id": 1789819029737,
+      "word": "で",
+      "reading": "で",
+      "time": 41332.0593192685,
+      "endTime": 41457.0593192685,
+      "type": "normal"
+    },
+    {
+      "id": 1789819029738,
+      "word": "ちょっ",
+      "reading": "ちょっ",
+      "time": 41460,
+      "endTime": 41960,
+      "type": "normal"
+    },
+    {
+      "id": 1789819029740,
+      "word": "と",
+      "reading": "と",
+      "time": 41960,
+      "endTime": 42460,
+      "type": "normal"
+    },
+    {
+      "id": 1789819029741,
+      "word": "ひ",
+      "reading": "ひ",
+      "time": 42460,
+      "endTime": 42835,
+      "type": "normal"
+    },
+    {
+      "id": 1789819029742,
+      "word": "と",
+      "reading": "と",
+      "time": 42835,
+      "endTime": 42960,
+      "type": "normal"
+    },
+    {
+      "id": 1789819029743,
+      "word": "ね",
+      "reading": "ね",
+      "time": 42963.3093192685,
+      "endTime": 43338.3093192685,
+      "type": "normal"
+    },
+    {
+      "id": 1789819029744,
+      "word": "む",
+      "reading": "む",
+      "time": 43338.3093192685,
+      "endTime": 43463.3093192685,
+      "type": "normal"
+    },
+    {
+      "id": 1789819029745,
+      "word": "り",
+      "reading": "り",
+      "time": 43460,
+      "endTime": 43960,
+      "type": "normal"
+    },
+    {
+      "id": 1789819029746,
+      "word": "グ",
+      "reading": "ぐ",
+      "time": 44460,
+      "endTime": 44835,
+      "type": "normal"
+    },
+    {
+      "id": 1789819029747,
+      "word": "ー",
+      "reading": "ー",
+      "time": 44835,
+      "endTime": 44960,
+      "type": "normal"
+    },
+    {
+      "id": 1789819029756,
+      "word": "グー",
+      "reading": "ぐー",
+      "time": 47457.0593192685,
+      "endTime": 47957.0593192685,
+      "type": "normal"
+    },
+    {
+      "id": 1789819029759,
+      "word": "こ",
+      "reading": "こ",
+      "time": 48460,
+      "endTime": 48960,
+      "type": "normal"
+    },
+    {
+      "id": 1789819029761,
+      "word": "れ",
+      "reading": "れ",
+      "time": 48960,
+      "endTime": 49335,
+      "type": "normal"
+    },
+    {
+      "id": 1789819029764,
+      "word": "ね",
+      "reading": "ね",
+      "time": 49460,
+      "endTime": 49585,
+      "type": "normal"
+    },
+    {
+      "id": 1789819029766,
+      "word": "し",
+      "reading": "し",
+      "time": 50460,
+      "endTime": 50835,
+      "type": "normal"
+    },
+    {
+      "id": 1789819029767,
+      "word": "く",
+      "reading": "く",
+      "time": 50835,
+      "endTime": 50960,
+      "type": "normal"
+    },
+    {
+      "id": 1789819029768,
+      "word": "じっ",
+      "reading": "じっ",
+      "time": 50960,
+      "endTime": 51460,
+      "type": "normal"
+    },
+    {
+      "id": 1789819029770,
+      "word": "た",
+      "reading": "た",
+      "time": 51460,
+      "endTime": 52210,
+      "type": "normal"
+    },
+    {
+      "id": 1789819029784,
+      "word": "あ",
+      "reading": "あ",
+      "time": 56460,
+      "endTime": 56835,
+      "type": "normal"
+    },
+    {
+      "id": 1789819029785,
+      "word": "ん",
+      "reading": "ん",
+      "time": 56835,
+      "endTime": 56960,
+      "type": "normal"
+    },
+    {
+      "id": 1789819029786,
+      "word": "ま",
+      "reading": "ま",
+      "time": 56960,
+      "endTime": 57335,
+      "type": "normal"
+    },
+    {
+      "id": 1789819029787,
+      "word": "り",
+      "reading": "り",
+      "time": 57335,
+      "endTime": 57460,
+      "type": "normal"
+    },
+    {
+      "id": 1789819029788,
+      "word": "お",
+      "reading": "お",
+      "time": 57460,
+      "endTime": 57835,
+      "type": "normal"
+    },
+    {
+      "id": 1789819029789,
+      "word": "そ",
+      "reading": "そ",
+      "time": 57835,
+      "endTime": 57960,
+      "type": "normal"
+    },
+    {
+      "id": 1789819029790,
+      "word": "い",
+      "reading": "い",
+      "time": 57960,
+      "endTime": 58460,
+      "type": "normal"
+    },
+    {
+      "id": 1789819029791,
+      "word": "う",
+      "reading": "う",
+      "time": 58460,
+      "endTime": 58835,
+      "type": "normal"
+    },
+    {
+      "id": 1789819029793,
+      "word": "さ",
+      "reading": "さ",
+      "time": 58835,
+      "endTime": 58960,
+      "type": "normal"
+    },
+    {
+      "id": 1789819029794,
+      "word": "ぎ",
+      "reading": "ぎ",
+      "time": 58960,
+      "endTime": 59335,
+      "type": "normal"
+    },
+    {
+      "id": 1789819029795,
+      "word": "さ",
+      "reading": "さ",
+      "time": 59335,
+      "endTime": 59460,
+      "type": "normal"
+    },
+    {
+      "id": 1789819029796,
+      "word": "ん",
+      "reading": "ん",
+      "time": 59460,
+      "endTime": 59960,
+      "type": "normal"
+    },
+    {
+      "id": 1789819029797,
+      "word": "さっ",
+      "reading": "さっ",
+      "time": 60460,
+      "endTime": 60960,
+      "type": "normal"
+    },
+    {
+      "id": 1789819029799,
+      "word": "き",
+      "reading": "き",
+      "time": 60960,
+      "endTime": 61335,
+      "type": "normal"
+    },
+    {
+      "id": 1789819029800,
+      "word": "の",
+      "reading": "の",
+      "time": 61335,
+      "endTime": 61460,
+      "type": "normal"
+    },
+    {
+      "id": 1789819029801,
+      "word": "じ",
+      "reading": "じ",
+      "time": 61460,
+      "endTime": 61835,
+      "type": "normal"
+    },
+    {
+      "id": 1789819029802,
+      "word": "し",
+      "reading": "し",
+      "time": 61835,
+      "endTime": 61960,
+      "type": "normal"
+    },
+    {
+      "id": 1789819029803,
+      "word": "ん",
+      "reading": "ん",
+      "time": 61960,
+      "endTime": 62335,
+      "type": "normal"
+    },
+    {
+      "id": 1789819029804,
+      "word": "は",
+      "reading": "は",
+      "time": 62335,
+      "endTime": 62460,
+      "type": "normal"
+    },
+    {
+      "id": 1789819029805,
+      "word": "う",
+      "reading": "う",
+      "time": 62835,
+      "endTime": 62960,
+      "type": "normal"
+    },
+    {
+      "id": 1789819029806,
+      "word": "し",
+      "reading": "し",
+      "time": 62960,
+      "endTime": 63335,
+      "type": "normal"
+    },
+    {
+      "id": 1789819029807,
+      "word": "た",
+      "reading": "た",
+      "time": 63335,
+      "endTime": 63460,
+      "type": "normal"
+    },
+    {
+      "id": 1789819029808,
+      "word": "の",
+      "reading": "の",
+      "time": 63460,
+      "endTime": 64210,
+      "type": "normal"
+    },
+    {
+      "id": 1789819663147,
+      "word": "グ",
+      "reading": "ぐ",
+      "time": 44960,
+      "endTime": 45335,
+      "type": "normal"
+    },
+    {
+      "id": 1789819663148,
+      "word": "ー",
+      "reading": "ー",
+      "time": 45335,
+      "endTime": 45460,
+      "type": "normal"
+    },
+    {
+      "id": 1789819672877,
+      "word": "グ",
+      "reading": "ぐ",
+      "time": 45460,
+      "endTime": 45835,
+      "type": "normal"
+    },
+    {
+      "id": 1789819672878,
+      "word": "ー",
+      "reading": "ー",
+      "time": 45835,
+      "endTime": 45960,
+      "type": "normal"
+    },
+    {
+      "id": 1789819672879,
+      "word": "グ",
+      "reading": "ぐ",
+      "time": 45960,
+      "endTime": 46335,
+      "type": "normal"
+    },
+    {
+      "id": 1789819672880,
+      "word": "ー",
+      "reading": "ー",
+      "time": 46335,
+      "endTime": 46460,
+      "type": "normal"
+    },
+    {
+      "id": 1789819680733,
+      "word": "グ",
+      "reading": "ぐ",
+      "time": 46460,
+      "endTime": 46835,
+      "type": "normal"
+    },
+    {
+      "id": 1789819680734,
+      "word": "ー",
+      "reading": "ー",
+      "time": 46835,
+      "endTime": 46960,
+      "type": "normal"
+    },
+    {
+      "id": 1789819680735,
+      "word": "グ",
+      "reading": "ぐ",
+      "time": 46960,
+      "endTime": 47335,
+      "type": "normal"
+    },
+    {
+      "id": 1789819680736,
+      "word": "ー",
+      "reading": "ー",
+      "time": 47335,
+      "endTime": 47460,
+      "type": "normal"
+    },
+    {
+      "id": 1789819814247,
+      "word": "は",
+      "reading": "は",
+      "time": 49335,
+      "endTime": 49460,
+      "type": "normal"
+    },
+    {
+      "id": 1789819849197,
+      "word": "す",
+      "reading": "す",
+      "time": 49585,
+      "endTime": 49710,
+      "type": "normal"
+    },
+    {
+      "id": 1789819856283,
+      "word": "ぎ",
+      "reading": "ぎ",
+      "time": 49710,
+      "endTime": 49835,
+      "type": "normal"
+    },
+    {
+      "id": 1789819866110,
+      "word": "た",
+      "reading": "た",
+      "time": 49835,
+      "endTime": 50460,
+      "type": "normal"
+    },
+    {
+      "id": 1789820016488,
+      "word": "ピョ",
+      "reading": "ぴょ",
+      "time": 52460,
+      "endTime": 52835,
+      "type": "normal"
+    },
+    {
+      "id": 1789820016489,
+      "word": "ン",
+      "reading": "ん",
+      "time": 52835,
+      "endTime": 52960,
+      "type": "normal"
+    },
+    {
+      "id": 1789820016490,
+      "word": "ピョン",
+      "reading": "ぴょん",
+      "time": 55457.0593192685,
+      "endTime": 55957.0593192685,
+      "type": "normal"
+    },
+    {
+      "id": 1789820016491,
+      "word": "ピョ",
+      "reading": "ぴょ",
+      "time": 52960,
+      "endTime": 53335,
+      "type": "normal"
+    },
+    {
+      "id": 1789820016492,
+      "word": "ン",
+      "reading": "ん",
+      "time": 53335,
+      "endTime": 53460,
+      "type": "normal"
+    },
+    {
+      "id": 1789820016493,
+      "word": "ピョ",
+      "reading": "ぴょ",
+      "time": 53460,
+      "endTime": 53835,
+      "type": "normal"
+    },
+    {
+      "id": 1789820016494,
+      "word": "ン",
+      "reading": "ん",
+      "time": 53835,
+      "endTime": 53960,
+      "type": "normal"
+    },
+    {
+      "id": 1789820016495,
+      "word": "ピョ",
+      "reading": "ぴょ",
+      "time": 53960,
+      "endTime": 54335,
+      "type": "normal"
+    },
+    {
+      "id": 1789820016496,
+      "word": "ン",
+      "reading": "ん",
+      "time": 54335,
+      "endTime": 54460,
+      "type": "normal"
+    },
+    {
+      "id": 1789820016497,
+      "word": "ピョ",
+      "reading": "ぴょ",
+      "time": 54460,
+      "endTime": 54835,
+      "type": "normal"
+    },
+    {
+      "id": 1789820016498,
+      "word": "ン",
+      "reading": "ん",
+      "time": 54835,
+      "endTime": 54960,
+      "type": "normal"
+    },
+    {
+      "id": 1789820016499,
+      "word": "ピョ",
+      "reading": "ぴょ",
+      "time": 54960,
+      "endTime": 55335,
+      "type": "normal"
+    },
+    {
+      "id": 1789820016500,
+      "word": "ン",
+      "reading": "ん",
+      "time": 55335,
+      "endTime": 55460,
+      "type": "normal"
+    },
+    {
+      "id": 1789820319770,
+      "word": "ど",
+      "reading": "ど",
+      "time": 62460,
+      "endTime": 62835,
+      "type": "normal"
+    }
+  ]
+}
