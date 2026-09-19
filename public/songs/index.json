@@ -5,7 +5,9 @@
     "creator": "ほかほか",
     "difficulty": 1,
     "scorePath": "./songs/kimigayo/kimigayo.json",
-    "audioPath": "./songs/kimigayo/kimigayo.mp3"
+    "audioPath": "./songs/kimigayo/kimigayo.mp3",
+    "notesCount": 32,
+    "durationMs": 64950
   },
   {
     "id": "senrohatudukuyodokomademo",
@@ -13,7 +15,9 @@
     "creator": "Pygeton",
     "difficulty": 9,
     "scorePath": "./songs/senrohatudukuyodokomademo/senrohatudukuyodokomademo.json",
-    "audioPath": "./songs/senrohatudukuyodokomademo/senrohatudukuyodokomademo.mp3"
+    "audioPath": "./songs/senrohatudukuyodokomademo/senrohatudukuyodokomademo.mp3",
+    "notesCount": 38,
+    "durationMs": 39500
   },
   {
     "id": "harugakita",
@@ -21,7 +25,9 @@
     "creator": "ほかほか",
     "difficulty": 4,
     "scorePath": "./songs/harugakita/harugakita.json",
-    "audioPath": "./songs/harugakita/harugakita.mp3"
+    "audioPath": "./songs/harugakita/harugakita.mp3",
+    "notesCount": 90,
+    "durationMs": 55547.750185607576
   },
   {
     "id": "koinobori",
@@ -29,14 +35,18 @@
     "creator": "ほかほか",
     "difficulty": 3,
     "scorePath": "./songs/koinobori/koinobori.json",
-    "audioPath": "./songs/koinobori/koinobori.mp3"
+    "audioPath": "./songs/koinobori/koinobori.mp3",
+    "notesCount": 50,
+    "durationMs": 26094.908903115225
   },
   {
     "id": "usagitokame",
     "title": "うさぎとかめ",
     "creator": "ほかほか",
-    "difficulty": 7,
+    "difficulty": 8,
     "scorePath": "./songs/usagitokame/usagitokame.json",
-    "audioPath": "./songs/usagitokame/usagitokame.mp3"
+    "audioPath": "./songs/usagitokame/usagitokame.mp3",
+    "notesCount": 194,
+    "durationMs": 62835
   }
 ]

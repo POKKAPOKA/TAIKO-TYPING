@@ -110,8 +110,9 @@ export default function EditorView({ onExit }) {
               if (b < minBeats) minBeats = b;
             });
             
-            // 現在のシークバー位置を基準（ビート）
-            const currentBeats = (state.currentTime / (60000 / state.bpm));
+            // 現在のシークバー位置を基準（ビート）に変換し、16分グリッド(0.25拍単位)にスナップさせる
+            let currentBeats = (state.currentTime / (60000 / state.bpm));
+            currentBeats = Math.round(currentBeats * 4) / 4;
             
             const newNotes = [];
             state.clipboardNotes.forEach((note, index) => {
