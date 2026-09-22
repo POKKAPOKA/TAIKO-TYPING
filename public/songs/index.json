@@ -48,5 +48,15 @@
     "audioPath": "./songs/usagitokame/usagitokame.mp3",
     "notesCount": 194,
     "durationMs": 62835
+  },
+  {
+    "id": "sakura",
+    "title": "さくら",
+    "creator": "MIYA",
+    "difficulty": 2,
+    "scorePath": "./songs/sakura/sakura.json",
+    "audioPath": "./songs/sakura/sakura.mp3",
+    "notesCount": 45,
+    "durationMs": 53250
   }
 ]
