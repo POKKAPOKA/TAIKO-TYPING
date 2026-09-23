@@ -58,5 +58,25 @@
     "audioPath": "./songs/sakura/sakura.mp3",
     "notesCount": 45,
     "durationMs": 53250
+  },
+  {
+    "id": "alps",
+    "title": "アルプス一万尺",
+    "creator": "MIYA",
+    "difficulty": 6,
+    "scorePath": "./songs/alps/alps.json",
+    "audioPath": "./songs/alps/alps.mp3",
+    "notesCount": 73,
+    "durationMs": 39625
+  },
+  {
+    "id": "hotarunohikari",
+    "title": "蛍の光",
+    "creator": "ほかほか",
+    "difficulty": 2,
+    "scorePath": "./songs/hotarunohikari/hotarunohikari.json",
+    "audioPath": "./songs/hotarunohikari/hotarunohikari.mp3",
+    "notesCount": 192,
+    "durationMs": 221092.85714285713
   }
 ]

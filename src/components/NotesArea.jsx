@@ -52,9 +52,9 @@ export default function NotesArea() {
         }
 
         // ノーツの場合
-        const noteId = parseInt(el.dataset.id, 10);
-        const noteData = allNotes.find(n => n.id === noteId);
-        
+        // 既存の譜面データ（小数を含むID）でも一致するように文字列として比較
+        const noteIdStr = el.dataset.id;
+        const noteData = allNotes.find(n => String(n.id) === noteIdStr);
         if (noteData) {
           // X座標計算: 判定ライン + (目標時間 - 現在時間) * 速度
           const xPos = JUDGE_LINE_X + (noteData.time - currentTime) * NOTE_SPEED;

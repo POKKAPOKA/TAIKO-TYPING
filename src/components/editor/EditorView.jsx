@@ -305,6 +305,9 @@ export default function EditorView({ onExit }) {
       };
     });
 
+    // タイムライン上で追加・編集した結果、時間が前後している可能性があるので必ずtimeでソートする
+    compiledNotes.sort((a, b) => a.time - b.time);
+
     return JSON.stringify({ bpm: currentBpm, offset: currentOffset, notes: compiledNotes }, null, 2);
   };
 
@@ -409,7 +412,7 @@ export default function EditorView({ onExit }) {
             }
 
             store.addEditorNote({
-              id: note.id || Date.now() + Math.random(),
+              id: note.id || crypto.randomUUID(),
               measure,
               beat,
               durationBeats,
@@ -498,7 +501,7 @@ export default function EditorView({ onExit }) {
       
       const beatTime = currentBeats + beatOffset;
       newNotes.push({
-        id: Date.now() + Math.random(),
+        id: crypto.randomUUID(),
         measure: Math.floor(beatTime / 4),
         beat: beatTime % 4,
         durationBeats: 0.25,

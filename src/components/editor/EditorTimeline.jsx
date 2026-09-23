@@ -188,7 +188,7 @@ export default function EditorTimeline() {
     const beat = snappedBeats % 4;
 
     addEditorNote({
-      id: Date.now(),
+      id: crypto.randomUUID(),
       measure,
       beat,
       durationBeats: 0.25, 
