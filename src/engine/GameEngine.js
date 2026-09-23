@@ -58,10 +58,18 @@ export class GameEngine {
     this.updateCurrentTarget(store, this.queue.shift() || null);
     store.setWordQueue([...this.queue]);
     
-    this.isFallbackMode = false;
-    this.mockStartTime = performance.now();
+    // リードイン（待機時間）の計算
+    // 最初のノーツが3000ms未満の場合、3000msのリードインを挿入する
+    const firstNoteTime = this.currentTarget ? this.currentTarget.time : Infinity;
+    this.leadInTime = firstNoteTime < 3000 ? 3000 : 0;
+    this.currentTime = -this.leadInTime;
+    this.realStartTime = performance.now();
+    this.audioStarted = false;
     
-    const lastNote = this.queue[this.queue.length - 1];
+    this.isFallbackMode = false;
+    
+    // 最後のノーツの終了時間
+    const lastNote = this.queue[this.queue.length - 1] || this.currentTarget;
     this.fallbackEndTime = (lastNote ? lastNote.endTime : 0) + 2000;
 
     if (this.audio) {
@@ -71,14 +79,24 @@ export class GameEngine {
     this.audio.volume = 0.5;
     this.audio.currentTime = 0;
     
-    this.audio.play().catch(e => {
-      console.warn("Audio play failed, switching to fallback mode:", e);
-      this.isFallbackMode = true;
-      this.mockStartTime = performance.now();
-    });
+    // リードインが不要な場合は即座に再生
+    if (this.leadInTime === 0) {
+      this.startAudio();
+    }
     
     window.addEventListener('keydown', this.handleKeyDown);
     this.animationFrameId = requestAnimationFrame(this.update);
+  }
+
+  startAudio() {
+    this.audioStarted = true;
+    if (this.audio) {
+      this.audio.play().catch(e => {
+        console.warn("Audio play failed, switching to fallback mode:", e);
+        this.isFallbackMode = true;
+        this.mockStartTime = performance.now();
+      });
+    }
   }
 
   stop() {
@@ -107,12 +125,26 @@ export class GameEngine {
   }
 
   update() {
-    if (this.isFallbackMode) {
-      this.currentTime = performance.now() - this.mockStartTime;
-    } else if (this.audio) {
-      this.currentTime = this.audio.currentTime * 1000;
+    const now = performance.now();
+
+    if (!this.audioStarted) {
+      // リードイン期間中の時間進行（マイナスから0へ）
+      const elapsed = now - this.realStartTime;
+      this.currentTime = -this.leadInTime + elapsed;
+      
+      if (this.currentTime >= 0) {
+        this.currentTime = 0;
+        this.startAudio();
+      }
     } else {
-      return;
+      // オーディオ再生中の時間進行
+      if (this.isFallbackMode) {
+        this.currentTime = now - this.mockStartTime;
+      } else if (this.audio) {
+        this.currentTime = this.audio.currentTime * 1000;
+      } else {
+        return;
+      }
     }
 
     this.checkForceTransition();
@@ -161,7 +193,8 @@ export class GameEngine {
     if (!/^[a-zA-Z]$/.test(e.key)) return;
     if (!this.currentTarget || !this.romajiParser) return;
 
-    const currentTimeMs = this.isFallbackMode ? performance.now() - this.mockStartTime : (this.audio ? this.audio.currentTime * 1000 : this.currentTime);
+    // update()で計算されたcurrentTimeを使用することで、リードイン中のマイナス時間も正しく判定に反映させる
+    const currentTimeMs = this.currentTime;
     const nextWordTime = this.queue.length > 0 ? this.queue[0].time : Infinity;
     const timeLimit = Math.min(this.currentTarget.endTime + 150, nextWordTime - 150);
 
