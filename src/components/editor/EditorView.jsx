@@ -27,6 +27,10 @@ export default function EditorView({ onExit }) {
   const [bulkAddText, setBulkAddText] = useState("");
   const [bulkAddInterval, setBulkAddInterval] = useState(0.25); // 16分音符: 0.25拍, 8分音符: 0.5拍
 
+  // 歌詞流し込み用
+  const [showLyricsModal, setShowLyricsModal] = useState(false);
+  const [lyricsText, setLyricsText] = useState("");
+
   const requestRef = useRef();
   const audioRef = useRef(null);
   const handleExportRef = useRef(null);
@@ -77,6 +81,12 @@ export default function EditorView({ onExit }) {
           if (state.selectedNoteIds && state.selectedNoteIds.length > 0) {
             e.preventDefault();
             setShowReplaceModal(true);
+          }
+        } else if (e.code === 'KeyL') {
+          // 歌詞の流し込み (Ctrl + L)
+          if (state.selectedNoteIds && state.selectedNoteIds.length > 0) {
+            e.preventDefault();
+            setShowLyricsModal(true);
           }
         } else if (e.code === 'KeyA') {
           // 全選択 (Ctrl + A)
@@ -483,7 +493,7 @@ export default function EditorView({ onExit }) {
     if (!bulkAddText) return;
     
     const state = useEditorStore.getState();
-    const chunks = bulkAddText.match(/.[ぁ-ぉゃ-ょっ]*/g) || [];
+    const chunks = bulkAddText.match(/.[ぁぃぅぇぉゃゅょっゎ]*/g) || [];
     if (chunks.length === 0) return;
 
     let currentBeats = (state.currentTime / (60000 / state.bpm));
@@ -518,6 +528,61 @@ export default function EditorView({ onExit }) {
 
     setShowBulkAddModal(false);
     setBulkAddText("");
+  };
+
+  const handleLyricsSubmit = (e) => {
+    e.preventDefault();
+    if (!lyricsText) return;
+
+    const state = useEditorStore.getState();
+    if (!state.selectedNoteIds || state.selectedNoteIds.length === 0) {
+      setShowLyricsModal(false);
+      return;
+    }
+
+    const rawChunks = lyricsText.match(/.[ぁぃぅぇぉゃゅょっゎ]*/g) || [];
+    const chunks = rawChunks.filter(c => c.trim() !== '' && c !== '　');
+    if (chunks.length === 0) return;
+
+    // 選択中のノーツを時間の昇順でソート
+    const targetNotes = state.editorNotes
+      .filter(n => state.selectedNoteIds.includes(n.id))
+      .sort((a, b) => {
+        const aBeats = a.measure * 4 + a.beat;
+        const bBeats = b.measure * 4 + b.beat;
+        return aBeats - bBeats;
+      });
+
+    const updates = [];
+    let applyCount = 0;
+
+    targetNotes.forEach((note, index) => {
+      if (index < chunks.length) {
+        updates.push({
+          id: note.id,
+          updates: {
+            word: chunks[index],
+            reading: chunks[index]
+          }
+        });
+        applyCount++;
+      }
+    });
+
+    if (updates.length > 0) {
+      state.updateMultipleNotes(updates);
+      
+      if (chunks.length > targetNotes.length) {
+        showToast(`${applyCount}件の文字を割り当てました（${chunks.length - targetNotes.length}文字余っています）`);
+      } else if (chunks.length < targetNotes.length) {
+        showToast(`${applyCount}件の文字を割り当てました（ノーツが${targetNotes.length - chunks.length}個余っています）`);
+      } else {
+        showToast(`${applyCount}件の文字を割り当てました`);
+      }
+    }
+
+    setShowLyricsModal(false);
+    setLyricsText("");
   };
 
   return (
@@ -589,6 +654,45 @@ export default function EditorView({ onExit }) {
                 className="px-6 py-2 bg-cyan-600 hover:bg-cyan-500 disabled:opacity-50 disabled:cursor-not-allowed rounded-xl font-bold transition-colors shadow-none"
               >
                 追加する
+              </button>
+            </div>
+          </form>
+        </div>
+      )}
+
+      {showLyricsModal && (
+        <div className="fixed inset-0 z-[2000] flex items-center justify-center bg-black/50 backdrop-blur-sm">
+          <form 
+            onSubmit={handleLyricsSubmit}
+            className="bg-neutral-800 p-6 rounded-2xl w-[28rem] flex flex-col gap-4 shadow-none"
+          >
+            <h2 className="text-xl font-bold text-white mb-2">歌詞の一括流し込み</h2>
+            <div className="flex flex-col gap-2">
+              <label className="text-sm font-bold text-neutral-400">割り当てるテキスト (選択中のノーツに左から順番に適用されます)</label>
+              <textarea
+                autoFocus
+                value={lyricsText}
+                onChange={(e) => setLyricsText(e.target.value)}
+                rows={3}
+                className="bg-neutral-900 border-2 border-neutral-700 text-white rounded-xl px-4 py-2 font-bold outline-none focus:border-cyan-500 transition-colors shadow-none resize-none"
+                placeholder="例: ちゃっと あい"
+              />
+            </div>
+            
+            <div className="flex justify-end gap-3 mt-4">
+              <button
+                type="button"
+                onClick={() => { setShowLyricsModal(false); setLyricsText(""); }}
+                className="px-4 py-2 bg-neutral-700 hover:bg-neutral-600 rounded-xl font-bold transition-colors shadow-none"
+              >
+                キャンセル
+              </button>
+              <button
+                type="submit"
+                disabled={!lyricsText}
+                className="px-6 py-2 bg-cyan-600 hover:bg-cyan-500 disabled:opacity-50 disabled:cursor-not-allowed rounded-xl font-bold transition-colors shadow-none"
+              >
+                割り当て実行
               </button>
             </div>
           </form>

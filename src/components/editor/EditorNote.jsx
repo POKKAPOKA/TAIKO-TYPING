@@ -136,10 +136,24 @@ export default function EditorNote({ note, beatWidth, msPerBeat }) {
       const clampedDuration = Math.max(0.25, newDurationUnsnapped);
       const snappedDuration = Math.round(clampedDuration / 0.25) * 0.25;
       
-      const newWidth = snappedDuration * beatWidth;
-      
-      noteRef.current.style.width = `${newWidth}px`;
-      noteRef.current.dataset.newDurationBeats = snappedDuration;
+      const diffDuration = snappedDuration - state.originalDurationBeats;
+      const isMultiResize = selectedNoteIds.includes(note.id) && selectedNoteIds.length > 1;
+
+      if (isMultiResize) {
+        selectedNoteIds.forEach(id => {
+          const el = document.getElementById(`editor-note-${id}`);
+          if (el) {
+            const origDuration = parseFloat(el.dataset.originalDuration);
+            const targetDuration = Math.max(0.25, origDuration + diffDuration);
+            el.style.width = `${targetDuration * beatWidth}px`;
+            el.dataset.newDurationBeats = targetDuration;
+          }
+        });
+      } else {
+        const newWidth = snappedDuration * beatWidth;
+        noteRef.current.style.width = `${newWidth}px`;
+        noteRef.current.dataset.newDurationBeats = snappedDuration;
+      }
     }
   };
 
@@ -196,12 +210,36 @@ export default function EditorNote({ note, beatWidth, msPerBeat }) {
         }
       }
     } else if (state.mode === 'resize') {
-      if (noteRef.current.dataset.newDurationBeats) {
-        const newDuration = parseFloat(noteRef.current.dataset.newDurationBeats);
-        if (newDuration !== note.durationBeats) {
-          updateEditorNote(note.id, { durationBeats: newDuration });
+      const isMultiResize = selectedNoteIds.includes(note.id) && selectedNoteIds.length > 1;
+
+      if (isMultiResize) {
+        const updatesArray = [];
+        selectedNoteIds.forEach(id => {
+          const el = document.getElementById(`editor-note-${id}`);
+          if (el && el.dataset.newDurationBeats) {
+            const newDuration = parseFloat(el.dataset.newDurationBeats);
+            const origDuration = parseFloat(el.dataset.originalDuration);
+            if (newDuration !== origDuration) {
+              updatesArray.push({
+                id,
+                updates: { durationBeats: newDuration }
+              });
+            }
+            delete el.dataset.newDurationBeats;
+          }
+        });
+        
+        if (updatesArray.length > 0) {
+          useEditorStore.getState().updateMultipleNotes(updatesArray);
         }
-        delete noteRef.current.dataset.newDurationBeats;
+      } else {
+        if (noteRef.current.dataset.newDurationBeats) {
+          const newDuration = parseFloat(noteRef.current.dataset.newDurationBeats);
+          if (newDuration !== note.durationBeats) {
+            updateEditorNote(note.id, { durationBeats: newDuration });
+          }
+          delete noteRef.current.dataset.newDurationBeats;
+        }
       }
     }
 
@@ -242,6 +280,7 @@ export default function EditorNote({ note, beatWidth, msPerBeat }) {
       ref={noteRef}
       id={`editor-note-${note.id}`}
       data-original-beats={noteTotalBeats}
+      data-original-duration={note.durationBeats || 0.25}
       className={`absolute top-1/2 -translate-y-1/2 h-16 rounded-xl flex items-center select-none
         ${isKpsWarning && !isSelected ? 'bg-red-500' : isSelected ? 'bg-amber-100/90' : 'bg-cyan-500'}
       `}
