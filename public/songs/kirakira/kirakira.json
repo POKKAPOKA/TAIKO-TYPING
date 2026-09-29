@@ -1,0 +1,294 @@
+{
+  "bpm": 80,
+  "offset": 0,
+  "notes": [
+    {
+      "id": "94e502a2-e662-4d30-8f75-c988c8598b2e",
+      "word": "twinkle",
+      "reading": "twinkle",
+      "time": 0,
+      "endTime": 1500,
+      "type": "normal"
+    },
+    {
+      "id": "1b99ef29-a0cf-459b-9522-38700c209cd7",
+      "word": "twinkle",
+      "reading": "twinkle",
+      "time": 1500,
+      "endTime": 3000,
+      "type": "normal"
+    },
+    {
+      "id": "305872ce-6bce-48c2-aed4-87b857d5f735",
+      "word": "little",
+      "reading": "little",
+      "time": 3000,
+      "endTime": 4312.5,
+      "type": "normal"
+    },
+    {
+      "id": "c1c79101-eaa2-4be6-a24b-0775b004e14d",
+      "word": "s",
+      "reading": "s",
+      "time": 4312.5,
+      "endTime": 4500,
+      "type": "normal"
+    },
+    {
+      "id": "1d02502e-bb73-48e5-9aa6-a4bd648c8dc2",
+      "word": "tar",
+      "reading": "tar",
+      "time": 4500,
+      "endTime": 6000,
+      "type": "normal"
+    },
+    {
+      "id": "9717e5b4-8a81-4ed7-919e-70eb769950d1",
+      "word": "how",
+      "reading": "how",
+      "time": 6000,
+      "endTime": 6750,
+      "type": "normal"
+    },
+    {
+      "id": "7593468a-356d-4213-a737-336b52671f25",
+      "word": "I",
+      "reading": "I",
+      "time": 6750,
+      "endTime": 7500,
+      "type": "normal"
+    },
+    {
+      "id": "35cf52c5-a87d-46b1-962d-9d1241a4d296",
+      "word": "won",
+      "reading": "won",
+      "time": 7500,
+      "endTime": 8250,
+      "type": "normal"
+    },
+    {
+      "id": "2d400036-c6d3-46bf-a3f9-195aad3bb09b",
+      "word": "der",
+      "reading": "der",
+      "time": 8250,
+      "endTime": 9000,
+      "type": "normal"
+    },
+    {
+      "id": "1d79e8cb-29e5-4fd6-8c86-75a094ba6f50",
+      "word": "what",
+      "reading": "what",
+      "time": 9000,
+      "endTime": 9750,
+      "type": "normal"
+    },
+    {
+      "id": "640c96ab-87f7-4a58-abe5-38f7e2de8a22",
+      "word": "you",
+      "reading": "you",
+      "time": 9750,
+      "endTime": 10500,
+      "type": "normal"
+    },
+    {
+      "id": "1f91b30c-2073-4a2d-8e5f-1a143b746b11",
+      "word": "are",
+      "reading": "are",
+      "time": 10500,
+      "endTime": 12000,
+      "type": "normal"
+    },
+    {
+      "id": "56a7495b-22cc-4cc5-9b57-caa7a438d701",
+      "word": "up",
+      "reading": "up",
+      "time": 12000,
+      "endTime": 12750,
+      "type": "normal"
+    },
+    {
+      "id": "8df5fbeb-b1d7-4cfb-b6e2-0912100eb2df",
+      "word": "above",
+      "reading": "above",
+      "time": 12750,
+      "endTime": 14250,
+      "type": "normal"
+    },
+    {
+      "id": "74449f8a-697b-422d-a557-72fd0e5e3a42",
+      "word": "the",
+      "reading": "the",
+      "time": 14250,
+      "endTime": 15000,
+      "type": "normal"
+    },
+    {
+      "id": "f5b17bf8-5b59-410a-8100-71939a3cceb0",
+      "word": "world",
+      "reading": "world",
+      "time": 15000,
+      "endTime": 15750,
+      "type": "normal"
+    },
+    {
+      "id": "260e02ec-e3e7-4c3d-84d4-1d70b51fc86a",
+      "word": "so",
+      "reading": "so",
+      "time": 15750,
+      "endTime": 16500,
+      "type": "normal"
+    },
+    {
+      "id": "62c1986a-29dc-4764-bc84-f5c1e3c28fc3",
+      "word": "high",
+      "reading": "high",
+      "time": 16500,
+      "endTime": 18000,
+      "type": "normal"
+    },
+    {
+      "id": 1790473384847,
+      "word": "like",
+      "reading": "like",
+      "time": 18000,
+      "endTime": 18750,
+      "type": "normal"
+    },
+    {
+      "id": 1790473384848,
+      "word": "a",
+      "reading": "a",
+      "time": 18750,
+      "endTime": 19500,
+      "type": "normal"
+    },
+    {
+      "id": 1790473384849,
+      "word": "diamond",
+      "reading": "diamond",
+      "time": 19500,
+      "endTime": 21000,
+      "type": "normal"
+    },
+    {
+      "id": 1790473384850,
+      "word": "in",
+      "reading": "in",
+      "time": 21000,
+      "endTime": 21750,
+      "type": "normal"
+    },
+    {
+      "id": 1790473384852,
+      "word": "the",
+      "reading": "the",
+      "time": 21750,
+      "endTime": 22500,
+      "type": "normal"
+    },
+    {
+      "id": 1790473384853,
+      "word": "sky",
+      "reading": "sky",
+      "time": 22500,
+      "endTime": 24000,
+      "type": "normal"
+    },
+    {
+      "id": 1790473327412,
+      "word": "twinkle",
+      "reading": "twinkle",
+      "time": 24000,
+      "endTime": 25500,
+      "type": "normal"
+    },
+    {
+      "id": 1790473327413,
+      "word": "twinkle",
+      "reading": "twinkle",
+      "time": 25500,
+      "endTime": 27000,
+      "type": "normal"
+    },
+    {
+      "id": 1790473327414,
+      "word": "little",
+      "reading": "little",
+      "time": 27000,
+      "endTime": 28312.5,
+      "type": "normal"
+    },
+    {
+      "id": 1790473327415,
+      "word": "s",
+      "reading": "s",
+      "time": 28312.5,
+      "endTime": 28500,
+      "type": "normal"
+    },
+    {
+      "id": 1790473327423,
+      "word": "tar",
+      "reading": "tar",
+      "time": 28500,
+      "endTime": 30000,
+      "type": "normal"
+    },
+    {
+      "id": 1790473327416,
+      "word": "how",
+      "reading": "how",
+      "time": 30000,
+      "endTime": 30750,
+      "type": "normal"
+    },
+    {
+      "id": 1790473327417,
+      "word": "I",
+      "reading": "I",
+      "time": 30750,
+      "endTime": 31500,
+      "type": "normal"
+    },
+    {
+      "id": 1790473327418,
+      "word": "won",
+      "reading": "won",
+      "time": 31500,
+      "endTime": 32250,
+      "type": "normal"
+    },
+    {
+      "id": 1790473327422,
+      "word": "der",
+      "reading": "der",
+      "time": 32250,
+      "endTime": 33000,
+      "type": "normal"
+    },
+    {
+      "id": 1790473327419,
+      "word": "what",
+      "reading": "what",
+      "time": 33000,
+      "endTime": 33750,
+      "type": "normal"
+    },
+    {
+      "id": 1790473327420,
+      "word": "you",
+      "reading": "you",
+      "time": 33750,
+      "endTime": 34500,
+      "type": "normal"
+    },
+    {
+      "id": 1790473327421,
+      "word": "are",
+      "reading": "are",
+      "time": 34500,
+      "endTime": 36000,
+      "type": "normal"
+    }
+  ]
+}

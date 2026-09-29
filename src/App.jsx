@@ -29,7 +29,7 @@ function App() {
   const scoreFileName = useGameStore(state => state.scoreFileName);
   const audioFileName = useGameStore(state => state.audioFileName);
   const isLocalPlay = useGameStore(state => state.isLocalPlay);
-  
+
   const setLoadedScore = useGameStore(state => state.setLoadedScore);
   const setAudioUrl = useGameStore(state => state.setAudioUrl);
   const resetPlayState = useGameStore(state => state.resetPlayState);
@@ -99,41 +99,56 @@ function App() {
       if (score >= maxScore * 0.7) return { rank: "クリア成功", color: "text-cyan-400" };
       return { rank: "クリア失敗", color: "text-red-500" };
     }
-    
+
     if (score === maxScore && maxScore > 0) {
       return { rank: "全良", color: "text-yellow-400" };
     }
-    
+
     return { rank: "フルコンボ", color: "text-green-400" };
   };
 
   if (appMode === 'editor') {
     return <EditorView onExit={() => setAppMode('menu')} />;
   }
-  
+
   if (appMode === 'songSelect') {
     return <SongSelect onBack={() => setAppMode('menu')} onStartGame={() => setAppMode('game')} />;
   }
 
   return (
-    <div className="h-screen w-screen bg-neutral-900 text-white flex flex-col items-center p-8 font-sans select-none overflow-hidden box-border">
-      <h1 className="text-4xl font-black mb-8 text-orange-400 tracking-wider flex-shrink-0">太鼓タイピング</h1>
-      
+    <div
+      className="h-screen w-screen bg-neutral-900 text-white flex flex-col items-center p-8 font-sans select-none overflow-hidden box-border relative"
+    >
       {appMode === 'menu' && (
-        <div className="flex flex-col gap-6 mt-20">
-          <button 
+        <div
+          className="absolute inset-0 w-full h-full z-0 pointer-events-none"
+          style={{
+            backgroundImage: 'url(/assets/home_bg.png)',
+            backgroundSize: 'cover',
+            backgroundPosition: 'top center',
+            backgroundRepeat: 'no-repeat'
+          }}
+        />
+      )}
+
+      <div className="z-10 flex flex-col items-center w-full h-full">
+        <h1 className={`text-4xl font-black mb-8 text-orange-400 tracking-wider flex-shrink-0 ${appMode === 'menu' ? 'invisible' : ''}`}>太鼓タイピング</h1>
+
+      {appMode === 'menu' && (
+        <div className="flex flex-col gap-6 mt-40">
+          <button
             onClick={() => setAppMode('songSelect')}
             className="px-12 py-4 bg-orange-500 hover:bg-orange-400 text-neutral-900 rounded-full font-black text-2xl transition-colors"
           >
             公式譜面で遊ぶ
           </button>
-          <button 
+          <button
             onClick={() => setAppMode('setup')}
             className="px-12 py-4 bg-cyan-600 hover:bg-cyan-500 text-white rounded-full font-black text-2xl transition-colors"
           >
             創作譜面を遊ぶ
           </button>
-          <button 
+          <button
             onClick={() => setAppMode('editor')}
             className="px-12 py-4 bg-neutral-700 hover:bg-neutral-600 text-white rounded-full font-black text-2xl transition-colors"
           >
@@ -145,11 +160,11 @@ function App() {
       {appMode === 'setup' && (
         <div className="bg-neutral-800 rounded-3xl p-8 flex flex-col items-center gap-8 w-full max-w-xl overflow-y-auto max-h-full">
           <h2 className="text-2xl font-black text-white">セットアップ</h2>
-          
+
           <div className="text-neutral-400 font-bold tracking-widest text-sm text-center bg-neutral-900 p-4 rounded-xl border-2 border-neutral-700 w-full">
             遊び方：ノーツが判定枠に重なったら、表示されている最初の文字をタイピングしてください
           </div>
-          
+
           {loadedScore && audioUrl ? (
             <div className="w-full flex flex-col gap-6">
               <div className="bg-cyan-900/30 border-2 border-cyan-800 p-6 rounded-2xl flex flex-col gap-2 text-center">
@@ -157,14 +172,14 @@ function App() {
                 <div className="text-white font-mono">{scoreFileName}</div>
                 <div className="text-white font-mono">{audioFileName}</div>
               </div>
-              
-              <button 
+
+              <button
                 onClick={handleStartGame}
                 className="w-full py-6 bg-orange-500 hover:bg-orange-400 text-neutral-900 rounded-full font-black text-3xl transition-colors"
               >
                 スタート
               </button>
-              
+
               <div className="flex flex-col gap-3 mt-4 pt-6 border-t-2 border-neutral-700">
                 <div className="text-neutral-500 font-bold text-center text-sm">別のファイルに変更する</div>
                 <label className="cursor-pointer w-full text-center py-3 bg-neutral-700 hover:bg-neutral-600 text-white rounded-full font-bold transition-colors">
@@ -183,7 +198,7 @@ function App() {
                 {loadedScore ? `読み込み済み (${scoreFileName})` : '譜面(json)を読み込む'}
                 <input type="file" accept=".json" className="hidden" onChange={handleScoreLoad} />
               </label>
-  
+
               <label className={`cursor-pointer w-full text-center py-4 rounded-full font-bold transition-colors ${audioUrl ? 'bg-green-500 text-neutral-900' : 'bg-neutral-700 hover:bg-neutral-600 text-white'}`}>
                 {audioUrl ? `読み込み済み (${audioFileName})` : '音源(mp3/wav)を読み込む'}
                 <input type="file" accept="audio/*" className="hidden" onChange={handleAudioLoad} />
@@ -192,14 +207,14 @@ function App() {
           )}
 
           <div className="flex gap-4 w-full mt-4 flex-shrink-0">
-            <button 
+            <button
               onClick={() => setAppMode('menu')}
               className="flex-1 py-4 bg-neutral-700 hover:bg-neutral-600 text-white rounded-full font-black transition-colors"
             >
               もどる
             </button>
             {!(loadedScore && audioUrl) && (
-              <button 
+              <button
                 onClick={handleStartGame}
                 disabled={!loadedScore || !audioUrl}
                 className="flex-1 py-4 bg-orange-500 hover:bg-orange-400 disabled:bg-neutral-700 disabled:text-neutral-500 text-neutral-900 rounded-full font-black transition-colors"
@@ -220,8 +235,8 @@ function App() {
                 <span className="font-mono text-4xl">{score.toString().padStart(6, '0')}</span>
               </div>
             </div>
-            
-            <button 
+
+            <button
               onClick={handleStop}
               className="px-8 py-3 bg-red-500 hover:bg-red-400 text-neutral-900 rounded-full font-black transition-colors"
             >
@@ -322,7 +337,7 @@ function App() {
               </div>
             </div>
           </div>
-          
+
           {isLocalPlay && (
             <div className="w-full bg-cyan-900/30 border-2 border-cyan-800 text-cyan-400 p-3 rounded-xl text-center font-bold">
               開発者に作成データを共有して公式譜面にしてみよう！
@@ -330,13 +345,13 @@ function App() {
           )}
 
           <div className="flex gap-4 w-full">
-            <button 
+            <button
               onClick={handleBackToMenu}
               className="flex-1 py-4 bg-neutral-700 hover:bg-neutral-600 text-white rounded-full font-black text-xl transition-colors"
             >
               メニューに戻る
             </button>
-            <button 
+            <button
               onClick={handleRetry}
               className="flex-1 py-4 bg-orange-500 hover:bg-orange-400 text-neutral-900 rounded-full font-black text-xl transition-colors"
             >
@@ -345,6 +360,7 @@ function App() {
           </div>
         </div>
       )}
+      </div>
     </div>
   );
 }

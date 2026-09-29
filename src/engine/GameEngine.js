@@ -1,5 +1,5 @@
 import { useGameStore } from '../store/gameStore';
-import { RomajiParser } from './RomajiParser';
+import { RomajiParser, getKeystrokeCount } from './RomajiParser';
 
 const JUDGE_WINDOW = {
   PERFECT: 50,
@@ -269,8 +269,8 @@ export class GameEngine {
 
     const durationSec = (this.currentTarget.endTime - this.currentTarget.time) / 1000;
     if (durationSec > 0) {
-      const charCount = this.currentTarget.reading ? this.currentTarget.reading.length : this.currentTarget.word.length;
-      const kps = charCount / durationSec;
+      const strokeCount = getKeystrokeCount(this.currentTarget.reading || this.currentTarget.word);
+      const kps = strokeCount / durationSec;
       store.updateMaxKps(kps);
     }
     

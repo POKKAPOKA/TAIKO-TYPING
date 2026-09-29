@@ -6,7 +6,7 @@
     "difficulty": 1,
     "scorePath": "./songs/kimigayo/kimigayo.json",
     "audioPath": "./songs/kimigayo/kimigayo.mp3",
-    "notesCount": 32,
+    "notesCount": 61,
     "durationMs": 64950
   },
   {
@@ -16,7 +16,7 @@
     "difficulty": 9,
     "scorePath": "./songs/senrohatudukuyodokomademo/senrohatudukuyodokomademo.json",
     "audioPath": "./songs/senrohatudukuyodokomademo/senrohatudukuyodokomademo.mp3",
-    "notesCount": 38,
+    "notesCount": 167,
     "durationMs": 39500
   },
   {
@@ -26,7 +26,7 @@
     "difficulty": 4,
     "scorePath": "./songs/harugakita/harugakita.json",
     "audioPath": "./songs/harugakita/harugakita.mp3",
-    "notesCount": 90,
+    "notesCount": 180,
     "durationMs": 55547.750185607576
   },
   {
@@ -36,7 +36,7 @@
     "difficulty": 3,
     "scorePath": "./songs/koinobori/koinobori.json",
     "audioPath": "./songs/koinobori/koinobori.mp3",
-    "notesCount": 50,
+    "notesCount": 85,
     "durationMs": 26094.908903115225
   },
   {
@@ -46,7 +46,7 @@
     "difficulty": 8,
     "scorePath": "./songs/usagitokame/usagitokame.json",
     "audioPath": "./songs/usagitokame/usagitokame.mp3",
-    "notesCount": 194,
+    "notesCount": 385,
     "durationMs": 62835
   },
   {
@@ -56,7 +56,7 @@
     "difficulty": 2,
     "scorePath": "./songs/sakura/sakura.json",
     "audioPath": "./songs/sakura/sakura.mp3",
-    "notesCount": 45,
+    "notesCount": 87,
     "durationMs": 53250
   },
   {
@@ -66,7 +66,7 @@
     "difficulty": 6,
     "scorePath": "./songs/alps/alps.json",
     "audioPath": "./songs/alps/alps.mp3",
-    "notesCount": 73,
+    "notesCount": 226,
     "durationMs": 39625
   },
   {
@@ -76,7 +76,38 @@
     "difficulty": 2,
     "scorePath": "./songs/hotarunohikari/hotarunohikari.json",
     "audioPath": "./songs/hotarunohikari/hotarunohikari.mp3",
-    "notesCount": 192,
+    "notesCount": 374,
     "durationMs": 221092.85714285713
+  },
+  {
+    "id": "kirakira",
+    "title": "きらきら星",
+    "creator": "ひぺりかむ",
+    "difficulty": 5,
+    "scorePath": "./songs/kirakira/kirakira.json",
+    "audioPath": "./songs/kirakira/kirakira.mp3",
+    "notesCount": 129,
+    "durationMs": 36000
+  },
+  {
+    "id": "shiningstar",
+    "title": "シャイニングスター",
+    "creator": "渚鳥",
+    "credit": "魔王魂",
+    "difficulty": 7,
+    "scorePath": "./songs/shiningstar/shiningstar.json",
+    "audioPath": "./songs/shiningstar/shiningstar.mp3",
+    "notesCount": 388,
+    "durationMs": 87341.77215189874
+  },
+  {
+    "id": "donguri",
+    "title": "どんぐりころころ",
+    "creator": "渚鳥",
+    "difficulty": 7,
+    "scorePath": "./songs/donguri/donguri.json",
+    "audioPath": "./songs/donguri/donguri.mp3",
+    "notesCount": 206,
+    "durationMs": 38454.545454545456
   }
 ]

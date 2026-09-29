@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { useEditorStore } from '../../store/editorStore';
+import { getKeystrokeCount } from '../../engine/RomajiParser';
 
 export default function EditorNote({ note, beatWidth, msPerBeat }) {
   const updateEditorNote = useEditorStore(state => state.updateEditorNote);
@@ -29,7 +30,8 @@ export default function EditorNote({ note, beatWidth, msPerBeat }) {
 
   // KPS計算
   const durationMs = note.durationBeats * msPerBeat;
-  const kps = (note.reading && durationMs > 0) ? note.reading.length / (durationMs / 1000) : ((note.word && durationMs > 0) ? note.word.length / (durationMs / 1000) : 0);
+  const strokeCount = getKeystrokeCount(note.reading || note.word);
+  const kps = durationMs > 0 ? strokeCount / (durationMs / 1000) : 0;
   const isKpsWarning = kps > 10;
 
   // 編集保存時

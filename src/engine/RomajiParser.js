@@ -1,4 +1,4 @@
-﻿// ひらがな1文字（または複数文字の組み合わせ）からローマ字の候補を返す辞書
+// ひらがな1文字（または複数文字の組み合わせ）からローマ字の候補を返す辞書
 const ROMAJI_DICT = {
   "あ": ["a"], "い": ["i"], "う": ["u", "wu", "whu"], "え": ["e"], "お": ["o"],
   "か": ["ka", "ca"], "き": ["ki"], "く": ["ku", "cu", "qu"], "け": ["ke"], "こ": ["ko", "co"],
@@ -159,4 +159,26 @@ export class RomajiParser {
       remaining: bestPath.substring(this.typedString.length + 1).toUpperCase()
     };
   }
+}
+
+/**
+ * テキスト（ひらがな、英数字混在）を受け取り、
+ * タイピングする際の最短打鍵数を計算して返すユーティリティ。
+ */
+export function getKeystrokeCount(text) {
+  if (!text) return 0;
+  
+  // RomajiParser の展開ロジックを利用して全パターンのローマ字を取得
+  const parser = new RomajiParser(text);
+  if (!parser.paths || parser.paths.length === 0) return text.length;
+
+  // 全パターンの中で最も文字数（打鍵数）が少ないものを探す
+  let minLen = Infinity;
+  for (const path of parser.paths) {
+    if (path.length < minLen) {
+      minLen = path.length;
+    }
+  }
+  
+  return minLen === Infinity ? text.length : minLen;
 }

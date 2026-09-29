@@ -205,6 +205,7 @@ export default function SongSelect({ onBack, onStartGame }) {
               <span className="text-2xl font-black text-white">{song.title}</span>
               <div className="flex flex-wrap items-center gap-x-4 gap-y-2 mt-2">
                 <span className="text-sm font-bold text-neutral-400">譜面制作: {song.creator}</span>
+                {song.credit && <span className="text-sm font-bold text-neutral-400">クレジット: {song.credit}</span>}
                 <span className="text-yellow-400 font-bold whitespace-nowrap text-sm tracking-[0.1em]">
                   {'★'.repeat(song.difficulty || 1)}{'☆'.repeat(10 - (song.difficulty || 1))}
                 </span>
