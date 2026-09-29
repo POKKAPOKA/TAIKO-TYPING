@@ -24,19 +24,21 @@ export class GameEngine {
 
   updateCurrentTarget(store, newTarget) {
     this.currentTarget = newTarget;
+    this.firstHitMiss = false;
     if (this.currentTarget) {
       const reading = this.currentTarget.reading || this.currentTarget.word;
       this.romajiParser = new RomajiParser(reading);
       
       const displayState = this.romajiParser.getDisplayState();
-      store.setActiveWord(displayState.typed + displayState.next + displayState.remaining);
-      store.setTypedIndex(displayState.typed.length);
+      store.setTargetState(
+        this.currentTarget, 
+        displayState.typed + displayState.next + displayState.remaining, 
+        displayState.typed.length
+      );
     } else {
       this.romajiParser = null;
-      store.setActiveWord(null);
-      store.setTypedIndex(0);
+      store.setTargetState(null, null, 0);
     }
-    store.setCurrentTarget(this.currentTarget);
   }
 
   start() {
@@ -59,7 +61,6 @@ export class GameEngine {
     store.setWordQueue([...this.queue]);
     
     // リードイン（待機時間）の計算
-    // 最初のノーツが3000ms未満の場合、3000msのリードインを挿入する
     const firstNoteTime = this.currentTarget ? this.currentTarget.time : Infinity;
     this.leadInTime = firstNoteTime < 3000 ? 3000 : 0;
     this.currentTime = -this.leadInTime;
@@ -68,7 +69,6 @@ export class GameEngine {
     
     this.isFallbackMode = false;
     
-    // 最後のノーツの終了時間
     const lastNote = this.queue[this.queue.length - 1] || this.currentTarget;
     this.fallbackEndTime = (lastNote ? lastNote.endTime : 0) + 2000;
 
@@ -76,12 +76,22 @@ export class GameEngine {
       this.audio.pause();
     }
     this.audio = new Audio(audioUrl);
-    this.audio.volume = 0.5;
     this.audio.currentTime = 0;
     
-    // リードインが不要な場合は即座に再生
     if (this.leadInTime === 0) {
+      this.audio.volume = 0.5;
       this.startAudio();
+    } else {
+      this.audio.volume = 0;
+      // ユーザーアクション中に再生を試みてアンロックする
+      this.audio.play().then(() => {
+        this.audio.pause();
+        this.audio.currentTime = 0;
+        this.audio.volume = 0.5;
+      }).catch(e => {
+        console.warn("Audio unlock failed:", e);
+        this.audio.volume = 0.5;
+      });
     }
     
     window.addEventListener('keydown', this.handleKeyDown);
@@ -117,8 +127,7 @@ export class GameEngine {
       store.setLastJudgment('MISS');
       this.updateCurrentTarget(store, null);
     } else {
-      store.setActiveWord(null);
-      store.setTypedIndex(0);
+      store.setTargetState(this.currentTarget, null, 0);
     }
 
     store.setStatus('result');
@@ -128,7 +137,6 @@ export class GameEngine {
     const now = performance.now();
 
     if (!this.audioStarted) {
-      // リードイン期間中の時間進行（マイナスから0へ）
       const elapsed = now - this.realStartTime;
       this.currentTime = -this.leadInTime + elapsed;
       
@@ -137,7 +145,6 @@ export class GameEngine {
         this.startAudio();
       }
     } else {
-      // オーディオ再生中の時間進行
       if (this.isFallbackMode) {
         this.currentTime = now - this.mockStartTime;
       } else if (this.audio) {
@@ -151,7 +158,6 @@ export class GameEngine {
 
     let shouldEnd = false;
     if (this.isFallbackMode) {
-      // フォールバック時は最後のノーツ+2000msまで
       if (!this.currentTarget && this.queue.length === 0 && this.currentTime > this.fallbackEndTime) {
         shouldEnd = true;
       }
@@ -171,7 +177,7 @@ export class GameEngine {
     if (!this.currentTarget) return;
     const nextWordTime = this.queue.length > 0 ? this.queue[0].time : Infinity;
     
-    const timeLimit = Math.min(this.currentTarget.endTime + 150, nextWordTime - 150);
+    const timeLimit = Math.min(this.currentTarget.endTime + JUDGE_WINDOW.MISS, nextWordTime - JUDGE_WINDOW.MISS);
     
     if (this.currentTime >= timeLimit) {
       this.forceMissAndTransition();
@@ -190,13 +196,13 @@ export class GameEngine {
   }
 
   handleKeyDown(e) {
-    if (!/^[a-zA-Z]$/.test(e.key)) return;
+    if (e.repeat) return;
+    if (!/^[a-zA-Z0-9\-]$/.test(e.key)) return;
     if (!this.currentTarget || !this.romajiParser) return;
 
-    // update()で計算されたcurrentTimeを使用することで、リードイン中のマイナス時間も正しく判定に反映させる
     const currentTimeMs = this.currentTime;
     const nextWordTime = this.queue.length > 0 ? this.queue[0].time : Infinity;
-    const timeLimit = Math.min(this.currentTarget.endTime + 150, nextWordTime - 150);
+    const timeLimit = Math.min(this.currentTarget.endTime + JUDGE_WINDOW.MISS, nextWordTime - JUDGE_WINDOW.MISS);
 
     if (currentTimeMs >= timeLimit) {
       return;
@@ -208,7 +214,7 @@ export class GameEngine {
       const targetTime = this.currentTarget.time;
       const diff = Math.abs(targetTime - currentTimeMs);
 
-      if (diff > 150) {
+      if (diff > JUDGE_WINDOW.MISS) {
         return; 
       }
 
@@ -218,12 +224,13 @@ export class GameEngine {
         return;
       }
 
-      if (diff <= 50) {
+      if (diff <= JUDGE_WINDOW.PERFECT) {
         this.applyJudgment('JUSTICE');
-      } else if (diff <= 100) {
+      } else if (diff <= JUDGE_WINDOW.GOOD) {
         this.applyJudgment('ATTACK');
-      } else if (diff <= 150) {
+      } else if (diff <= JUDGE_WINDOW.MISS) {
         this.applyJudgment('MISS');
+        this.firstHitMiss = true;
       }
     } else {
       const isCorrect = this.romajiParser.input(e.key);
@@ -233,10 +240,13 @@ export class GameEngine {
       }
     }
 
-    // UIを動的更新
+    const store = useGameStore.getState();
     const displayState = this.romajiParser.getDisplayState();
-    useGameStore.getState().setActiveWord(displayState.typed + displayState.next + displayState.remaining);
-    useGameStore.getState().setTypedIndex(displayState.typed.length);
+    store.setTargetState(
+      this.currentTarget,
+      displayState.typed + displayState.next + displayState.remaining,
+      displayState.typed.length
+    );
     
     if (this.romajiParser.isComplete()) {
       this.completeCurrentTarget();
@@ -265,7 +275,9 @@ export class GameEngine {
     const store = useGameStore.getState();
     
     store.addCompletedCount();
-    store.setCombo(store.combo + 1);
+    if (!this.firstHitMiss) {
+      store.setCombo(store.combo + 1);
+    }
 
     const durationSec = (this.currentTarget.endTime - this.currentTarget.time) / 1000;
     if (durationSec > 0) {

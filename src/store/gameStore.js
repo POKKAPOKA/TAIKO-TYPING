@@ -28,6 +28,7 @@ export const useGameStore = create((set) => ({
 
   // 直近の判定結果（良、可、不可）表示用
   lastJudgment: null,
+  judgmentCount: 0,
   
   // 今後流れてくる単語のキュー
   // { id, word, time } の配列
@@ -56,14 +57,31 @@ export const useGameStore = create((set) => ({
   setStatus: (status) => set({ status }),
   
   setLoadedScore: (score, fileName) => set({ loadedScore: score, scoreFileName: fileName || null }),
-  setAudioUrl: (url, fileName) => set({ audioUrl: url, audioFileName: fileName || null }),
+  setAudioUrl: (url, fileName) => set((state) => {
+    if (state.audioUrl && state.audioUrl.startsWith('blob:')) {
+      URL.revokeObjectURL(state.audioUrl);
+    }
+    return { audioUrl: url, audioFileName: fileName || null };
+  }),
   setIsLocalPlay: (isLocal) => set({ isLocalPlay: isLocal }),
   
   setCurrentTarget: (target) => set({ currentTarget: target }),
   setActiveWord: (word) => set({ activeWord: word }),
   setTypedIndex: (index) => set({ typedIndex: index }),
+  setTargetState: (target, activeWord, typedIndex) => set({
+    currentTarget: target,
+    activeWord,
+    typedIndex
+  }),
   
-  setLastJudgment: (judgment) => set({ lastJudgment: judgment }),
+  setLastJudgment: (judgment) => set((state) => ({ 
+    lastJudgment: judgment,
+    judgmentCount: state.judgmentCount + 1
+  })),
+
+  toastMessage: null,
+  toastId: 0,
+  showToast: (msg) => set((state) => ({ toastMessage: msg, toastId: state.toastId + 1 })),
 
   setWordQueue: (queue) => set({ wordQueue: queue }),
 

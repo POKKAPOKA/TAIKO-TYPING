@@ -1,70 +1,126 @@
-import { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useMemo } from 'react';
 import { useGameStore } from '../store/gameStore';
 import { gameEngine } from '../engine/GameEngine';
 
 const NOTE_SPEED = 0.5; // px per ms
 const JUDGE_LINE_X = 200; // 判定ラインのX座標(px)
 
-export default function NotesArea() {
+const JudgmentPopup = React.memo(() => {
+  const combo = useGameStore(state => state.combo);
+  const lastJudgment = useGameStore(state => state.lastJudgment);
+  const judgmentCount = useGameStore(state => state.judgmentCount);
+  
+  return (
+    <div 
+      className="absolute top-1/4 -translate-y-1/2 transform -translate-x-1/2 flex flex-col items-center justify-center z-20 pointer-events-none"
+      style={{ left: `${JUDGE_LINE_X}px` }}
+    >
+      {lastJudgment && (
+        <div key={judgmentCount} className="animate-bounce font-black text-3xl tracking-widest mb-1">
+          {lastJudgment === 'JUSTICE' && <span className="text-yellow-400">JUSTICE</span>}
+          {lastJudgment === 'ATTACK' && <span className="text-green-400">ATTACK</span>}
+          {lastJudgment === 'MISS' && <span className="text-neutral-500">MISS</span>}
+        </div>
+      )}
+      
+      {combo > 0 && (
+        <div className="text-xl font-bold text-white flex items-end gap-1">
+          <span className="text-4xl text-yellow-400 font-mono">{combo}</span>
+          <span className="text-neutral-400 pb-1">COMBO</span>
+        </div>
+      )}
+    </div>
+  );
+});
+
+const NotesArea = React.memo(() => {
   const containerRef = useRef(null);
   const requestRef = useRef();
 
-  // Zustand から変更が少ない状態のみ取得（キューの中身などは参照のみ）
-  // 頻繁に変わる target などを subscribe しすぎないように注意
+  const currentTarget = useGameStore(state => state.currentTarget);
+  const wordQueue = useGameStore(state => state.wordQueue);
+  const status = useGameStore(state => state.status);
+  const loadedScore = useGameStore(state => state.loadedScore);
   
+  const [visibleRange, setVisibleRange] = React.useState({ start: -2000, end: 8000 });
+
   useEffect(() => {
+    if (status !== 'playing') {
+      setVisibleRange({ start: -2000, end: 8000 });
+      return;
+    }
+
+    const interval = setInterval(() => {
+      const currentTime = gameEngine.getCurrentTime();
+      const pastMargin = 1500;
+      const futureWindow = (window.innerWidth || 1920) / NOTE_SPEED + 1500;
+      
+      const newStart = currentTime - pastMargin;
+      const newEnd = currentTime + futureWindow;
+      
+      setVisibleRange(prev => {
+        if (Math.abs(prev.start - newStart) > 500) {
+          return { start: newStart, end: newEnd };
+        }
+        return prev;
+      });
+    }, 250);
+
+    return () => clearInterval(interval);
+  }, [status]);
+
+  useEffect(() => {
+    if (status !== 'playing') return;
+
     const updateNotes = () => {
       const currentTime = gameEngine.getCurrentTime();
-      const status = useGameStore.getState().status;
       
-      if (status !== 'playing' || !containerRef.current) {
+      if (!containerRef.current) {
         requestRef.current = requestAnimationFrame(updateNotes);
         return;
       }
 
       const storeState = useGameStore.getState();
-      const currentTarget = storeState.currentTarget;
-      const wordQueue = storeState.wordQueue;
+      const currentTargetData = storeState.currentTarget;
+      const wordQueueData = storeState.wordQueue;
 
-      // 現在のターゲットとキューをマージして描画
-      const allNotes = [];
-      if (currentTarget) allNotes.push(currentTarget);
-      allNotes.push(...wordQueue);
+      const allNotesMap = new Map();
+      if (currentTargetData) allNotesMap.set(String(currentTargetData.id), currentTargetData);
+      for (let i = 0; i < wordQueueData.length; i++) {
+        allNotesMap.set(String(wordQueueData[i].id), wordQueueData[i]);
+      }
 
-      // DOMを直接操作
       const noteElements = containerRef.current.children;
+      const screenWidth = window.innerWidth;
       
       for (let i = 0; i < noteElements.length; i++) {
         const el = noteElements[i];
         
-        // 小節線の場合
         if (el.dataset.isBarline) {
           const barTime = parseFloat(el.dataset.time);
           const xPos = JUDGE_LINE_X + (barTime - currentTime) * NOTE_SPEED;
-          el.style.left = `${xPos}px`;
           
-          if (xPos < -100 || xPos > 2000) {
-             el.style.opacity = '0';
+          if (xPos < -100 || xPos > screenWidth + 200) {
+             el.style.display = 'none';
           } else {
-             el.style.opacity = '1';
+             el.style.display = 'block';
+             el.style.left = `${xPos}px`;
           }
           continue;
         }
 
-        // ノーツの場合
-        // 既存の譜面データ（小数を含むID）でも一致するように文字列として比較
         const noteIdStr = el.dataset.id;
-        const noteData = allNotes.find(n => String(n.id) === noteIdStr);
-        if (noteData) {
-          // X座標計算: 判定ライン + (目標時間 - 現在時間) * 速度
-          const xPos = JUDGE_LINE_X + (noteData.time - currentTime) * NOTE_SPEED;
-          el.style.left = `${xPos}px`;
-          
-          // 通り過ぎて見えなくなったら非表示などの処理
-          if (xPos < -100 || xPos > 2000) {
-             el.style.opacity = '0';
-          } else {
-             el.style.opacity = '1';
+        if (noteIdStr) {
+          const noteData = allNotesMap.get(noteIdStr);
+          if (noteData) {
+            const xPos = JUDGE_LINE_X + (noteData.time - currentTime) * NOTE_SPEED;
+            
+            if (xPos < -200 || xPos > screenWidth + 200) {
+               el.style.display = 'none';
+            } else {
+               el.style.display = 'flex';
+               el.style.left = `${xPos}px`;
+            }
           }
         }
       }
@@ -73,34 +129,37 @@ export default function NotesArea() {
     };
 
     requestRef.current = requestAnimationFrame(updateNotes);
-    return () => cancelAnimationFrame(requestRef.current);
-  }, []);
+    return () => {
+      if (requestRef.current) cancelAnimationFrame(requestRef.current);
+    };
+  }, [status]);
 
-  const currentTarget = useGameStore(state => state.currentTarget);
-  const wordQueue = useGameStore(state => state.wordQueue);
-  const status = useGameStore(state => state.status);
-  
-  // ポップアップエフェクト用
-  const combo = useGameStore(state => state.combo);
-  const lastJudgment = useGameStore(state => state.lastJudgment);
-  
-  const loadedScore = useGameStore(state => state.loadedScore);
-  
-  const allNotes = [];
-  if (currentTarget) allNotes.push(currentTarget);
-  allNotes.push(...wordQueue);
+  const allNotes = useMemo(() => {
+    const arr = [];
+    if (currentTarget) arr.push(currentTarget);
+    arr.push(...wordQueue);
+    return arr.filter(n => n.time >= visibleRange.start && n.time <= visibleRange.end);
+  }, [currentTarget, wordQueue, visibleRange]);
 
-  // 小節線の計算
-  const barlines = [];
-  if (loadedScore) {
-    const bpm = loadedScore.bpm || 120;
-    const offset = loadedScore.offset || 0;
-    const msPerMeasure = (60000 / bpm) * 4;
-    // 余裕を持って100小節分くらい生成しておく
-    for (let i = 0; i < 100; i++) {
-      barlines.push(offset + i * msPerMeasure);
+  const barlines = useMemo(() => {
+    const lines = [];
+    if (loadedScore) {
+      const bpm = loadedScore.bpm || 120;
+      const offset = loadedScore.offset || 0;
+      const msPerMeasure = (60000 / bpm) * 4;
+      
+      const totalMs = loadedScore.durationMs || (loadedScore.notes && loadedScore.notes.length > 0 ? loadedScore.notes[loadedScore.notes.length - 1].endTime : 10000);
+      const measureCount = Math.ceil(totalMs / msPerMeasure) + 5;
+      
+      for (let i = 0; i < measureCount; i++) {
+        const t = offset + i * msPerMeasure;
+        if (t >= visibleRange.start && t <= visibleRange.end) {
+          lines.push(t);
+        }
+      }
     }
-  }
+    return lines;
+  }, [loadedScore, visibleRange]);
 
   if (status !== 'playing') {
     return <div className="h-64 bg-neutral-800 w-full relative flex items-center justify-center text-neutral-400 font-bold text-xl rounded-2xl">Press Start to Play</div>;
@@ -108,8 +167,6 @@ export default function NotesArea() {
 
   return (
     <div className="h-64 bg-neutral-800 w-full relative overflow-hidden rounded-2xl">
-      
-      {/* 判定ライン (フラットデザイン) */}
       <div 
         className="absolute top-1/2 -translate-y-1/2 w-32 h-32 border-4 border-neutral-600 rounded-full z-0 transform -translate-x-1/2 flex items-center justify-center"
         style={{ left: `${JUDGE_LINE_X}px` }}
@@ -117,12 +174,10 @@ export default function NotesArea() {
         <div className="w-4 h-32 bg-neutral-600 rounded-full opacity-50" />
       </div>
 
-      {/* ノーツコンテナ */}
       <div ref={containerRef} className="absolute inset-0">
-        {/* 小節線 */}
         {barlines.map((time, index) => (
           <div
-            key={`bar-${index}`}
+            key={`bar-${time}`}
             data-is-barline="true"
             data-time={time}
             className="absolute top-0 w-0.5 h-full bg-white opacity-20 z-0 transform -translate-x-1/2"
@@ -130,7 +185,6 @@ export default function NotesArea() {
           />
         ))}
 
-        {/* ノーツ */}
         {allNotes.map((note) => {
           const isCurrent = currentTarget?.id === note.id;
           const displayWord = note.word.length > 4 ? note.word.substring(0, 4) : note.word;
@@ -141,7 +195,6 @@ export default function NotesArea() {
               className={`absolute top-1/2 -translate-y-1/2 flex items-center justify-center w-28 h-28 rounded-full font-black text-2xl transition-colors z-10 transform -translate-x-1/2 whitespace-nowrap
                 ${isCurrent ? 'bg-orange-500 text-neutral-900 border-4 border-orange-400' : 'bg-cyan-500 text-neutral-900 border-4 border-cyan-400'}
               `}
-              // 初期位置はCSSでは設定せず、requestAnimationFrameで上書きする
               style={{ left: `2000px` }}
             >
               {displayWord}
@@ -150,27 +203,9 @@ export default function NotesArea() {
         })}
       </div>
 
-      {/* 判定・コンボポップアップ */}
-      <div 
-        className="absolute top-1/4 -translate-y-1/2 transform -translate-x-1/2 flex flex-col items-center justify-center z-20 pointer-events-none"
-        style={{ left: `${JUDGE_LINE_X}px` }}
-      >
-        {lastJudgment && (
-          <div key={Date.now()} className="animate-bounce font-black text-3xl tracking-widest mb-1">
-            {lastJudgment === 'JUSTICE' && <span className="text-yellow-400">JUSTICE</span>}
-            {lastJudgment === 'ATTACK' && <span className="text-green-400">ATTACK</span>}
-            {lastJudgment === 'MISS' && <span className="text-neutral-500">MISS</span>}
-          </div>
-        )}
-        
-        {combo > 0 && (
-          <div className="text-xl font-bold text-white flex items-end gap-1">
-            <span className="text-4xl text-yellow-400 font-mono">{combo}</span>
-            <span className="text-neutral-400 pb-1">COMBO</span>
-          </div>
-        )}
-      </div>
-
+      <JudgmentPopup />
     </div>
   );
-}
+});
+
+export default NotesArea;

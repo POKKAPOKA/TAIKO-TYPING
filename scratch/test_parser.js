@@ -1,0 +1,1 @@
+import { RomajiParser, getKeystrokeCount } from '../src/engine/RomajiParser.js'; console.log(getKeystrokeCount('‚µ‚á‚¢‚ñ')); const p = new RomajiParser('‚µ‚á‚¢‚ñ'); console.log(p.getDisplayState()); p.input('s'); console.log(p.getDisplayState()); p.input('h'); p.input('a'); console.log(p.getDisplayState());

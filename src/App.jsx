@@ -3,6 +3,8 @@ import { useGameStore } from './store/gameStore';
 import { gameEngine } from './engine/GameEngine';
 import NotesArea from './components/NotesArea';
 import EditorView from './components/editor/EditorView';
+import ActiveWordDisplay from './components/ActiveWordDisplay';
+import Toast from './components/Toast';
 
 import SongSelect from './components/SongSelect';
 
@@ -13,7 +15,6 @@ function App() {
   const score = useGameStore(state => state.score);
   const maxCombo = useGameStore(state => state.maxCombo);
   const status = useGameStore(state => state.status);
-  const currentTarget = useGameStore(state => state.currentTarget);
   const loadedScore = useGameStore(state => state.loadedScore);
   const audioUrl = useGameStore(state => state.audioUrl);
   const maxScore = useGameStore(state => state.maxScore);
@@ -24,8 +25,6 @@ function App() {
   const droppedCount = useGameStore(state => state.droppedCount);
   const typoCount = useGameStore(state => state.typoCount);
   const maxKps = useGameStore(state => state.maxKps);
-  const activeWord = useGameStore(state => state.activeWord);
-  const typedIndex = useGameStore(state => state.typedIndex);
   const scoreFileName = useGameStore(state => state.scoreFileName);
   const audioFileName = useGameStore(state => state.audioFileName);
   const isLocalPlay = useGameStore(state => state.isLocalPlay);
@@ -35,6 +34,7 @@ function App() {
   const resetPlayState = useGameStore(state => state.resetPlayState);
   const clearSetup = useGameStore(state => state.clearSetup);
   const setIsLocalPlay = useGameStore(state => state.setIsLocalPlay);
+  const showToast = useGameStore(state => state.showToast);
 
   useEffect(() => {
     if (appMode === 'game' && status === 'playing') {
@@ -79,9 +79,11 @@ function App() {
         const json = JSON.parse(event.target.result);
         if (json.notes && Array.isArray(json.notes)) {
           setLoadedScore(json, file.name);
+        } else {
+          showToast("無効な譜面ファイルです");
         }
       } catch (err) {
-        alert("無効な譜面ファイルです");
+        showToast("無効な譜面ファイルです");
       }
     };
     reader.readAsText(file);
@@ -112,13 +114,20 @@ function App() {
   }
 
   if (appMode === 'songSelect') {
-    return <SongSelect onBack={() => setAppMode('menu')} onStartGame={() => setAppMode('game')} />;
+    return (
+      <>
+        <Toast />
+        <SongSelect onBack={() => setAppMode('menu')} onStartGame={() => setAppMode('game')} />
+      </>
+    );
   }
 
   return (
-    <div
-      className="h-screen w-screen bg-neutral-900 text-white flex flex-col items-center p-8 font-sans select-none overflow-hidden box-border relative"
-    >
+    <>
+      <Toast />
+      <div
+        className="h-screen w-screen bg-neutral-900 text-white flex flex-col items-center p-8 font-sans select-none overflow-hidden box-border relative"
+      >
       {appMode === 'menu' && (
         <div
           className="absolute inset-0 w-full h-full z-0 pointer-events-none"
@@ -254,17 +263,7 @@ function App() {
                 遊び方：ノーツが判定枠に重なったら、表示されている最初の文字をタイピングしてください
               </div>
             )}
-            {activeWord ? (
-              <div className="text-6xl font-mono tracking-widest mt-2">
-                <span className="text-neutral-600">{activeWord.substring(0, typedIndex)}</span>
-                <span className="text-white font-black underline decoration-4 underline-offset-8">{activeWord.charAt(typedIndex)}</span>
-                <span className="text-neutral-400">{activeWord.substring(typedIndex + 1)}</span>
-              </div>
-            ) : (
-              <div className="text-2xl text-neutral-500 mt-2 font-bold tracking-widest">
-                {status === 'playing' ? 'READY...' : 'PRESS START'}
-              </div>
-            )}
+            <ActiveWordDisplay />
           </div>
         </>
       )}
@@ -361,7 +360,8 @@ function App() {
         </div>
       )}
       </div>
-    </div>
+      </div>
+    </>
   );
 }
 

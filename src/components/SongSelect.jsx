@@ -56,7 +56,7 @@ export default function SongSelect({ onBack, onStartGame }) {
       setTimeout(() => gameEngine.start(), 0);
     } catch (err) {
       console.error(err);
-      alert('譜面データの読み込みに失敗しました。');
+      useGameStore.getState().showToast('譜面データの読み込みに失敗しました。');
     }
   };
 

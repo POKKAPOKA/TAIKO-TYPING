@@ -31,16 +31,28 @@ const ROMAJI_DICT = {
   
   "ぁ": ["xa", "la"], "ぃ": ["xi", "li"], "ぅ": ["xu", "lu"], "ぇ": ["xe", "le"], "ぉ": ["xo", "lo"],
   "ゃ": ["xya", "lya"], "ゅ": ["xyu", "lyu"], "ょ": ["xyo", "lyo"],
+  "ゎ": ["xwa", "lwa"],
+
+  "うぃ": ["wi", "whi"], "うぇ": ["we", "whe"], "うぉ": ["who"],
+  "ふぁ": ["fa"], "ふぃ": ["fi"], "ふぇ": ["fe"], "ふぉ": ["fo"],
+  "てぃ": ["thi"], "でぃ": ["dhi"], "とぅ": ["twu"], "どぅ": ["dwu"],
+  "ゔぁ": ["va"], "ゔぃ": ["vi"], "ゔ": ["vu"], "ゔぇ": ["ve"], "ゔぉ": ["vo"],
+  "ヴぁ": ["va"], "ヴぃ": ["vi"], "ヴ": ["vu"], "ヴぇ": ["ve"], "ヴぉ": ["vo"],
   
-  "ん": ["nn", "xn"], // 単独の "n" は特別な条件でのみ追加される
-  "っ": ["xtsu", "ltsu", "xtu", "ltu"], // 次の子音を重ねるパターンは動的に追加される
+  "ん": ["nn", "xn"],
+  "っ": ["xtsu", "ltsu", "xtu", "ltu"],
   "ー": ["-"]
 };
+
+// 全角カタカナをひらがなに変換
+function toHiragana(str) {
+  return str.replace(/[\u30a1-\u30f6]/g, match => String.fromCharCode(match.charCodeAt(0) - 0x60));
+}
 
 // 単独nが許容されるかどうかの判定
 function canUseSingleN(nextHiraganaChar) {
   if (!nextHiraganaChar) return false; // 最後が「ん」の場合は "nn" が必要
-  // 母音、な行、や行 が次に来る場合は単独nは不可（na とつながって「な」になってしまうため）
+  // 母音、な行、や行 が次に来る場合は単独nは不可
   const invalidNextChars = "あいうえおなにぬねのやゆよぁぃぅぇぉゃゅょ";
   return !invalidNextChars.includes(nextHiraganaChar);
 }
@@ -48,11 +60,19 @@ function canUseSingleN(nextHiraganaChar) {
 export class RomajiParser {
   constructor(reading) {
     this.reading = reading || "";
-    this.tokens = this._tokenize(this.reading);
-    this.paths = this._buildPaths(this.tokens);
+    // カタカナをひらがなに変換（入力されるreadingのみ）
+    this.normalizedReading = toHiragana(this.reading);
+    this.tokens = this._tokenize(this.normalizedReading);
+    this.tokenOptions = this._buildTokenOptions(this.tokens);
     
-    // 現在有効なルートの候補（最初は全て）
-    this.activePaths = this.paths;
+    // 状態: { tokenIndex: 0, optionIndex: X, charIndex: 0 }
+    this.activeNodes = [];
+    if (this.tokenOptions.length > 0) {
+      for (let i = 0; i < this.tokenOptions[0].length; i++) {
+        this.activeNodes.push({ tokenIndex: 0, optionIndex: i, charIndex: 0 });
+      }
+    }
+    
     this.typedString = "";
   }
 
@@ -71,13 +91,12 @@ export class RomajiParser {
     return tokens;
   }
 
-  _buildPaths(tokens) {
+  _buildTokenOptions(tokens) {
     const tokenOptions = [];
     for (let i = 0; i < tokens.length; i++) {
       const token = tokens[i];
       let options = ROMAJI_DICT[token] ? [...ROMAJI_DICT[token]] : [token.toLowerCase()]; 
       
-      // 「ん」の特例：次が特定の文字でなければ単独 'n' を追加
       if (token === "ん") {
         const nextChar = tokens[i+1] ? tokens[i+1][0] : null;
         if (nextChar && canUseSingleN(nextChar)) {
@@ -85,14 +104,12 @@ export class RomajiParser {
         }
       }
       
-      // 「っ」の特例：次の文字の子音を重ねるパターンを追加
       if (token === "っ") {
         const nextToken = tokens[i+1];
         if (nextToken && ROMAJI_DICT[nextToken]) {
           const nextOptions = ROMAJI_DICT[nextToken];
           nextOptions.forEach(opt => {
             const firstChar = opt[0];
-            // a,i,u,e,o 以外の子音なら重ねる
             if (!"aiueo".includes(firstChar)) {
               options.push(firstChar);
             }
@@ -100,85 +117,82 @@ export class RomajiParser {
         }
       }
       
-      // 重複排除
       options = [...new Set(options)];
       tokenOptions.push(options);
     }
-    
-    // 全組み合わせを展開
-    let currentStrings = [""];
-    for (let i = 0; i < tokenOptions.length; i++) {
-      let nextStrings = [];
-      const opts = tokenOptions[i];
-      for (const str of currentStrings) {
-        for (const opt of opts) {
-          nextStrings.push(str + opt);
-        }
-      }
-      currentStrings = nextStrings;
-    }
-    
-    // フォールバック（何も見つからなかった場合）
-    if (currentStrings.length === 0) return [""];
-    return currentStrings;
+    return tokenOptions;
   }
 
-  /**
-   * キーボードからの1文字の入力を受け付ける。
-   * 正解ルートに乗っていれば true を返し、内部状態を進める。
-   * 間違っていれば false を返す。
-   */
   input(key) {
+    if (this.tokenOptions.length === 0) return true;
     key = key.toLowerCase();
-    const candidate = this.typedString + key;
+    const nextNodes = [];
     
-    const validPaths = this.activePaths.filter(path => path.startsWith(candidate));
+    for (const node of this.activeNodes) {
+      const opt = this.tokenOptions[node.tokenIndex][node.optionIndex];
+      if (opt[node.charIndex] === key) {
+        if (node.charIndex + 1 === opt.length) {
+          if (node.tokenIndex + 1 < this.tokenOptions.length) {
+            for (let nextOptIdx = 0; nextOptIdx < this.tokenOptions[node.tokenIndex + 1].length; nextOptIdx++) {
+              nextNodes.push({ tokenIndex: node.tokenIndex + 1, optionIndex: nextOptIdx, charIndex: 0 });
+            }
+          } else {
+            nextNodes.push({ tokenIndex: node.tokenIndex + 1, optionIndex: 0, charIndex: 0 });
+          }
+        } else {
+          nextNodes.push({ tokenIndex: node.tokenIndex, optionIndex: node.optionIndex, charIndex: node.charIndex + 1 });
+        }
+      }
+    }
     
-    if (validPaths.length > 0) {
-      this.typedString = candidate;
-      this.activePaths = validPaths;
+    if (nextNodes.length > 0) {
+      this.typedString += key;
+      this.activeNodes = nextNodes;
       return true;
     }
     return false;
   }
 
   isComplete() {
-    return this.activePaths.some(path => path === this.typedString);
+    if (this.tokenOptions.length === 0) return true;
+    return this.activeNodes.some(node => node.tokenIndex >= this.tokenOptions.length);
   }
 
-  /**
-   * UI表示用の状態オブジェクトを返す
-   * 例: "shinkansen" に対して "shin" まで打った状態
-   * { typed: "SHIN", next: "K", remaining: "ANSEN" }
-   */
   getDisplayState() {
-    const bestPath = this.activePaths[0] || "";
+    if (this.isComplete() || this.activeNodes.length === 0) {
+      return { typed: this.typedString.toUpperCase(), next: "", remaining: "" };
+    }
+    
+    const node = this.activeNodes[0];
+    const currentOpt = this.tokenOptions[node.tokenIndex][node.optionIndex];
+    const nextChar = currentOpt[node.charIndex] || "";
+    let remaining = currentOpt.substring(node.charIndex + 1);
+    
+    for (let i = node.tokenIndex + 1; i < this.tokenOptions.length; i++) {
+      remaining += this.tokenOptions[i][0];
+    }
+    
     return {
       typed: this.typedString.toUpperCase(),
-      next: bestPath.charAt(this.typedString.length).toUpperCase(),
-      remaining: bestPath.substring(this.typedString.length + 1).toUpperCase()
+      next: nextChar.toUpperCase(),
+      remaining: remaining.toUpperCase()
     };
   }
 }
 
-/**
- * テキスト（ひらがな、英数字混在）を受け取り、
- * タイピングする際の最短打鍵数を計算して返すユーティリティ。
- */
 export function getKeystrokeCount(text) {
   if (!text) return 0;
   
-  // RomajiParser の展開ロジックを利用して全パターンのローマ字を取得
   const parser = new RomajiParser(text);
-  if (!parser.paths || parser.paths.length === 0) return text.length;
+  if (!parser.tokenOptions || parser.tokenOptions.length === 0) return text.length;
 
-  // 全パターンの中で最も文字数（打鍵数）が少ないものを探す
-  let minLen = Infinity;
-  for (const path of parser.paths) {
-    if (path.length < minLen) {
-      minLen = path.length;
+  let count = 0;
+  for (const options of parser.tokenOptions) {
+    let minLen = Infinity;
+    for (const opt of options) {
+      if (opt.length < minLen) minLen = opt.length;
     }
+    count += minLen === Infinity ? 1 : minLen;
   }
-  
-  return minLen === Infinity ? text.length : minLen;
+  return count;
 }

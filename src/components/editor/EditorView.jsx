@@ -433,7 +433,7 @@ export default function EditorView({ onExit }) {
         }
       } catch (err) {
         console.error("Invalid JSON file:", err);
-        alert("無効なJSONファイルです。");
+        setToastMessage("無効なJSONファイルです。");
       }
     };
     reader.readAsText(file);
