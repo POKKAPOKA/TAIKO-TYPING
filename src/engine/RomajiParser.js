@@ -45,12 +45,12 @@ const ROMAJI_DICT = {
 };
 
 // 全角カタカナをひらがなに変換
-function toHiragana(str) {
+export function toHiragana(str) {
   return str.replace(/[\u30a1-\u30f6]/g, match => String.fromCharCode(match.charCodeAt(0) - 0x60));
 }
 
 // 単独nが許容されるかどうかの判定
-function canUseSingleN(nextHiraganaChar) {
+export function canUseSingleN(nextHiraganaChar) {
   if (!nextHiraganaChar) return false; // 最後が「ん」の場合は "nn" が必要
   // 母音、な行、や行 が次に来る場合は単独nは不可
   const invalidNextChars = "あいうえおなにぬねのやゆよぁぃぅぇぉゃゅょ";
@@ -58,7 +58,7 @@ function canUseSingleN(nextHiraganaChar) {
 }
 
 // 読みをひらがなトークン（辞書のキー単位）に分割する
-function tokenizeReading(reading) {
+export function tokenizeReading(reading) {
   const tokens = [];
   let i = 0;
   while (i < reading.length) {
@@ -84,7 +84,8 @@ export function findUntypableChars(reading) {
 }
 
 export class RomajiParser {
-  constructor(reading) {
+  constructor(reading, nextReading = "") {
+    this.nextReading = nextReading;
     this.reading = reading || "";
     // カタカナをひらがなに変換（入力されるreadingのみ）
     this.normalizedReading = toHiragana(this.reading);
@@ -102,21 +103,21 @@ export class RomajiParser {
     this.typedString = "";
   }
 
-  _buildTokenOptions(tokens) {
+  _buildTokenOptions(tokens, lookaheadToken = null) {
     const tokenOptions = [];
     for (let i = 0; i < tokens.length; i++) {
       const token = tokens[i];
       let options = ROMAJI_DICT[token] ? [...ROMAJI_DICT[token]] : [token.toLowerCase()];
 
       if (token === "ん") {
-        const nextChar = tokens[i+1] ? tokens[i+1][0] : null;
+        const nextChar = tokens[i+1] ? tokens[i+1][0] : (lookaheadToken ? lookaheadToken[0] : null);
         if (nextChar && canUseSingleN(nextChar)) {
           options.push("n");
         }
       }
 
       if (token === "っ") {
-        const nextToken = tokens[i+1];
+        const nextToken = tokens[i+1] || lookaheadToken;
         if (nextToken && ROMAJI_DICT[nextToken]) {
           const nextOptions = ROMAJI_DICT[nextToken];
           nextOptions.forEach(opt => {

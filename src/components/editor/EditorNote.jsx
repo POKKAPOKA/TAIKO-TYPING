@@ -6,6 +6,7 @@ export default function EditorNote({ note, beatWidth, msPerBeat }) {
   const updateEditorNote = useEditorStore(state => state.updateEditorNote);
   const scrollTimeOffset = useEditorStore(state => state.scrollTimeOffset);
   const selectedNoteIds = useEditorStore(state => state.selectedNoteIds);
+  const allNotes = useEditorStore(state => state.notes);
   const setSelectedNoteIds = useEditorStore(state => state.setSelectedNoteIds);
 
   const [isEditing, setIsEditing] = useState(false);

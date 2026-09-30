@@ -46,7 +46,14 @@ export class GameEngine {
     this.firstHitMiss = false;
     if (this.currentTarget) {
       const reading = this.currentTarget.reading || this.currentTarget.word;
-      this.romajiParser = new RomajiParser(reading);
+      let nextReading = "";
+      if (this.queue.length > 0) {
+        const nextNote = this.queue[0];
+        if (Math.abs(this.currentTarget.endTime - nextNote.time) < 1) {
+          nextReading = nextNote.reading || nextNote.word || "";
+        }
+      }
+      this.romajiParser = new RomajiParser(reading, nextReading);
 
       const displayState = this.romajiParser.getDisplayState();
       store.setTargetState(
@@ -304,7 +311,7 @@ export class GameEngine {
 
     const durationSec = (this.currentTarget.endTime - this.currentTarget.time) / 1000;
     if (durationSec > 0) {
-      const strokeCount = getKeystrokeCount(this.currentTarget.reading || this.currentTarget.word);
+      const strokeCount = this.romajiParser.typedString.length;
       const kps = strokeCount / durationSec;
       store.updateMaxKps(kps);
     }
