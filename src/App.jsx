@@ -43,7 +43,7 @@ function App() {
   const setLoadedScore = useGameStore(state => state.setLoadedScore);
   const setAudioUrl = useGameStore(state => state.setAudioUrl);
   const resetPlayState = useGameStore(state => state.resetPlayState);
-  const clearSetup = useGameStore(state => state.clearSetup);
+  const resetGameState = useGameStore(state => state.resetGameState);
   const setIsLocalPlay = useGameStore(state => state.setIsLocalPlay);
   const showToast = useGameStore(state => state.showToast);
 
@@ -68,7 +68,7 @@ function App() {
 
   const handleBackToMenu = () => {
     gameEngine.stop();
-    clearSetup();
+    resetGameState();
     setAppMode('menu');
   };
 

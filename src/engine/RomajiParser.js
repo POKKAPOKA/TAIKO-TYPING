@@ -10,7 +10,7 @@ const ROMAJI_DICT = {
   "や": ["ya"], "ゆ": ["yu"], "よ": ["yo"],
   "ら": ["ra"], "り": ["ri"], "る": ["ru"], "れ": ["re"], "ろ": ["ro"],
   "わ": ["wa"], "を": ["wo"],
-  
+
   "が": ["ga"], "ぎ": ["gi"], "ぐ": ["gu"], "げ": ["ge"], "ご": ["go"],
   "ざ": ["za"], "じ": ["ji", "zi"], "ず": ["zu"], "ぜ": ["ze"], "ぞ": ["zo"],
   "だ": ["da"], "ぢ": ["di"], "づ": ["du"], "で": ["de"], "ど": ["do"],
@@ -28,7 +28,7 @@ const ROMAJI_DICT = {
   "じゃ": ["ja", "zya", "jya"], "じゅ": ["ju", "zyu", "jyu"], "じょ": ["jo", "zyo", "jyo"],
   "びゃ": ["bya"], "びゅ": ["byu"], "びょ": ["byo"],
   "ぴゃ": ["pya"], "ぴゅ": ["pyu"], "ぴょ": ["pyo"],
-  
+
   "ぁ": ["xa", "la"], "ぃ": ["xi", "li"], "ぅ": ["xu", "lu"], "ぇ": ["xe", "le"], "ぉ": ["xo", "lo"],
   "ゃ": ["xya", "lya"], "ゅ": ["xyu", "lyu"], "ょ": ["xyo", "lyo"],
   "ゎ": ["xwa", "lwa"],
@@ -38,7 +38,7 @@ const ROMAJI_DICT = {
   "てぃ": ["thi"], "でぃ": ["dhi"], "とぅ": ["twu"], "どぅ": ["dwu"],
   "ゔぁ": ["va"], "ゔぃ": ["vi"], "ゔ": ["vu"], "ゔぇ": ["ve"], "ゔぉ": ["vo"],
   "ヴぁ": ["va"], "ヴぃ": ["vi"], "ヴ": ["vu"], "ヴぇ": ["ve"], "ヴぉ": ["vo"],
-  
+
   "ん": ["nn", "xn"],
   "っ": ["xtsu", "ltsu", "xtu", "ltu"],
   "ー": ["-"]
@@ -57,14 +57,40 @@ function canUseSingleN(nextHiraganaChar) {
   return !invalidNextChars.includes(nextHiraganaChar);
 }
 
+// 読みをひらがなトークン（辞書のキー単位）に分割する
+function tokenizeReading(reading) {
+  const tokens = [];
+  let i = 0;
+  while (i < reading.length) {
+    if (i + 1 < reading.length && ROMAJI_DICT[reading.substring(i, i + 2)]) {
+      tokens.push(reading.substring(i, i + 2));
+      i += 2;
+    } else {
+      tokens.push(reading[i]);
+      i++;
+    }
+  }
+  return tokens;
+}
+
+// 読みの中に「タイピング不可能な文字」（辞書にも英数字にもない文字）が
+// 含まれるか検査し、該当文字の配列を返す（空なら問題なし）。
+// そのままだとゲーム中に絶対に打てないノーツになるため、エディタの入力チェックに使う。
+export function findUntypableChars(reading) {
+  if (!reading) return [];
+  return tokenizeReading(toHiragana(reading)).filter(
+    token => !ROMAJI_DICT[token] && !/^[a-z0-9\-]+$/i.test(token)
+  );
+}
+
 export class RomajiParser {
   constructor(reading) {
     this.reading = reading || "";
     // カタカナをひらがなに変換（入力されるreadingのみ）
     this.normalizedReading = toHiragana(this.reading);
-    this.tokens = this._tokenize(this.normalizedReading);
+    this.tokens = tokenizeReading(this.normalizedReading);
     this.tokenOptions = this._buildTokenOptions(this.tokens);
-    
+
     // 状態: { tokenIndex: 0, optionIndex: X, charIndex: 0 }
     this.activeNodes = [];
     if (this.tokenOptions.length > 0) {
@@ -72,38 +98,23 @@ export class RomajiParser {
         this.activeNodes.push({ tokenIndex: 0, optionIndex: i, charIndex: 0 });
       }
     }
-    
-    this.typedString = "";
-  }
 
-  _tokenize(reading) {
-    let tokens = [];
-    let i = 0;
-    while (i < reading.length) {
-      if (i + 1 < reading.length && ROMAJI_DICT[reading.substring(i, i + 2)]) {
-        tokens.push(reading.substring(i, i + 2));
-        i += 2;
-      } else {
-        tokens.push(reading[i]);
-        i++;
-      }
-    }
-    return tokens;
+    this.typedString = "";
   }
 
   _buildTokenOptions(tokens) {
     const tokenOptions = [];
     for (let i = 0; i < tokens.length; i++) {
       const token = tokens[i];
-      let options = ROMAJI_DICT[token] ? [...ROMAJI_DICT[token]] : [token.toLowerCase()]; 
-      
+      let options = ROMAJI_DICT[token] ? [...ROMAJI_DICT[token]] : [token.toLowerCase()];
+
       if (token === "ん") {
         const nextChar = tokens[i+1] ? tokens[i+1][0] : null;
         if (nextChar && canUseSingleN(nextChar)) {
           options.push("n");
         }
       }
-      
+
       if (token === "っ") {
         const nextToken = tokens[i+1];
         if (nextToken && ROMAJI_DICT[nextToken]) {
@@ -116,7 +127,7 @@ export class RomajiParser {
           });
         }
       }
-      
+
       options = [...new Set(options)];
       tokenOptions.push(options);
     }
@@ -127,7 +138,7 @@ export class RomajiParser {
     if (this.tokenOptions.length === 0) return true;
     key = key.toLowerCase();
     const nextNodes = [];
-    
+
     for (const node of this.activeNodes) {
       const opt = this.tokenOptions[node.tokenIndex][node.optionIndex];
       if (opt[node.charIndex] === key) {
@@ -144,7 +155,7 @@ export class RomajiParser {
         }
       }
     }
-    
+
     if (nextNodes.length > 0) {
       this.typedString += key;
       this.activeNodes = nextNodes;
@@ -162,16 +173,16 @@ export class RomajiParser {
     if (this.isComplete() || this.activeNodes.length === 0) {
       return { typed: this.typedString.toUpperCase(), next: "", remaining: "" };
     }
-    
+
     const node = this.activeNodes[0];
     const currentOpt = this.tokenOptions[node.tokenIndex][node.optionIndex];
     const nextChar = currentOpt[node.charIndex] || "";
     let remaining = currentOpt.substring(node.charIndex + 1);
-    
+
     for (let i = node.tokenIndex + 1; i < this.tokenOptions.length; i++) {
       remaining += this.tokenOptions[i][0];
     }
-    
+
     return {
       typed: this.typedString.toUpperCase(),
       next: nextChar.toUpperCase(),
@@ -182,7 +193,7 @@ export class RomajiParser {
 
 export function getKeystrokeCount(text) {
   if (!text) return 0;
-  
+
   const parser = new RomajiParser(text);
   if (!parser.tokenOptions || parser.tokenOptions.length === 0) return text.length;
 

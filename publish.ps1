@@ -9,7 +9,7 @@ if ([string]::IsNullOrWhiteSpace($commitMessage)) {
     Write-Error "Commit message is required."
 }
 
-npm exec vite build
+npm run build
 
 git add .
 git commit -m $commitMessage

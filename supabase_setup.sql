@@ -5,18 +5,19 @@ CREATE TABLE IF NOT EXISTS public.rankings (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   song_id TEXT NOT NULL CHECK (char_length(song_id) BETWEEN 1 AND 100),
   player_name TEXT NOT NULL CHECK (char_length(player_name) BETWEEN 1 AND 50),
-  score NUMERIC NOT NULL CHECK (score >= 0),
-  max_combo NUMERIC NOT NULL CHECK (max_combo >= 0),
-  peak_kps NUMERIC NOT NULL CHECK (peak_kps >= 0),
+  -- スコア・コンボ・KPSに上限を設け、不正な大値の送信（荒らし）を防ぐ
+  score NUMERIC NOT NULL CHECK (score >= 0 AND score <= 10000000),
+  max_combo NUMERIC NOT NULL CHECK (max_combo >= 0 AND max_combo <= 100000),
+  peak_kps NUMERIC NOT NULL CHECK (peak_kps >= 0 AND peak_kps <= 30),
   created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL
 );
 
 -- ※ すでに旧定義でテーブルを作成済みの場合は、以下のALTER文で制約を追加してください
 -- ALTER TABLE public.rankings ADD CONSTRAINT rankings_song_id_length CHECK (char_length(song_id) BETWEEN 1 AND 100);
 -- ALTER TABLE public.rankings ADD CONSTRAINT rankings_player_name_length CHECK (char_length(player_name) BETWEEN 1 AND 50);
--- ALTER TABLE public.rankings ADD CONSTRAINT rankings_score_positive CHECK (score >= 0);
--- ALTER TABLE public.rankings ADD CONSTRAINT rankings_max_combo_positive CHECK (max_combo >= 0);
--- ALTER TABLE public.rankings ADD CONSTRAINT rankings_peak_kps_positive CHECK (peak_kps >= 0);
+-- ALTER TABLE public.rankings ADD CONSTRAINT rankings_score_range CHECK (score >= 0 AND score <= 10000000);
+-- ALTER TABLE public.rankings ADD CONSTRAINT rankings_max_combo_range CHECK (max_combo >= 0 AND max_combo <= 100000);
+-- ALTER TABLE public.rankings ADD CONSTRAINT rankings_peak_kps_range CHECK (peak_kps >= 0 AND peak_kps <= 30);
 
 -- ==============================================================================
 -- RLS (Row Level Security) の設定

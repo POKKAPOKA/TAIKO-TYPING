@@ -1,6 +1,6 @@
 import { useState, useRef } from 'react';
 import { useEditorStore } from '../../store/editorStore';
-import { getKeystrokeCount } from '../../engine/RomajiParser';
+import { getKeystrokeCount, findUntypableChars } from '../../engine/RomajiParser';
 
 export default function EditorNote({ note, beatWidth, msPerBeat }) {
   const updateEditorNote = useEditorStore(state => state.updateEditorNote);
@@ -43,6 +43,14 @@ export default function EditorNote({ note, beatWidth, msPerBeat }) {
   // 編集保存時
   const handleSave = () => {
     setIsEditing(false);
+    // 読みにタイピング不可能な文字（漢字・記号など）が含まれていたら警告する
+    // （そのままだとゲーム中に絶対に打てないノーツになるため）
+    const untypableChars = findUntypableChars(readingText);
+    if (untypableChars.length > 0) {
+      useEditorStore.getState().showEditorToast(
+        `読みに打てない文字があります: ${untypableChars.join(' ')}（ひらがなに修正してください）`
+      );
+    }
     updateEditorNote(note.id, { word: inputText, reading: readingText });
   };
 

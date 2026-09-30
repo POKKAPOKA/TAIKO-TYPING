@@ -3,6 +3,27 @@ import { create } from 'zustand';
 // トースト自動消去用タイマー（UI側のuseEffectを使わずストア側で管理する）
 let toastTimer = null;
 
+// プレイ関連状態の初期値（resetPlayState / resetGameState で共用）
+const initialPlayState = {
+  score: 0,
+  combo: 0,
+  maxCombo: 0,
+  missCount: 0,
+  justiceCount: 0,
+  attackCount: 0,
+  completedCount: 0,
+  droppedCount: 0,
+  typoCount: 0,
+  maxKps: 0,
+  status: 'idle',
+  showGuide: false,
+  currentTarget: null,
+  activeWord: null,
+  typedIndex: 0,
+  lastJudgment: null,
+  wordQueue: []
+};
+
 export const useGameStore = create((set) => ({
   score: 0,
   combo: 0,
@@ -95,44 +116,11 @@ export const useGameStore = create((set) => ({
 
   setWordQueue: (queue) => set({ wordQueue: queue }),
 
-  resetPlayState: () => set({
-    score: 0,
-    combo: 0,
-    maxCombo: 0,
-    missCount: 0,
-    justiceCount: 0,
-    attackCount: 0,
-    completedCount: 0,
-    droppedCount: 0,
-    typoCount: 0,
-    maxKps: 0,
-    status: 'idle',
-    showGuide: false,
-    currentTarget: null,
-    activeWord: null,
-    typedIndex: 0,
-    lastJudgment: null,
-    wordQueue: []
-  }),
+  // プレイ結果系の状態だけを初期化する（譜面・音源・maxScoreは保持。リトライ時に使用）
+  resetPlayState: () => set({ ...initialPlayState }),
 
-  clearSetup: () => set({
-    score: 0,
-    combo: 0,
-    maxCombo: 0,
-    missCount: 0,
-    justiceCount: 0,
-    attackCount: 0,
-    completedCount: 0,
-    droppedCount: 0,
-    typoCount: 0,
-    maxKps: 0,
-    maxScore: 0,
-    status: 'idle',
-    showGuide: false,
-    currentTarget: null,
-    activeWord: null,
-    typedIndex: 0,
-    lastJudgment: null,
-    wordQueue: []
-  })
+  // プレイ結果系に加えてmaxScoreも初期化する（メニューへ戻る際に使用）
+  // ※譜面・音源はあえて保持する。メニューから再びセットアップ画面へ進んだとき、
+  //   再読み込みなしで同じデータを使えるようにするため
+  resetGameState: () => set({ ...initialPlayState, maxScore: 0 })
 }));
