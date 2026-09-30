@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { useGameStore } from './store/gameStore';
 import { gameEngine } from './engine/GameEngine';
 import NotesArea from './components/NotesArea';
@@ -9,15 +9,18 @@ import { useSystemSE } from './hooks/useSystemSE';
 
 import SongSelect from './components/SongSelect';
 import Leaderboard from './components/Leaderboard';
-import { submitScore } from './api/mockRankings';
+import { fetchRankingsResult } from './api/rankings';
+import { loadSongs } from './api/songList';
+
+// 操作ガイドの自動消去とリザルトのスコア送信をストア購読で行うモジュール（importするだけで有効になる）
+import './engine/gameUiSync';
 
 function App() {
   useSystemSE();
-  
+
   const [appMode, setAppMode] = useState('menu'); // 'menu' | 'setup' | 'game' | 'editor' | 'songSelect'
-  const [showGuide, setShowGuide] = useState(false);
-  const [showLeaderboard, setShowLeaderboard] = useState(false);
-  const [scoreSubmitted, setScoreSubmitted] = useState(false);
+  const [leaderboardData, setLeaderboardData] = useState(null); // { songTitle, promise } | null
+  const [songsPromise, setSongsPromise] = useState(null);
 
   const score = useGameStore(state => state.score);
   const maxCombo = useGameStore(state => state.maxCombo);
@@ -35,6 +38,7 @@ function App() {
   const scoreFileName = useGameStore(state => state.scoreFileName);
   const audioFileName = useGameStore(state => state.audioFileName);
   const isLocalPlay = useGameStore(state => state.isLocalPlay);
+  const showGuide = useGameStore(state => state.showGuide);
 
   const setLoadedScore = useGameStore(state => state.setLoadedScore);
   const setAudioUrl = useGameStore(state => state.setAudioUrl);
@@ -43,37 +47,8 @@ function App() {
   const setIsLocalPlay = useGameStore(state => state.setIsLocalPlay);
   const showToast = useGameStore(state => state.showToast);
 
-  useEffect(() => {
-    if (appMode === 'game' && status === 'playing') {
-      setShowGuide(true);
-      const timer = setTimeout(() => {
-        setShowGuide(false);
-      }, 5000);
-      return () => clearTimeout(timer);
-    } else {
-      setShowGuide(false);
-    }
-  }, [appMode, status]);
-
-  useEffect(() => {
-    if (appMode === 'game' && status === 'result' && !scoreSubmitted && !isLocalPlay) {
-      if (scoreFileName) {
-        const songId = scoreFileName.replace('.json', '');
-        submitScore({
-          songId,
-          playerName: 'Guest',
-          score,
-          maxCombo,
-          maxKps
-        }).then(() => {
-          setScoreSubmitted(true);
-        }).catch(err => {
-          console.error("Score submission failed", err);
-          showToast(`送信失敗: ${err.message || '不明なエラー'}`);
-        });
-      }
-    }
-  }, [appMode, status, scoreSubmitted, isLocalPlay, scoreFileName, score, maxCombo, maxKps]);
+  // 操作ガイドの表示制御とリザルトのスコア送信は engine/gameUiSync.js が
+  // ストア購読（subscribe）で行うため、ここでのuseEffectは不要
 
   const handleStartGame = () => {
     setIsLocalPlay(true);
@@ -87,7 +62,6 @@ function App() {
 
   const handleRetry = () => {
     resetPlayState();
-    setScoreSubmitted(false);
     setAppMode('game');
     gameEngine.start();
   };
@@ -95,7 +69,6 @@ function App() {
   const handleBackToMenu = () => {
     gameEngine.stop();
     clearSetup();
-    setScoreSubmitted(false);
     setAppMode('menu');
   };
 
@@ -146,7 +119,7 @@ function App() {
     return (
       <>
         <Toast />
-        <SongSelect onBack={() => setAppMode('menu')} onStartGame={() => setAppMode('game')} />
+        <SongSelect songsPromise={songsPromise} onBack={() => setAppMode('menu')} onStartGame={() => setAppMode('game')} />
       </>
     );
   }
@@ -175,7 +148,10 @@ function App() {
       {appMode === 'menu' && (
         <div className="flex flex-col gap-6 mt-40">
           <button
-            onClick={() => setAppMode('songSelect')}
+            onClick={() => {
+              setSongsPromise(loadSongs());
+              setAppMode('songSelect');
+            }}
             className="px-12 py-4 bg-orange-500 hover:bg-orange-400 text-neutral-900 rounded-full font-black text-2xl transition-colors"
           >
             公式譜面で遊ぶ
@@ -380,7 +356,13 @@ function App() {
               メニューに戻る
             </button>
             <button
-              onClick={() => setShowLeaderboard(true)}
+              onClick={() => {
+                const songId = scoreFileName ? scoreFileName.replace(/\.json$/i, '') : 'Unknown';
+                setLeaderboardData({
+                  songTitle: 'LEADERBOARD',
+                  promise: fetchRankingsResult(songId)
+                });
+              }}
               className="flex-1 py-4 bg-yellow-600 hover:bg-yellow-500 text-white rounded-full font-black text-xl transition-colors"
             >
               ランキング
@@ -394,12 +376,12 @@ function App() {
           </div>
         </div>
       )}
-      
-      {showLeaderboard && (
+
+      {leaderboardData && (
         <Leaderboard 
-          songId={scoreFileName ? scoreFileName.replace('.json', '') : 'Unknown'}
-          songTitle="LEADERBOARD"
-          onClose={() => setShowLeaderboard(false)}
+          songTitle={leaderboardData.songTitle}
+          rankingsPromise={leaderboardData.promise}
+          onClose={() => setLeaderboardData(null)}
         />
       )}
       </div>

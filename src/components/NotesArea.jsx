@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useMemo } from 'react';
+import React, { useRef, useMemo, useCallback } from 'react';
 import { useGameStore } from '../store/gameStore';
 import { gameEngine } from '../engine/GameEngine';
 
@@ -34,92 +34,87 @@ const JudgmentPopup = React.memo(() => {
 });
 
 const NotesArea = React.memo(() => {
-  const containerRef = useRef(null);
-  const requestRef = useRef();
+  const containerNodeRef = useRef(null);
+  const requestRef = useRef(null);
 
   const currentTarget = useGameStore(state => state.currentTarget);
   const wordQueue = useGameStore(state => state.wordQueue);
   const status = useGameStore(state => state.status);
   const loadedScore = useGameStore(state => state.loadedScore);
-  
+
   const [visibleRange, setVisibleRange] = React.useState({ start: -2000, end: 8000 });
 
-  useEffect(() => {
-    if (status !== 'playing') {
-      setVisibleRange({ start: -2000, end: 8000 });
-      return;
+  // ノーツ描画ループの制御はコールバックrefで行う（useEffectは使わない）。
+  // 再生中のみコンテナDOMが存在するため、マウント/アンマウントがそのまま開始/停止の合図になる。
+  const handleContainerRef = useCallback((node) => {
+    if (requestRef.current) {
+      cancelAnimationFrame(requestRef.current);
+      requestRef.current = null;
     }
+    containerNodeRef.current = node;
+    if (!node) return;
 
-    const interval = setInterval(() => {
+    // 表示範囲を初期化
+    setVisibleRange({ start: -2000, end: 8000 });
+
+    const updateNotes = () => {
       const currentTime = gameEngine.getCurrentTime();
+
+      // レンダリング対象の絞り込み範囲を更新（再レンダリング抑制のため、大きくずれた時だけ反映）
       const pastMargin = 1500;
       const futureWindow = (window.innerWidth || 1920) / NOTE_SPEED + 1500;
-      
       const newStart = currentTime - pastMargin;
       const newEnd = currentTime + futureWindow;
-      
       setVisibleRange(prev => {
         if (Math.abs(prev.start - newStart) > 500) {
           return { start: newStart, end: newEnd };
         }
         return prev;
       });
-    }, 250);
 
-    return () => clearInterval(interval);
-  }, [status]);
+      const container = containerNodeRef.current;
+      if (container) {
+        const storeState = useGameStore.getState();
+        const currentTargetData = storeState.currentTarget;
+        const wordQueueData = storeState.wordQueue;
 
-  useEffect(() => {
-    if (status !== 'playing') return;
-
-    const updateNotes = () => {
-      const currentTime = gameEngine.getCurrentTime();
-      
-      if (!containerRef.current) {
-        requestRef.current = requestAnimationFrame(updateNotes);
-        return;
-      }
-
-      const storeState = useGameStore.getState();
-      const currentTargetData = storeState.currentTarget;
-      const wordQueueData = storeState.wordQueue;
-
-      const allNotesMap = new Map();
-      if (currentTargetData) allNotesMap.set(String(currentTargetData.id), currentTargetData);
-      for (let i = 0; i < wordQueueData.length; i++) {
-        allNotesMap.set(String(wordQueueData[i].id), wordQueueData[i]);
-      }
-
-      const noteElements = containerRef.current.children;
-      const screenWidth = window.innerWidth;
-      
-      for (let i = 0; i < noteElements.length; i++) {
-        const el = noteElements[i];
-        
-        if (el.dataset.isBarline) {
-          const barTime = parseFloat(el.dataset.time);
-          const xPos = JUDGE_LINE_X + (barTime - currentTime) * NOTE_SPEED;
-          
-          if (xPos < -100 || xPos > screenWidth + 200) {
-             el.style.display = 'none';
-          } else {
-             el.style.display = 'block';
-             el.style.left = `${xPos}px`;
-          }
-          continue;
+        const allNotesMap = new Map();
+        if (currentTargetData) allNotesMap.set(String(currentTargetData.id), currentTargetData);
+        for (let i = 0; i < wordQueueData.length; i++) {
+          allNotesMap.set(String(wordQueueData[i].id), wordQueueData[i]);
         }
 
-        const noteIdStr = el.dataset.id;
-        if (noteIdStr) {
-          const noteData = allNotesMap.get(noteIdStr);
-          if (noteData) {
-            const xPos = JUDGE_LINE_X + (noteData.time - currentTime) * NOTE_SPEED;
-            
-            if (xPos < -200 || xPos > screenWidth + 200) {
+        const noteElements = container.children;
+        const screenWidth = window.innerWidth;
+
+        for (let i = 0; i < noteElements.length; i++) {
+          const el = noteElements[i];
+
+          if (el.dataset.isBarline) {
+            const barTime = parseFloat(el.dataset.time);
+            const xPos = JUDGE_LINE_X + (barTime - currentTime) * NOTE_SPEED;
+
+            if (xPos < -100 || xPos > screenWidth + 200) {
                el.style.display = 'none';
             } else {
-               el.style.display = 'flex';
+               el.style.display = 'block';
                el.style.left = `${xPos}px`;
+            }
+            continue;
+          }
+
+          const noteIdStr = el.dataset.id;
+          if (noteIdStr) {
+            const noteData = allNotesMap.get(noteIdStr);
+            if (noteData) {
+              const xPos = JUDGE_LINE_X + (noteData.time - currentTime) * NOTE_SPEED;
+
+              if (xPos < -200 || xPos > screenWidth + 200) {
+                 el.style.display = 'none';
+              } else {
+                 el.style.display = 'flex';
+                 el.style.left = `${xPos}px`;
+              }
             }
           }
         }
@@ -129,10 +124,7 @@ const NotesArea = React.memo(() => {
     };
 
     requestRef.current = requestAnimationFrame(updateNotes);
-    return () => {
-      if (requestRef.current) cancelAnimationFrame(requestRef.current);
-    };
-  }, [status]);
+  }, []);
 
   const allNotes = useMemo(() => {
     const arr = [];
@@ -174,7 +166,7 @@ const NotesArea = React.memo(() => {
         <div className="w-4 h-32 bg-neutral-600 rounded-full opacity-50" />
       </div>
 
-      <div ref={containerRef} className="absolute inset-0">
+      <div ref={handleContainerRef} className="absolute inset-0">
         {barlines.map((time, index) => (
           <div
             key={`bar-${time}`}

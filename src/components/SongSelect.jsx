@@ -1,14 +1,27 @@
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useMemo, Suspense, use } from 'react';
 import { useGameStore } from '../store/gameStore';
 import { gameEngine } from '../engine/GameEngine';
 import Leaderboard from './Leaderboard';
+import { fetchRankingsResult } from '../api/rankings';
 
-export default function SongSelect({ onBack, onStartGame }) {
-  const [songs, setSongs] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
-  const [selectedLeaderboard, setSelectedLeaderboard] = useState(null);
-  
+export default function SongSelect({ songsPromise, onBack, onStartGame }) {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen bg-neutral-900 text-white flex items-center justify-center font-sans select-none w-full">
+        <div className="text-xl text-neutral-400">曲を読み込み中...</div>
+      </div>
+    }>
+      <SongListContent songsPromise={songsPromise} onBack={onBack} onStartGame={onStartGame} />
+    </Suspense>
+  );
+}
+
+function SongListContent({ songsPromise, onBack, onStartGame }) {
+  // 曲リストはPromiseから読み取る（React 19のuseフック。useEffectでのフェッチは行わない）
+  const { songs, error } = use(songsPromise);
+
+  const [selectedLeaderboard, setSelectedLeaderboard] = useState(null); // { songTitle, promise } | null
+
   // ソートとフィルターのステート
   const [sortType, setSortType] = useState('difficulty'); // 'difficulty', 'duration', 'notesCount'
   const [sortOrder, setSortOrder] = useState('asc'); // 'asc', 'desc'
@@ -18,25 +31,6 @@ export default function SongSelect({ onBack, onStartGame }) {
   const setLoadedScore = useGameStore(state => state.setLoadedScore);
   const setAudioUrl = useGameStore(state => state.setAudioUrl);
 
-  useEffect(() => {
-    const fetchSongs = async () => {
-      try {
-        const response = await fetch('./songs/index.json');
-        if (!response.ok) {
-          throw new Error('Failed to load song list');
-        }
-        const data = await response.json();
-        setSongs(data);
-      } catch (err) {
-        console.error(err);
-        setError('曲リストの読み込みに失敗しました。');
-      } finally {
-        setLoading(false);
-      }
-    };
-    fetchSongs();
-  }, []);
-
   const handleSelectSong = async (song) => {
     try {
       const response = await fetch(song.scorePath);
@@ -44,22 +38,31 @@ export default function SongSelect({ onBack, onStartGame }) {
         throw new Error(`Failed to load score: ${response.statusText}`);
       }
       const data = await response.json();
-      
+
       const scoreFileName = song.scorePath.split('/').pop();
       const audioFileName = song.audioPath.split('/').pop();
-      
+
       setLoadedScore(data, scoreFileName);
       setAudioUrl(song.audioPath, audioFileName);
-      
+
       const store = useGameStore.getState();
       if(store.setIsLocalPlay) store.setIsLocalPlay(false);
-      
+
       onStartGame();
       setTimeout(() => gameEngine.start(), 0);
     } catch (err) {
       console.error(err);
       useGameStore.getState().showToast('譜面データの読み込みに失敗しました。');
     }
+  };
+
+  // ランキングを開く（データ取得のPromiseはここで作成し、useEffectは使わない）
+  const handleOpenLeaderboard = (song) => {
+    const songId = song.scorePath.split('/').pop().replace(/\.json$/i, '');
+    setSelectedLeaderboard({
+      songTitle: song.title,
+      promise: fetchRankingsResult(songId)
+    });
   };
 
   const creators = useMemo(() => {
@@ -111,27 +114,27 @@ export default function SongSelect({ onBack, onStartGame }) {
     <div className="min-h-screen bg-neutral-900 text-white flex flex-col items-center p-4 md:p-8 font-sans select-none w-full">
       <div className="w-full max-w-4xl flex justify-between items-center mb-6">
         <h1 className="text-3xl md:text-4xl font-black text-cyan-400 tracking-wider">曲を選ぶ</h1>
-        <button 
+        <button
           onClick={onBack}
           className="px-4 md:px-6 py-2 bg-neutral-700 hover:bg-neutral-600 text-white rounded-full font-bold transition-colors text-sm md:text-base"
         >
           メニューに戻る
         </button>
       </div>
-      
+
       <div className="w-full max-w-4xl text-neutral-400 font-bold tracking-widest text-xs md:text-sm text-center bg-neutral-800 p-4 rounded-xl border-2 border-neutral-700 mb-6">
         遊び方：ノーツが判定枠に重なったら、表示されている最初の文字をタイピングしてください
       </div>
 
       {/* フィルター＆ソート コントロールパネル */}
-      {!loading && !error && songs.length > 0 && (
+      {!error && songs.length > 0 && (
         <div className="w-full max-w-4xl bg-neutral-800 p-4 rounded-2xl border-2 border-neutral-700 mb-6 flex flex-col md:flex-row gap-4 justify-between items-start md:items-center">
-          
+
           <div className="flex flex-col md:flex-row gap-4 w-full md:w-auto">
             {/* 難易度フィルター */}
             <div className="flex flex-col gap-1">
               <label className="text-xs font-bold text-neutral-400">難易度</label>
-              <select 
+              <select
                 value={filterDifficulty}
                 onChange={(e) => setFilterDifficulty(e.target.value)}
                 className="bg-neutral-900 text-white font-bold rounded-xl px-4 py-2 border-none outline-none cursor-pointer"
@@ -142,11 +145,11 @@ export default function SongSelect({ onBack, onStartGame }) {
                 <option value="7-10">☆7〜10 (難しい)</option>
               </select>
             </div>
-            
+
             {/* 制作者フィルター */}
             <div className="flex flex-col gap-1">
               <label className="text-xs font-bold text-neutral-400">譜面制作</label>
-              <select 
+              <select
                 value={filterCreator}
                 onChange={(e) => setFilterCreator(e.target.value)}
                 className="bg-neutral-900 text-white font-bold rounded-xl px-4 py-2 border-none outline-none cursor-pointer"
@@ -164,7 +167,7 @@ export default function SongSelect({ onBack, onStartGame }) {
             <div className="flex flex-col gap-1">
               <label className="text-xs font-bold text-neutral-400">並び替え</label>
               <div className="flex gap-2">
-                <select 
+                <select
                   value={sortType}
                   onChange={(e) => setSortType(e.target.value)}
                   className="bg-neutral-900 text-white font-bold rounded-xl px-4 py-2 border-none outline-none cursor-pointer"
@@ -187,18 +190,16 @@ export default function SongSelect({ onBack, onStartGame }) {
       )}
 
       <div className="w-full max-w-4xl flex flex-col gap-4">
-        {loading && <div className="text-xl text-neutral-400 text-center py-8">曲を読み込み中...</div>}
-        
         {error && <div className="text-xl text-red-400 text-center py-8">{error}</div>}
-        
-        {!loading && !error && filteredAndSortedSongs.length === 0 && (
+
+        {!error && filteredAndSortedSongs.length === 0 && (
           <div className="bg-neutral-800 p-8 rounded-2xl border-4 border-neutral-700 border-dashed text-center">
             <span className="text-xl font-bold text-neutral-400">該当する譜面がありません</span>
           </div>
         )}
 
-        {!loading && !error && filteredAndSortedSongs.map(song => (
-          <div 
+        {!error && filteredAndSortedSongs.map(song => (
+          <div
             key={song.id}
             onClick={() => handleSelectSong(song)}
             className="bg-neutral-800 hover:bg-neutral-700 transition-colors p-4 md:p-6 rounded-2xl cursor-pointer flex flex-col md:flex-row justify-between items-start md:items-center border-4 border-transparent hover:border-cyan-500 gap-4 shadow-none"
@@ -225,7 +226,7 @@ export default function SongSelect({ onBack, onStartGame }) {
               <button
                 onClick={(e) => {
                   e.stopPropagation();
-                  setSelectedLeaderboard(song);
+                  handleOpenLeaderboard(song);
                 }}
                 className="text-yellow-400 font-black tracking-widest bg-yellow-950 px-6 py-3 md:py-2 rounded-full whitespace-nowrap flex-1 md:flex-none text-center shadow-none hover:bg-yellow-900 transition-colors"
               >
@@ -244,11 +245,11 @@ export default function SongSelect({ onBack, onStartGame }) {
           </div>
         ))}
       </div>
-      
+
       {selectedLeaderboard && (
-        <Leaderboard 
-          songId={selectedLeaderboard.scorePath.split('/').pop().replace('.json', '')}
-          songTitle={selectedLeaderboard.title}
+        <Leaderboard
+          songTitle={selectedLeaderboard.songTitle}
+          rankingsPromise={selectedLeaderboard.promise}
           onClose={() => setSelectedLeaderboard(null)}
         />
       )}

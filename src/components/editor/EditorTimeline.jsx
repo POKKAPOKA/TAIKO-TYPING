@@ -1,9 +1,41 @@
-import { useEffect, useRef, useState } from 'react';
+import { useCallback, useRef, useState } from 'react';
 import { useEditorStore } from '../../store/editorStore';
 import EditorNote from './EditorNote';
 import EditorSeekBar from './EditorSeekBar';
+import { registerEditorViewport } from '../../engine/EditorController';
 
 const BEATS_PER_MEASURE = 4;
+
+// Ctrl+ホイールでズーム、通常ホイールで横スクロール。
+// passive: false のネイティブリスナーが必要なため、コールバックrefから登録する（useEffectは使わない）
+const handleViewportWheel = (e) => {
+  const viewport = e.currentTarget;
+  if (!viewport) return;
+
+  if (e.ctrlKey || e.metaKey) {
+    e.preventDefault();
+    const store = useEditorStore.getState();
+
+    // 現在の画面中央の時間 (ms)
+    const centerTimeMs = (viewport.scrollLeft + viewport.clientWidth / 2) / (store.measureWidth * store.zoomLevel / (60000 / store.bpm * 4));
+
+    let newLevel = store.zoomLevel - (e.deltaY * 0.005);
+    newLevel = Math.max(0.1, Math.min(3.0, newLevel));
+    store.setZoomLevel(newLevel);
+
+    // ズーム後の pxPerMs を再計算
+    const newZoomedMeasureWidth = store.measureWidth * newLevel;
+    const newPxPerMs = newZoomedMeasureWidth / (60000 / store.bpm * 4);
+
+    // 中央時間が同じになるように scrollLeft を補正
+    requestAnimationFrame(() => {
+      viewport.scrollLeft = centerTimeMs * newPxPerMs - viewport.clientWidth / 2;
+    });
+  } else {
+    // 横スクロールに変換
+    viewport.scrollLeft += e.deltaY;
+  }
+};
 
 export default function EditorTimeline() {
   const containerRef = useRef(null);
@@ -16,8 +48,6 @@ export default function EditorTimeline() {
   const editorNotes = useEditorStore(state => state.editorNotes);
   const addEditorNote = useEditorStore(state => state.addEditorNote);
   
-  const timelineWidth = useEditorStore(state => state.timelineWidth);
-  const setTimelineWidth = useEditorStore(state => state.setTimelineWidth);
   const baseMeasureWidth = useEditorStore(state => state.measureWidth);
   const zoomLevel = useEditorStore(state => state.zoomLevel);
   const setCurrentTime = useEditorStore(state => state.setCurrentTime);
@@ -45,57 +75,18 @@ export default function EditorTimeline() {
 
   const continuousTimelineWidth = Math.max(effectiveDuration * pxPerMs, window.innerWidth * 2);
 
-  useEffect(() => {
-    setTimelineWidth(continuousTimelineWidth);
-  }, [setTimelineWidth, continuousTimelineWidth]);
-
+  // ビューポートDOMの登録とネイティブホイールリスナーの管理はコールバックrefで行う。
+  // 再生リセット時のscrollLeft同期は EditorController 側が直接行う。
   const viewportRef = useRef(null);
-
-  // 外部から（Stop & Resetなど）scrollTimeOffset が 0 にリセットされた場合の同期
-  useEffect(() => {
-    if (scrollTimeOffset === 0 && viewportRef.current && viewportRef.current.scrollLeft > 0) {
-      viewportRef.current.scrollLeft = 0;
+  const handleViewportRef = useCallback((node) => {
+    if (viewportRef.current) {
+      viewportRef.current.removeEventListener('wheel', handleViewportWheel);
     }
-  }, [scrollTimeOffset]);
-
-  useEffect(() => {
-    const handleNativeWheel = (e) => {
-      if (e.ctrlKey || e.metaKey) {
-        e.preventDefault();
-        const store = useEditorStore.getState();
-        
-        // 現在の画面中央の時間 (ms)
-        const centerTimeMs = (viewportRef.current.scrollLeft + viewportRef.current.clientWidth / 2) / (store.measureWidth * store.zoomLevel / (60000 / store.bpm * 4));
-
-        let newLevel = store.zoomLevel - (e.deltaY * 0.005);
-        newLevel = Math.max(0.1, Math.min(3.0, newLevel));
-        store.setZoomLevel(newLevel);
-        
-        // ズーム後の pxPerMs を再計算
-        const newZoomedMeasureWidth = store.measureWidth * newLevel;
-        const newPxPerMs = newZoomedMeasureWidth / (60000 / store.bpm * 4);
-        
-        // 中央時間が同じになるように scrollLeft を補正
-        requestAnimationFrame(() => {
-          if (viewportRef.current) {
-            viewportRef.current.scrollLeft = centerTimeMs * newPxPerMs - viewportRef.current.clientWidth / 2;
-          }
-        });
-      } else {
-        // 横スクロールに変換
-        if (viewportRef.current) {
-          viewportRef.current.scrollLeft += e.deltaY;
-        }
-      }
-    };
-    
-    const vp = viewportRef.current;
-    if (vp) {
-      vp.addEventListener('wheel', handleNativeWheel, { passive: false });
+    viewportRef.current = node;
+    registerEditorViewport(node);
+    if (node) {
+      node.addEventListener('wheel', handleViewportWheel, { passive: false });
     }
-    return () => {
-      if (vp) vp.removeEventListener('wheel', handleNativeWheel);
-    };
   }, []);
 
   // --- ルーラーでのシーク処理 ---
@@ -273,7 +264,7 @@ export default function EditorTimeline() {
 
   return (
     <div 
-      ref={viewportRef}
+      ref={handleViewportRef}
       className="w-full h-full overflow-x-auto overflow-y-hidden bg-neutral-900 rounded-3xl border-4 border-neutral-700 relative"
       onScroll={(e) => {
         if (!pxPerMs || Number.isNaN(pxPerMs)) return;

@@ -1,5 +1,8 @@
 import { create } from 'zustand';
 
+// トースト自動消去用タイマー（UI側のuseEffectを使わずストア側で管理する）
+let editorToastTimer = null;
+
 export const useEditorStore = create((set) => ({
   bpm: 120,
   // 1小節の幅 (px)
@@ -8,9 +11,6 @@ export const useEditorStore = create((set) => ({
   // タイムラインの左端が表す絶対時間 (ms)
   scrollTimeOffset: 0,
   
-  // エディタのタイムラインの表示幅 (px) - Timelineコンポーネントがマウントされた時に更新する
-  timelineWidth: 1280, 
-
   // 再生状態と設定
   audioUrl: './audio/track.mp3',
   audioPeaks: [],
@@ -43,12 +43,24 @@ export const useEditorStore = create((set) => ({
 
   setFileHandle: (handle) => set({ fileHandle: handle }),
 
+  // トースト通知（3秒で自動的に消える）
+  toastMessage: null,
+  showEditorToast: (msg) => {
+    if (editorToastTimer) clearTimeout(editorToastTimer);
+    editorToastTimer = setTimeout(() => set({ toastMessage: null }), 3000);
+    set({ toastMessage: msg });
+  },
+
+  // モーダル表示状態（'bulkAdd' | 'replace' | 'lyrics' | null）
+  activeModal: null,
+  openModal: (name) => set({ activeModal: name }),
+  closeModal: () => set({ activeModal: null }),
+
   setBpm: (bpm) => set({ bpm: Number.isNaN(bpm) ? 120 : bpm }),
   setScrollTimeOffset: (offsetTime) => {
     if (Number.isNaN(offsetTime)) return;
     set({ scrollTimeOffset: Math.max(0, offsetTime) });
   },
-  setTimelineWidth: (width) => set({ timelineWidth: width }),
   setZoomLevel: (level) => {
     let newLevel = Number(level);
     if (Number.isNaN(newLevel)) return;

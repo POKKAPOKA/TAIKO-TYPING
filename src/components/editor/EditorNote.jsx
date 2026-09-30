@@ -1,5 +1,4 @@
-import { useState, useRef, useEffect } from 'react';
-import { createPortal } from 'react-dom';
+import { useState, useRef } from 'react';
 import { useEditorStore } from '../../store/editorStore';
 import { getKeystrokeCount } from '../../engine/RomajiParser';
 
@@ -12,13 +11,20 @@ export default function EditorNote({ note, beatWidth, msPerBeat }) {
   const [isEditing, setIsEditing] = useState(false);
   const [inputText, setInputText] = useState(note.word || '');
   const [readingText, setReadingText] = useState(note.reading || '');
-  
+
   // 外部からのStore変更（一括置換など）を検知してローカルステートに同期する
-  useEffect(() => {
+  // （propsの変化に応じてレンダリング中に状態を調整する公式推奨パターン。useEffectは使わない）
+  const [prevWord, setPrevWord] = useState(note.word);
+  const [prevReading, setPrevReading] = useState(note.reading);
+  if (note.word !== prevWord) {
+    setPrevWord(note.word);
     setInputText(note.word || '');
+  }
+  if (note.reading !== prevReading) {
+    setPrevReading(note.reading);
     setReadingText(note.reading || '');
-  }, [note.word, note.reading]);
-  
+  }
+
   const noteRef = useRef(null);
   
   const isSelected = selectedNoteIds.includes(note.id);
@@ -253,17 +259,8 @@ export default function EditorNote({ note, beatWidth, msPerBeat }) {
     setIsEditing(true);
   };
 
-  const [popupPos, setPopupPos] = useState({ top: 0, left: 0 });
-  useEffect(() => {
-    if (isEditing && noteRef.current) {
-      const rect = noteRef.current.getBoundingClientRect();
-      setPopupPos({ top: rect.top - 140, left: rect.left });
-    } else if (isEditing && !noteRef.current) {
-      setIsEditing(false); // 画面外に出て参照が消えたら編集モードを解除
-    }
-  }, [isEditing, initialX]); // initialX(スクロール等による再レンダリング)も含めることで座標を更新
-
-  // 画面外カリング処理はネイティブスクロールへ移行したため削除
+  // 編集ポップアップはノーツ内に相対配置（bottom: 100%）で描画するため、座標計算は不要。
+  // 画面外カリング処理はネイティブスクロールへ移行したため削除済み。
   // ボーダースタイル決定
   let borderColor = '#06b6d4'; // cyan-500
   let borderWidth = '4px';

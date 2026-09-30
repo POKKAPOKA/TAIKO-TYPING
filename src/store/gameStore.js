@@ -1,5 +1,8 @@
 import { create } from 'zustand';
 
+// トースト自動消去用タイマー（UI側のuseEffectを使わずストア側で管理する）
+let toastTimer = null;
+
 export const useGameStore = create((set) => ({
   score: 0,
   combo: 0,
@@ -13,6 +16,7 @@ export const useGameStore = create((set) => ({
   maxKps: 0,
   maxScore: 0,
   status: 'idle', // 'idle' | 'playing' | 'result'
+  showGuide: false, // プレイ開始直後に数秒間だけ表示する操作ガイド
   
   // 読み込んだデータ
   loadedScore: null,
@@ -55,6 +59,7 @@ export const useGameStore = create((set) => ({
   setMaxScore: (maxScore) => set({ maxScore }),
   
   setStatus: (status) => set({ status }),
+  setShowGuide: (showGuide) => set({ showGuide }),
   
   setLoadedScore: (score, fileName) => set({ loadedScore: score, scoreFileName: fileName || null }),
   setAudioUrl: (url, fileName) => set((state) => {
@@ -81,7 +86,12 @@ export const useGameStore = create((set) => ({
 
   toastMessage: null,
   toastId: 0,
-  showToast: (msg) => set((state) => ({ toastMessage: msg, toastId: state.toastId + 1 })),
+  showToast: (msg) => {
+    // 3秒後に自動で消す
+    if (toastTimer) clearTimeout(toastTimer);
+    toastTimer = setTimeout(() => set({ toastMessage: null }), 3000);
+    set((state) => ({ toastMessage: msg, toastId: state.toastId + 1 }));
+  },
 
   setWordQueue: (queue) => set({ wordQueue: queue }),
 
@@ -97,6 +107,7 @@ export const useGameStore = create((set) => ({
     typoCount: 0,
     maxKps: 0,
     status: 'idle',
+    showGuide: false,
     currentTarget: null,
     activeWord: null,
     typedIndex: 0,
@@ -117,6 +128,7 @@ export const useGameStore = create((set) => ({
     maxKps: 0,
     maxScore: 0,
     status: 'idle',
+    showGuide: false,
     currentTarget: null,
     activeWord: null,
     typedIndex: 0,

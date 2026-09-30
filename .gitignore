@@ -1,3 +1,7 @@
 node_modules
 dist
+
+# 環境変数ファイル（APIキー等を含むため絶対にコミットしない）
 .env
+.env.local
+.env.*.local
