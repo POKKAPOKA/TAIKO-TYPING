@@ -1,11 +1,13 @@
 import { useState, useEffect, useMemo } from 'react';
 import { useGameStore } from '../store/gameStore';
 import { gameEngine } from '../engine/GameEngine';
+import Leaderboard from './Leaderboard';
 
 export default function SongSelect({ onBack, onStartGame }) {
   const [songs, setSongs] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [selectedLeaderboard, setSelectedLeaderboard] = useState(null);
   
   // ソートとフィルターのステート
   const [sortType, setSortType] = useState('difficulty'); // 'difficulty', 'duration', 'notesCount'
@@ -219,12 +221,37 @@ export default function SongSelect({ onBack, onStartGame }) {
                 </span>
               </div>
             </div>
-            <div className="text-cyan-400 font-black tracking-widest bg-cyan-950 px-6 py-3 md:py-2 rounded-full whitespace-nowrap w-full md:w-auto text-center mt-2 md:mt-0 shadow-none">
-              あそぶ
+            <div className="flex gap-2 w-full md:w-auto mt-2 md:mt-0">
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setSelectedLeaderboard(song);
+                }}
+                className="text-yellow-400 font-black tracking-widest bg-yellow-950 px-6 py-3 md:py-2 rounded-full whitespace-nowrap flex-1 md:flex-none text-center shadow-none hover:bg-yellow-900 transition-colors"
+              >
+                ランキング
+              </button>
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handleSelectSong(song);
+                }}
+                className="text-cyan-400 font-black tracking-widest bg-cyan-950 px-6 py-3 md:py-2 rounded-full whitespace-nowrap flex-1 md:flex-none text-center shadow-none hover:bg-cyan-900 transition-colors"
+              >
+                あそぶ
+              </button>
             </div>
           </div>
         ))}
       </div>
+      
+      {selectedLeaderboard && (
+        <Leaderboard 
+          songId={selectedLeaderboard.scorePath.split('/').pop().replace('.json', '')}
+          songTitle={selectedLeaderboard.title}
+          onClose={() => setSelectedLeaderboard(null)}
+        />
+      )}
     </div>
   );
 }

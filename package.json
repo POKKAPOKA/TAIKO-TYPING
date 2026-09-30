@@ -9,6 +9,7 @@
     "publish": "powershell -ExecutionPolicy Bypass -File .\\publish.ps1"
   },
   "dependencies": {
+    "@supabase/supabase-js": "^2.117.2",
     "react": "^19.2.8",
     "react-dom": "^19.2.8",
     "zustand": "^5.0.15"

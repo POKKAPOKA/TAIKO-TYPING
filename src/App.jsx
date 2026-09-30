@@ -5,12 +5,19 @@ import NotesArea from './components/NotesArea';
 import EditorView from './components/editor/EditorView';
 import ActiveWordDisplay from './components/ActiveWordDisplay';
 import Toast from './components/Toast';
+import { useSystemSE } from './hooks/useSystemSE';
 
 import SongSelect from './components/SongSelect';
+import Leaderboard from './components/Leaderboard';
+import { submitScore } from './api/mockRankings';
 
 function App() {
+  useSystemSE();
+  
   const [appMode, setAppMode] = useState('menu'); // 'menu' | 'setup' | 'game' | 'editor' | 'songSelect'
   const [showGuide, setShowGuide] = useState(false);
+  const [showLeaderboard, setShowLeaderboard] = useState(false);
+  const [scoreSubmitted, setScoreSubmitted] = useState(false);
 
   const score = useGameStore(state => state.score);
   const maxCombo = useGameStore(state => state.maxCombo);
@@ -48,6 +55,26 @@ function App() {
     }
   }, [appMode, status]);
 
+  useEffect(() => {
+    if (appMode === 'game' && status === 'result' && !scoreSubmitted && !isLocalPlay) {
+      if (scoreFileName) {
+        const songId = scoreFileName.replace('.json', '');
+        submitScore({
+          songId,
+          playerName: 'Guest',
+          score,
+          maxCombo,
+          maxKps
+        }).then(() => {
+          setScoreSubmitted(true);
+        }).catch(err => {
+          console.error("Score submission failed", err);
+          showToast(`送信失敗: ${err.message || '不明なエラー'}`);
+        });
+      }
+    }
+  }, [appMode, status, scoreSubmitted, isLocalPlay, scoreFileName, score, maxCombo, maxKps]);
+
   const handleStartGame = () => {
     setIsLocalPlay(true);
     setAppMode('game');
@@ -60,6 +87,7 @@ function App() {
 
   const handleRetry = () => {
     resetPlayState();
+    setScoreSubmitted(false);
     setAppMode('game');
     gameEngine.start();
   };
@@ -67,6 +95,7 @@ function App() {
   const handleBackToMenu = () => {
     gameEngine.stop();
     clearSetup();
+    setScoreSubmitted(false);
     setAppMode('menu');
   };
 
@@ -351,6 +380,12 @@ function App() {
               メニューに戻る
             </button>
             <button
+              onClick={() => setShowLeaderboard(true)}
+              className="flex-1 py-4 bg-yellow-600 hover:bg-yellow-500 text-white rounded-full font-black text-xl transition-colors"
+            >
+              ランキング
+            </button>
+            <button
               onClick={handleRetry}
               className="flex-1 py-4 bg-orange-500 hover:bg-orange-400 text-neutral-900 rounded-full font-black text-xl transition-colors"
             >
@@ -358,6 +393,14 @@ function App() {
             </button>
           </div>
         </div>
+      )}
+      
+      {showLeaderboard && (
+        <Leaderboard 
+          songId={scoreFileName ? scoreFileName.replace('.json', '') : 'Unknown'}
+          songTitle="LEADERBOARD"
+          onClose={() => setShowLeaderboard(false)}
+        />
       )}
       </div>
       </div>
