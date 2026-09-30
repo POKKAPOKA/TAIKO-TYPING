@@ -26,7 +26,7 @@ export default function EditorNote({ note, beatWidth, msPerBeat }) {
   }
 
   const noteRef = useRef(null);
-  
+
   const isSelected = selectedNoteIds.includes(note.id);
 
   // 初期位置計算
@@ -45,7 +45,7 @@ export default function EditorNote({ note, beatWidth, msPerBeat }) {
     setIsEditing(false);
     updateEditorNote(note.id, { word: inputText, reading: readingText });
   };
-  
+
   const handleInputKeyDown = (e) => {
     e.stopPropagation();
     if (e.key === 'Enter') {
@@ -55,7 +55,7 @@ export default function EditorNote({ note, beatWidth, msPerBeat }) {
 
   // ドラッグ＆ドロップ（移動とリサイズ）ロジック
   const dragState = useRef({
-    mode: null, 
+    mode: null,
     startX: 0,
     originalTotalBeats: 0,
     originalDurationBeats: 0,
@@ -64,7 +64,7 @@ export default function EditorNote({ note, beatWidth, msPerBeat }) {
   const handleMouseDown = (e, mode) => {
     e.stopPropagation(); // 伝播防止
     if (isEditing) return;
-    
+
     if (e.ctrlKey || e.metaKey) {
       if (selectedNoteIds.includes(note.id)) {
         setSelectedNoteIds(selectedNoteIds.filter(id => id !== note.id));
@@ -77,7 +77,7 @@ export default function EditorNote({ note, beatWidth, msPerBeat }) {
         setSelectedNoteIds([note.id]);
       }
     }
-    
+
     window._isEditorDragging = true; // グローバルドラッグフラグON
 
     dragState.current = {
@@ -94,7 +94,7 @@ export default function EditorNote({ note, beatWidth, msPerBeat }) {
   const handleMouseMove = (e) => {
     const state = dragState.current;
     if (!state.mode || !noteRef.current) return;
-    
+
     // スロットリング用の時刻管理
     window._lastAutoScrollTime = window._lastAutoScrollTime || 0;
     const now = performance.now();
@@ -119,7 +119,7 @@ export default function EditorNote({ note, beatWidth, msPerBeat }) {
     if (state.mode === 'move') {
       const newTotalBeatsUnsnapped = state.originalTotalBeats + deltaBeats;
       const snappedBeats = Math.max(0, Math.round(newTotalBeatsUnsnapped / 0.25) * 0.25);
-      
+
       const diffBeats = snappedBeats - state.originalTotalBeats;
       const isMultiMove = selectedNoteIds.includes(note.id) && selectedNoteIds.length > 1;
 
@@ -143,7 +143,7 @@ export default function EditorNote({ note, beatWidth, msPerBeat }) {
       const newDurationUnsnapped = state.originalDurationBeats + deltaBeats;
       const clampedDuration = Math.max(0.25, newDurationUnsnapped);
       const snappedDuration = Math.round(clampedDuration / 0.25) * 0.25;
-      
+
       const diffDuration = snappedDuration - state.originalDurationBeats;
       const isMultiResize = selectedNoteIds.includes(note.id) && selectedNoteIds.length > 1;
 
@@ -167,10 +167,10 @@ export default function EditorNote({ note, beatWidth, msPerBeat }) {
 
   const handleMouseUp = (e) => {
     if (e) e.stopPropagation();
-    
+
     window.removeEventListener('mousemove', handleMouseMove);
     window.removeEventListener('mouseup', handleMouseUp);
-    
+
     // 次のイベントループでフラグをリセットし、誤爆クリックを防ぐ
     setTimeout(() => {
       window._isEditorDragging = false;
@@ -181,7 +181,7 @@ export default function EditorNote({ note, beatWidth, msPerBeat }) {
 
     if (state.mode === 'move') {
       const isMultiMove = selectedNoteIds.includes(note.id) && selectedNoteIds.length > 1;
-      
+
       if (isMultiMove) {
         const updatesArray = [];
         selectedNoteIds.forEach(id => {
@@ -201,7 +201,7 @@ export default function EditorNote({ note, beatWidth, msPerBeat }) {
             delete el.dataset.newTotalBeats;
           }
         });
-        
+
         if (updatesArray.length > 0) {
           useEditorStore.getState().updateMultipleNotes(updatesArray);
         }
@@ -236,7 +236,7 @@ export default function EditorNote({ note, beatWidth, msPerBeat }) {
             delete el.dataset.newDurationBeats;
           }
         });
-        
+
         if (updatesArray.length > 0) {
           useEditorStore.getState().updateMultipleNotes(updatesArray);
         }
@@ -275,7 +275,7 @@ export default function EditorNote({ note, beatWidth, msPerBeat }) {
   const textOffset = initialX < 0 ? -initialX : 0;
 
   return (
-    <div 
+    <div
       ref={noteRef}
       id={`editor-note-${note.id}`}
       data-original-beats={noteTotalBeats}
@@ -283,8 +283,8 @@ export default function EditorNote({ note, beatWidth, msPerBeat }) {
       className={`absolute top-1/2 -translate-y-1/2 h-16 rounded-xl flex items-center select-none
         ${isKpsWarning && !isSelected ? 'bg-red-500' : isSelected ? 'bg-amber-100/90' : 'bg-cyan-500'}
       `}
-      style={{ 
-        left: `${initialX}px`, 
+      style={{
+        left: `${initialX}px`,
         width: `${initialWidth}px`,
         border: `${borderWidth} solid ${borderColor}`,
         zIndex: isEditing ? 999 : (isSelected ? 30 : 10),
@@ -297,7 +297,7 @@ export default function EditorNote({ note, beatWidth, msPerBeat }) {
         setSelectedNoteIds([note.id]);
       }}
     >
-      <div 
+      <div
         className="flex-1 px-3 overflow-hidden text-neutral-900 font-black truncate h-full flex items-center"
       >
         <span className={(isKpsWarning && !isSelected) ? 'text-white' : 'text-neutral-900'}>
@@ -306,7 +306,7 @@ export default function EditorNote({ note, beatWidth, msPerBeat }) {
       </div>
 
       {isEditing && (
-        <div 
+        <div
           className="absolute bg-neutral-800 p-3 rounded-2xl z-[100] flex flex-col gap-2 border-4 border-neutral-700 w-64 shadow-none"
           style={{
             bottom: '100%',
@@ -333,8 +333,8 @@ export default function EditorNote({ note, beatWidth, msPerBeat }) {
             onChange={(e) => setReadingText(e.target.value)}
             onKeyDown={handleInputKeyDown}
           />
-          <button 
-            className="w-full bg-cyan-500 hover:bg-cyan-400 text-neutral-900 rounded-xl py-2 font-black transition-colors" 
+          <button
+            className="w-full bg-cyan-500 hover:bg-cyan-400 text-neutral-900 rounded-xl py-2 font-black transition-colors"
             onClick={handleSave}
           >
             SAVE
@@ -343,7 +343,7 @@ export default function EditorNote({ note, beatWidth, msPerBeat }) {
       )}
 
       {!isEditing && (
-        <div 
+        <div
           className={`absolute -top-6 text-xs font-bold ${isKpsWarning ? 'text-red-400' : 'text-neutral-500'}`}
           style={{ left: `${Math.max(4, textOffset + 4)}px` }}
         >
@@ -351,7 +351,7 @@ export default function EditorNote({ note, beatWidth, msPerBeat }) {
         </div>
       )}
 
-      <div 
+      <div
         className="absolute right-0 w-4 h-full bg-black/20 hover:bg-black/40 cursor-ew-resize rounded-r-lg"
         onMouseDown={(e) => handleMouseDown(e, 'resize')}
         onClick={(e) => e.stopPropagation()}

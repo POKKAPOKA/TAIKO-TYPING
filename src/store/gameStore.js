@@ -17,7 +17,7 @@ export const useGameStore = create((set) => ({
   maxScore: 0,
   status: 'idle', // 'idle' | 'playing' | 'result'
   showGuide: false, // プレイ開始直後に数秒間だけ表示する操作ガイド
-  
+
   // 読み込んだデータ
   loadedScore: null,
   audioUrl: null,
@@ -33,7 +33,7 @@ export const useGameStore = create((set) => ({
   // 直近の判定結果（良、可、不可）表示用
   lastJudgment: null,
   judgmentCount: 0,
-  
+
   // 今後流れてくる単語のキュー
   // { id, word, time } の配列
   wordQueue: [],
@@ -41,26 +41,26 @@ export const useGameStore = create((set) => ({
   // アクション群
   setScore: (score) => set({ score }),
   addScore: (points) => set((state) => ({ score: state.score + points })),
-  
+
   setCombo: (combo) => set((state) => ({
     combo,
     maxCombo: Math.max(state.maxCombo, combo)
   })),
-  
+
   addMissCount: () => set((state) => ({ missCount: state.missCount + 1 })),
   addJusticeCount: () => set((state) => ({ justiceCount: state.justiceCount + 1 })),
   addAttackCount: () => set((state) => ({ attackCount: state.attackCount + 1 })),
-  
+
   addCompletedCount: () => set((state) => ({ completedCount: state.completedCount + 1 })),
   addDroppedCount: () => set((state) => ({ droppedCount: state.droppedCount + 1 })),
   addTypoCount: () => set((state) => ({ typoCount: state.typoCount + 1 })),
   updateMaxKps: (kps) => set((state) => ({ maxKps: Math.max(state.maxKps, kps) })),
-  
+
   setMaxScore: (maxScore) => set({ maxScore }),
-  
+
   setStatus: (status) => set({ status }),
   setShowGuide: (showGuide) => set({ showGuide }),
-  
+
   setLoadedScore: (score, fileName) => set({ loadedScore: score, scoreFileName: fileName || null }),
   setAudioUrl: (url, fileName) => set((state) => {
     if (state.audioUrl && state.audioUrl.startsWith('blob:')) {
@@ -69,7 +69,7 @@ export const useGameStore = create((set) => ({
     return { audioUrl: url, audioFileName: fileName || null };
   }),
   setIsLocalPlay: (isLocal) => set({ isLocalPlay: isLocal }),
-  
+
   setCurrentTarget: (target) => set({ currentTarget: target }),
   setActiveWord: (word) => set({ activeWord: word }),
   setTypedIndex: (index) => set({ typedIndex: index }),
@@ -78,8 +78,8 @@ export const useGameStore = create((set) => ({
     activeWord,
     typedIndex
   }),
-  
-  setLastJudgment: (judgment) => set((state) => ({ 
+
+  setLastJudgment: (judgment) => set((state) => ({
     lastJudgment: judgment,
     judgmentCount: state.judgmentCount + 1
   })),

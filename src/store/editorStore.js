@@ -6,11 +6,11 @@ let editorToastTimer = null;
 export const useEditorStore = create((set) => ({
   bpm: 120,
   // 1小節の幅 (px)
-  measureWidth: 320, 
-  
+  measureWidth: 320,
+
   // タイムラインの左端が表す絶対時間 (ms)
   scrollTimeOffset: 0,
-  
+
   // 再生状態と設定
   audioUrl: './audio/track.mp3',
   audioPeaks: [],
@@ -24,7 +24,7 @@ export const useEditorStore = create((set) => ({
 
   // 選択状態 (複数選択対応)
   selectedNoteIds: [],
-  
+
   // クリップボード状態
   clipboardNotes: [],
 
@@ -74,7 +74,7 @@ export const useEditorStore = create((set) => ({
   setIsPlaying: (isPlaying) => set({ isPlaying }),
   setCurrentTime: (time) => {
     if (!Number.isNaN(time)) set({ currentTime: time });
-  }, 
+  },
   setOffset: (offset) => {
     if (!Number.isNaN(offset)) set({ offset });
   },
@@ -90,7 +90,7 @@ export const useEditorStore = create((set) => ({
     return { pastNotes: newPast, futureNotes: [] };
   },
 
-  addEditorNote: (note) => set((state) => ({ 
+  addEditorNote: (note) => set((state) => ({
     ...state.saveHistory(state),
     editorNotes: [...state.editorNotes, note],
     selectedNoteIds: [note.id] // 追加されたノーツを選択状態にする
@@ -101,7 +101,7 @@ export const useEditorStore = create((set) => ({
     editorNotes: [...state.editorNotes, ...notes],
     selectedNoteIds: notes.map(n => n.id)
   })),
-  
+
   updateEditorNote: (id, updates) => set((state) => ({
     ...state.saveHistory(state),
     editorNotes: state.editorNotes.map(n => n.id === id ? { ...n, ...updates } : n)
@@ -114,7 +114,7 @@ export const useEditorStore = create((set) => ({
       editorNotes: state.editorNotes.map(n => updateMap.has(n.id) ? { ...n, ...updateMap.get(n.id) } : n)
     };
   }),
-  
+
   removeEditorNote: (id) => set((state) => ({
     ...state.saveHistory(state),
     editorNotes: state.editorNotes.filter(n => n.id !== id),
@@ -126,8 +126,8 @@ export const useEditorStore = create((set) => ({
     editorNotes: state.editorNotes.filter(n => !ids.includes(n.id)),
     selectedNoteIds: state.selectedNoteIds.filter(selectedId => !ids.includes(selectedId))
   })),
-  
-  clearEditorNotes: () => set((state) => ({ 
+
+  clearEditorNotes: () => set((state) => ({
     ...state.saveHistory(state),
     editorNotes: [],
     selectedNoteId: null

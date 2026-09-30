@@ -9,9 +9,9 @@ const JudgmentPopup = React.memo(() => {
   const combo = useGameStore(state => state.combo);
   const lastJudgment = useGameStore(state => state.lastJudgment);
   const judgmentCount = useGameStore(state => state.judgmentCount);
-  
+
   return (
-    <div 
+    <div
       className="absolute top-1/4 -translate-y-1/2 transform -translate-x-1/2 flex flex-col items-center justify-center z-20 pointer-events-none"
       style={{ left: `${JUDGE_LINE_X}px` }}
     >
@@ -22,7 +22,7 @@ const JudgmentPopup = React.memo(() => {
           {lastJudgment === 'MISS' && <span className="text-neutral-500">MISS</span>}
         </div>
       )}
-      
+
       {combo > 0 && (
         <div className="text-xl font-bold text-white flex items-end gap-1">
           <span className="text-4xl text-yellow-400 font-mono">{combo}</span>
@@ -139,10 +139,10 @@ const NotesArea = React.memo(() => {
       const bpm = loadedScore.bpm || 120;
       const offset = loadedScore.offset || 0;
       const msPerMeasure = (60000 / bpm) * 4;
-      
+
       const totalMs = loadedScore.durationMs || (loadedScore.notes && loadedScore.notes.length > 0 ? loadedScore.notes[loadedScore.notes.length - 1].endTime : 10000);
       const measureCount = Math.ceil(totalMs / msPerMeasure) + 5;
-      
+
       for (let i = 0; i < measureCount; i++) {
         const t = offset + i * msPerMeasure;
         if (t >= visibleRange.start && t <= visibleRange.end) {
@@ -159,7 +159,7 @@ const NotesArea = React.memo(() => {
 
   return (
     <div className="h-64 bg-neutral-800 w-full relative overflow-hidden rounded-2xl">
-      <div 
+      <div
         className="absolute top-1/2 -translate-y-1/2 w-32 h-32 border-4 border-neutral-600 rounded-full z-0 transform -translate-x-1/2 flex items-center justify-center"
         style={{ left: `${JUDGE_LINE_X}px` }}
       >

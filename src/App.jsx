@@ -378,7 +378,7 @@ function App() {
       )}
 
       {leaderboardData && (
-        <Leaderboard 
+        <Leaderboard
           songTitle={leaderboardData.songTitle}
           rankingsPromise={leaderboardData.promise}
           onClose={() => setLeaderboardData(null)}

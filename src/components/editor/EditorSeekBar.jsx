@@ -51,7 +51,7 @@ export default function EditorSeekBar() {
   }, []);
 
   return (
-    <div 
+    <div
       ref={barRef}
       className="absolute top-0 bottom-0 w-1 bg-red-500 z-30 pointer-events-none"
       style={{ transform: `translateX(-1000px)` }} // 初期位置は画面外

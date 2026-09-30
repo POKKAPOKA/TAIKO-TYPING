@@ -47,7 +47,7 @@ export default function EditorTimeline() {
   const setScrollTimeOffset = useEditorStore(state => state.setScrollTimeOffset);
   const editorNotes = useEditorStore(state => state.editorNotes);
   const addEditorNote = useEditorStore(state => state.addEditorNote);
-  
+
   const baseMeasureWidth = useEditorStore(state => state.measureWidth);
   const zoomLevel = useEditorStore(state => state.zoomLevel);
   const setCurrentTime = useEditorStore(state => state.setCurrentTime);
@@ -61,7 +61,7 @@ export default function EditorTimeline() {
   const msPerBeat = 60000 / bpm;
   const msPerMeasure = msPerBeat * BEATS_PER_MEASURE;
   const pxPerMs = measureWidth / msPerMeasure;
-  
+
   const beatWidth = measureWidth / BEATS_PER_MEASURE;
   const note16Width = beatWidth / 4;
 
@@ -106,7 +106,7 @@ export default function EditorTimeline() {
     }
     const targetTime = calculateTimeFromEvent(e);
     setCurrentTime(targetTime);
-    
+
     window.addEventListener('pointermove', handleRulerPointerMove);
     window.addEventListener('pointerup', handleRulerPointerUp);
   };
@@ -136,10 +136,10 @@ export default function EditorTimeline() {
   const handleRulerPointerUp = (e) => {
     window.removeEventListener('pointermove', handleRulerPointerMove);
     window.removeEventListener('pointerup', handleRulerPointerUp);
-    
+
     if (!rulerDragState.current.isDragging) return;
     rulerDragState.current.isDragging = false;
-    
+
     const targetTime = calculateTimeFromEvent(e);
     setSeekRequest(targetTime);
 
@@ -155,7 +155,7 @@ export default function EditorTimeline() {
   const handleTimelineClick = (e) => {
     // ドラッグ直後等のためにフラグを見る
     if (window._isEditorDragging) return;
-    
+
     // mousedownの要素とmouseup(click)の要素が異なる場合は配置しない（入力欄のテキスト選択対策）
     if (pointerDownTarget.current !== e.target) return;
 
@@ -168,13 +168,13 @@ export default function EditorTimeline() {
     // コンテナ内の相対X座標（＝絶対X座標）
     const rect = containerRef.current.getBoundingClientRect();
     const offsetX = e.clientX - rect.left;
-    
+
     // オフセットXを拍(beat)に変換
     const absoluteBeats = offsetX / beatWidth;
-    
+
     // 0.25(16分音符)単位にスナップ
     const snappedBeats = Math.max(0, Math.round(absoluteBeats / 0.25) * 0.25);
-    
+
     const measure = Math.floor(snappedBeats / 4);
     const beat = snappedBeats % 4;
 
@@ -182,7 +182,7 @@ export default function EditorTimeline() {
       id: crypto.randomUUID(),
       measure,
       beat,
-      durationBeats: 0.25, 
+      durationBeats: 0.25,
       word: "WORD"
     });
   };
@@ -208,17 +208,17 @@ export default function EditorTimeline() {
       const x = e.clientX - rect.left;
       const y = e.clientY - rect.top;
       setMarquee({ startX: x, startY: y, currentX: x, currentY: y });
-      
+
       const onMove = (moveEvent) => {
         const moveX = moveEvent.clientX - rect.left;
         const moveY = moveEvent.clientY - rect.top;
         setMarquee(prev => prev ? { ...prev, currentX: moveX, currentY: moveY } : null);
       };
-      
+
       const onUp = (upEvent) => {
         window.removeEventListener('pointermove', onMove);
         window.removeEventListener('pointerup', onUp);
-        
+
         setMarquee(currentMarquee => {
           if (currentMarquee) {
             // 選択判定
@@ -226,26 +226,26 @@ export default function EditorTimeline() {
             const right = Math.max(currentMarquee.startX, currentMarquee.currentX);
             const top = Math.min(currentMarquee.startY, currentMarquee.currentY);
             const bottom = Math.max(currentMarquee.startY, currentMarquee.currentY);
-            
+
             const store = useEditorStore.getState();
             const containerHeight = rect.height;
             const noteYTop = (containerHeight / 2) - 32;
             const noteYBottom = (containerHeight / 2) + 32;
-            
+
             const selectedIds = [];
             store.editorNotes.forEach(note => {
               const noteTotalBeats = (note.measure * 4) + note.beat;
               const noteXLeft = noteTotalBeats * beatWidth;
               const noteXRight = noteXLeft + (note.durationBeats * beatWidth);
-              
+
               const intersectX = left < noteXRight && right > noteXLeft;
               const intersectY = top < noteYBottom && bottom > noteYTop;
-              
+
               if (intersectX && intersectY) {
                 selectedIds.push(note.id);
               }
             });
-            
+
             if (upEvent.ctrlKey || upEvent.metaKey) {
               const newSet = new Set([...store.selectedNoteIds, ...selectedIds]);
               store.setSelectedNoteIds(Array.from(newSet));
@@ -256,14 +256,14 @@ export default function EditorTimeline() {
           return null;
         });
       };
-      
+
       window.addEventListener('pointermove', onMove);
       window.addEventListener('pointerup', onUp);
     }
   };
 
   return (
-    <div 
+    <div
       ref={handleViewportRef}
       className="w-full h-full overflow-x-auto overflow-y-hidden bg-neutral-900 rounded-3xl border-4 border-neutral-700 relative"
       onScroll={(e) => {
@@ -271,7 +271,7 @@ export default function EditorTimeline() {
         setScrollTimeOffset(e.target.scrollLeft / pxPerMs);
       }}
     >
-      <div 
+      <div
         className="relative mx-auto flex-shrink-0 flex flex-col"
         style={{
           width: `${continuousTimelineWidth}px`,
@@ -282,7 +282,7 @@ export default function EditorTimeline() {
         }}
       >
         {/* ルーラー領域 */}
-        <div 
+        <div
           ref={rulerRef}
           className="w-full h-8 bg-neutral-800 border-b-2 border-neutral-700 cursor-text flex-shrink-0 relative"
           onPointerDown={handleRulerPointerDown}
@@ -309,7 +309,7 @@ export default function EditorTimeline() {
               points={useEditorStore.getState().audioPeaks.map((peak, index) => {
                 const absoluteMs = index * 50;
                 const x = absoluteMs * pxPerMs;
-                const y = 100 - (peak * 100); 
+                const y = 100 - (peak * 100);
                 return `${x},${y}`;
               }).join(' ')}
               style={{ transform: 'translateY(50%)', transformOrigin: 'center' }}
@@ -319,7 +319,7 @@ export default function EditorTimeline() {
 
         {/* Marquee UI */}
         {marquee && (
-          <div 
+          <div
             className="absolute bg-blue-500/20 border border-blue-500 rounded-sm pointer-events-none z-50"
             style={{
               left: Math.min(marquee.startX, marquee.currentX),
@@ -333,12 +333,12 @@ export default function EditorTimeline() {
         <div className="absolute bottom-4 left-4 text-neutral-500 font-mono text-sm bg-neutral-950 px-3 py-1 rounded-full z-20 pointer-events-none">
           TIME: {Math.round(scrollTimeOffset)} ms
         </div>
-        
+
         <EditorSeekBar />
 
         {/* 配置されたノーツの描画 */}
         {editorNotes.map(note => (
-          <EditorNote 
+          <EditorNote
             key={note.id}
             note={note}
             beatWidth={beatWidth}
