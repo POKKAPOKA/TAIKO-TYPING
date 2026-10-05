@@ -9,10 +9,10 @@ import { useSystemSE } from './hooks/useSystemSE';
 
 import SongSelect from './components/SongSelect';
 import Leaderboard from './components/Leaderboard';
-import { fetchRankingsResult } from './api/rankings';
+import { fetchRankingsResult, submitScore } from './api/rankings';
 import { loadSongs } from './api/songList';
 
-// 操作ガイドの自動消去とリザルトのスコア送信をストア購読で行うモジュール（importするだけで有効になる）
+// 操作ガイドの自動消去をストア購読で行うモジュール（importするだけで有効になる）
 import './engine/gameUiSync';
 
 function App() {
@@ -47,11 +47,47 @@ function App() {
   const setIsLocalPlay = useGameStore(state => state.setIsLocalPlay);
   const showToast = useGameStore(state => state.showToast);
 
-  // 操作ガイドの表示制御とリザルトのスコア送信は engine/gameUiSync.js が
+  // ランキング登録用のプレイヤー名（localStorageに保存して次回起動時も使う）
+  const [playerName, setPlayerName] = useState(() => localStorage.getItem('taiko_player_name') || '');
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [submitSuccessMessage, setSubmitSuccessMessage] = useState(null);
+
+  const handleNameChange = (e) => {
+    setPlayerName(e.target.value);
+  };
+
+  const handleScoreSubmit = async () => {
+    if (isLocalPlay || !scoreFileName) return;
+    setIsSubmitting(true);
+    setSubmitSuccessMessage(null);
+    const finalName = playerName.trim() || 'Guest';
+    localStorage.setItem('taiko_player_name', finalName);
+    try {
+      const res = await submitScore({
+        songId: scoreFileName.replace(/\.json$/i, ''),
+        playerName: finalName,
+        score,
+        maxCombo,
+        maxKps
+      });
+      if (res.updated) {
+        setSubmitSuccessMessage('ベストスコアを更新してランキングに登録しました');
+      } else {
+        setSubmitSuccessMessage('ベストスコア未更新のため登録されませんでした');
+      }
+    } catch (err) {
+      showToast('送信失敗: ' + (err.message || '不明なエラー'));
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  // 操作ガイドの表示制御は engine/gameUiSync.js が
   // ストア購読（subscribe）で行うため、ここでのuseEffectは不要
 
   const handleStartGame = () => {
     setIsLocalPlay(true);
+    setSubmitSuccessMessage(null);
     setAppMode('game');
     gameEngine.start();
   };
@@ -62,6 +98,7 @@ function App() {
 
   const handleRetry = () => {
     resetPlayState();
+    setSubmitSuccessMessage(null);
     setAppMode('game');
     gameEngine.start();
   };
@@ -69,7 +106,15 @@ function App() {
   const handleBackToMenu = () => {
     gameEngine.stop();
     resetGameState();
-    setAppMode('menu');
+    setSubmitSuccessMessage(null);
+    if (isLocalPlay) {
+      setAppMode('setup');
+    } else {
+      if (!songsPromise) {
+        setSongsPromise(loadSongs());
+      }
+      setAppMode('songSelect');
+    }
   };
 
   const handleScoreLoad = (e) => {
@@ -348,12 +393,39 @@ function App() {
             </div>
           )}
 
+          {!isLocalPlay && scoreFileName && (
+            <div className="flex flex-col gap-3 w-full bg-neutral-900 p-4 rounded-2xl mb-4">
+              <h3 className="text-center font-black text-sm text-neutral-500 tracking-widest">ランキング登録</h3>
+              <div className="flex gap-2">
+                <input
+                  type="text"
+                  placeholder="Guest"
+                  value={playerName}
+                  onChange={handleNameChange}
+                  className="flex-[2] bg-neutral-800 border-2 border-neutral-700 text-white px-4 py-3 rounded-xl font-bold outline-none focus:border-cyan-500 transition-colors"
+                />
+                <button
+                  onClick={handleScoreSubmit}
+                  disabled={isSubmitting}
+                  className="flex-[1] bg-cyan-600 hover:bg-cyan-500 disabled:bg-neutral-700 text-white font-black rounded-xl transition-colors"
+                >
+                  {isSubmitting ? "送信中..." : "登録する"}
+                </button>
+              </div>
+              {submitSuccessMessage && (
+                <div className="text-center text-sm font-bold text-cyan-400 mt-1">
+                  {submitSuccessMessage}
+                </div>
+              )}
+            </div>
+          )}
+
           <div className="flex gap-4 w-full">
             <button
               onClick={handleBackToMenu}
               className="flex-1 py-4 bg-neutral-700 hover:bg-neutral-600 text-white rounded-full font-black text-xl transition-colors"
             >
-              メニューに戻る
+              {isLocalPlay ? "セッティングに戻る" : "曲選択に戻る"}
             </button>
             <button
               onClick={() => {

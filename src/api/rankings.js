@@ -53,21 +53,42 @@ export const fetchRankingsResult = (songId) =>
 export const submitScore = async (payload) => {
   try {
     const { songId, playerName, score, maxCombo, maxKps } = payload;
-
+    const { getDeviceId } = await import('../lib/deviceId');
+    const deviceId = getDeviceId();
+    
     // 名前のバリデーション
-    const finalPlayerName = (playerName && playerName.trim()) ? playerName.trim() : 'Anonymous';
+    const finalPlayerName = (playerName && playerName.trim()) ? playerName.trim() : 'Guest';
 
+    // 既存スコアの確認
+    const { data: existingData, error: fetchError } = await supabase
+      .from('rankings')
+      .select('score, id')
+      .eq('song_id', songId)
+      .eq('device_id', deviceId)
+      .maybeSingle();
+
+    if (fetchError) {
+      console.error('Failed to fetch existing score:', fetchError);
+      throw fetchError;
+    }
+
+    // 既存スコアが存在し、今回のスコアがそれ以下なら更新しない
+    if (existingData && existingData.score >= score) {
+      return { success: true, updated: false, message: '自己ベスト未更新' };
+    }
+
+    // upsertで登録・上書き
     const { data, error } = await supabase
       .from('rankings')
-      .insert([
-        {
-          song_id: songId,
-          player_name: finalPlayerName,
-          score,
-          max_combo: maxCombo,
-          peak_kps: maxKps
-        }
-      ])
+      .upsert({
+        id: existingData?.id,
+        song_id: songId,
+        device_id: deviceId,
+        player_name: finalPlayerName,
+        score,
+        max_combo: maxCombo,
+        peak_kps: maxKps
+      }, { onConflict: 'song_id,device_id' })
       .select();
 
     if (error) {
@@ -75,7 +96,7 @@ export const submitScore = async (payload) => {
       throw error;
     }
 
-    return { success: true, entry: data[0] };
+    return { success: true, updated: true, entry: data[0] };
   } catch (error) {
     console.error('Supabase insert error:', error);
     throw error;
