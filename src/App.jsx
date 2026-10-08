@@ -11,6 +11,7 @@ import SongSelect from './components/SongSelect';
 import Leaderboard from './components/Leaderboard';
 import { fetchRankingsResult, submitScore } from './api/rankings';
 import { loadSongs } from './api/songList';
+import { Maximize, Minimize, Smartphone, Monitor, User, Settings, Pause, Play, RotateCcw, Home } from 'lucide-react';
 
 // 操作ガイドの自動消去をストア購読で行うモジュール（importするだけで有効になる）
 import './engine/gameUiSync';
@@ -46,6 +47,25 @@ function App() {
   const resetGameState = useGameStore(state => state.resetGameState);
   const setIsLocalPlay = useGameStore(state => state.setIsLocalPlay);
   const showToast = useGameStore(state => state.showToast);
+  const isPaused = useGameStore(state => state.isPaused);
+  const isFullscreen = useGameStore(state => state.isFullscreen);
+  const isMobileMode = useGameStore(state => state.isMobileMode);
+  const showSettings = useGameStore(state => state.showSettings);
+  const setIsMobileMode = useGameStore(state => state.setIsMobileMode);
+  const setShowSettings = useGameStore(state => state.setShowSettings);
+
+  const toggleFullscreen = () => {
+    if (!document.fullscreenElement) {
+      document.documentElement.requestFullscreen().catch(() => {
+        showToast("全画面表示に失敗しました");
+      });
+    } else {
+      if (document.exitFullscreen) {
+        document.exitFullscreen();
+      }
+    }
+  };
+
 
   // ランキング登録用のプレイヤー名（localStorageに保存して次回起動時も使う）
   const [playerName, setPlayerName] = useState(() => localStorage.getItem('taiko_player_name') || '');
@@ -175,7 +195,34 @@ function App() {
       <div
         className="h-screen w-screen bg-neutral-900 text-white flex flex-col items-center p-8 font-sans select-none overflow-hidden box-border relative"
       >
-      {appMode === 'menu' && (
+      
+      <div className="absolute top-4 right-4 z-[55] flex gap-4">
+        {(appMode === "menu" || appMode === "songSelect" || appMode === "characterSelect") && (
+          <button
+            onClick={toggleFullscreen}
+            className="p-3 bg-neutral-800 hover:bg-neutral-700 text-neutral-400 hover:text-white rounded-xl transition-colors"
+            title="全画面表示切替"
+          >
+            {isFullscreen ? <Minimize size={24} /> : <Maximize size={24} />}
+          </button>
+        )}
+      </div>
+
+      {appMode === "characterSelect" && (
+        <div className="z-10 flex flex-col items-center justify-center w-full h-full gap-6">
+          <h2 className="text-4xl font-black text-white tracking-widest">キャラクター選択</h2>
+          <div className="text-neutral-400">現在準備中です...</div>
+          <button
+            onClick={() => setAppMode("menu")}
+            className="px-8 py-3 bg-neutral-700 hover:bg-neutral-600 text-white rounded-full font-black transition-colors flex items-center gap-2 mt-8"
+          >
+            <Home size={20} />
+            戻る
+          </button>
+        </div>
+      )}
+
+      {appMode === "menu" && (
         <div
           className="absolute inset-0 w-full h-full z-0 pointer-events-none"
           style={{
@@ -212,6 +259,20 @@ function App() {
             className="px-12 py-4 bg-neutral-700 hover:bg-neutral-600 text-white rounded-full font-black text-2xl transition-colors"
           >
             創作譜面を作る
+          </button>
+          <button
+            onClick={() => setIsMobileMode(!isMobileMode)}
+            className="px-12 py-4 bg-neutral-700 hover:bg-neutral-600 text-white rounded-full font-black text-2xl transition-colors flex items-center justify-center gap-2"
+          >
+            {isMobileMode ? <Smartphone size={28} /> : <Monitor size={28} />}
+            {isMobileMode ? "スマホモード" : "PCモード"}
+          </button>
+          <button
+            onClick={() => setAppMode('characterSelect')}
+            className="px-12 py-4 bg-purple-600 hover:bg-purple-500 text-white rounded-full font-black text-2xl transition-colors flex items-center justify-center gap-2"
+          >
+            <User size={28} />
+            キャラクター選択
           </button>
         </div>
       )}
@@ -287,6 +348,15 @@ function App() {
 
       {appMode === 'game' && status !== 'result' && (
         <>
+          <div className="absolute top-4 left-4 z-40">
+            <button
+              onClick={() => gameEngine.togglePause()}
+              className="p-3 bg-neutral-800 hover:bg-neutral-700 text-neutral-400 hover:text-white rounded-xl transition-colors"
+              title="一時停止 (Esc)"
+            >
+              <Pause size={24} />
+            </button>
+          </div>
           <div className="w-full max-w-4xl bg-neutral-800 rounded-t-3xl p-6 flex justify-between items-center border-b-4 border-neutral-900">
             <div className="flex gap-8">
               <div className="text-xl">
@@ -446,6 +516,70 @@ function App() {
               もう一度遊ぶ
             </button>
           </div>
+        </div>
+      )}
+
+      
+      {appMode === "game" && isPaused && (
+        <div className="absolute inset-0 z-50 bg-black/80 flex flex-col items-center justify-center backdrop-blur-sm">
+          <h2 className="text-5xl font-black text-white mb-12 tracking-widest">PAUSE</h2>
+          <div className="flex flex-col gap-4 w-full max-w-sm">
+            <button
+              onClick={() => gameEngine.togglePause()}
+              className="w-full py-4 bg-cyan-600 hover:bg-cyan-500 text-white rounded-full font-black text-xl transition-colors flex items-center justify-center gap-2"
+            >
+              <Play size={24} />
+              プレーに戻る
+            </button>
+            <button
+              onClick={() => {
+                gameEngine.togglePause();
+                handleRetry();
+              }}
+              className="w-full py-4 bg-orange-500 hover:bg-orange-400 text-neutral-900 rounded-full font-black text-xl transition-colors flex items-center justify-center gap-2"
+            >
+              <RotateCcw size={24} />
+              リトライ
+            </button>
+            <button
+              onClick={() => {
+                gameEngine.togglePause();
+                handleBackToMenu();
+              }}
+              className="w-full py-4 bg-neutral-700 hover:bg-neutral-600 text-white rounded-full font-black text-xl transition-colors flex items-center justify-center gap-2"
+            >
+              <Home size={24} />
+              曲選択画面に戻る
+            </button>
+            <button
+              onClick={() => setShowSettings(true)}
+              className="w-full py-4 bg-neutral-800 hover:bg-neutral-700 text-white rounded-full font-black text-xl transition-colors flex items-center justify-center gap-2"
+            >
+              <Settings size={24} />
+              設定
+            </button>
+          </div>
+        </div>
+      )}
+
+      {showSettings && (
+        <div className="absolute inset-0 z-[60] bg-neutral-900 flex flex-col items-center justify-center">
+          <h2 className="text-4xl font-black text-white mb-8">設定</h2>
+          <div className="text-neutral-400 mb-8">現在準備中です...</div>
+          <button
+            onClick={() => {
+              setShowSettings(false);
+              if (appMode === "game") {
+                if (isPaused) {
+                  gameEngine.togglePause();
+                }
+                handleRetry();
+              }
+            }}
+            className="px-12 py-4 bg-cyan-600 hover:bg-cyan-500 text-white rounded-full font-black text-xl transition-colors"
+          >
+            閉じる（リトライ）
+          </button>
         </div>
       )}
 

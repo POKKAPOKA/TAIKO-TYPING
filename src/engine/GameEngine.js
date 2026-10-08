@@ -10,6 +10,7 @@ const JUDGE_WINDOW = {
 export class GameEngine {
   constructor() {
     this.handleKeyDown = this.handleKeyDown.bind(this);
+    this.togglePause = this.togglePause.bind(this);
     this.update = this.update.bind(this);
     this.reset();
   }
@@ -64,6 +65,38 @@ export class GameEngine {
     } else {
       this.romajiParser = null;
       store.setTargetState(null, null, 0);
+    }
+  }
+  togglePause() {
+    const store = useGameStore.getState();
+    if (store.status !== 'playing') return;
+
+    if (store.isPaused) {
+      // Resume
+      store.setIsPaused(false);
+      const now = performance.now();
+      
+      if (!this.audioStarted) {
+        // Adjust realStartTime so elapsed time continues correctly
+        this.realStartTime = now - (this.currentTime + this.leadInTime);
+      } else if (this.isFallbackMode) {
+        this.mockStartTime = now - this.currentTime;
+      }
+      
+      if (this.audioStarted && this.audio) {
+        this.audio.play().catch(e => console.warn(e));
+      }
+      this.animationFrameId = requestAnimationFrame(this.update);
+    } else {
+      // Pause
+      store.setIsPaused(true);
+      if (this.audio) {
+        this.audio.pause();
+      }
+      if (this.animationFrameId) {
+        cancelAnimationFrame(this.animationFrameId);
+        this.animationFrameId = null;
+      }
     }
   }
 
@@ -227,6 +260,10 @@ export class GameEngine {
 
   handleKeyDown(e) {
     if (e.repeat) return;
+    if (e.key === 'Escape') {
+      this.togglePause();
+      return;
+    }
     if (!/^[a-zA-Z0-9\-]$/.test(e.key)) return;
     if (!this.currentTarget || !this.romajiParser) return;
 

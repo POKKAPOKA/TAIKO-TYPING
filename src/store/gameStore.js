@@ -37,6 +37,10 @@ export const useGameStore = create((set) => ({
   maxKps: 0,
   maxScore: 0,
   status: 'idle', // 'idle' | 'playing' | 'result'
+  isPaused: false,
+  isFullscreen: false,
+  isMobileMode: false,
+  showSettings: false,
   showGuide: false, // プレイ開始直後に数秒間だけ表示する操作ガイド
 
   // 読み込んだデータ
@@ -80,6 +84,10 @@ export const useGameStore = create((set) => ({
   setMaxScore: (maxScore) => set({ maxScore }),
 
   setStatus: (status) => set({ status }),
+  setIsPaused: (isPaused) => set({ isPaused }),
+  setIsFullscreen: (isFullscreen) => set({ isFullscreen }),
+  setIsMobileMode: (isMobileMode) => set({ isMobileMode }),
+  setShowSettings: (showSettings) => set({ showSettings }),
   setShowGuide: (showGuide) => set({ showGuide }),
 
   setLoadedScore: (score, fileName) => set({ loadedScore: score, scoreFileName: fileName || null }),
@@ -117,10 +125,19 @@ export const useGameStore = create((set) => ({
   setWordQueue: (queue) => set({ wordQueue: queue }),
 
   // プレイ結果系の状態だけを初期化する（譜面・音源・maxScoreは保持。リトライ時に使用）
-  resetPlayState: () => set({ ...initialPlayState }),
+  // ポーズ・設定表示もここで解除しないと、リトライ直後にポーズ画面が残ってしまう
+  resetPlayState: () => set({ ...initialPlayState, isPaused: false, showSettings: false }),
 
   // プレイ結果系に加えてmaxScoreも初期化する（メニューへ戻る際に使用）
   // ※譜面・音源はあえて保持する。メニューから再びセットアップ画面へ進んだとき、
   //   再読み込みなしで同じデータを使えるようにするため
-  resetGameState: () => set({ ...initialPlayState, maxScore: 0 })
+  resetGameState: () => set({ ...initialPlayState, maxScore: 0, isPaused: false, showSettings: false })
 }));
+
+
+// Fullscreen listener
+if (typeof document !== 'undefined') {
+  document.addEventListener('fullscreenchange', () => {
+    useGameStore.getState().setIsFullscreen(!!document.fullscreenElement);
+  });
+}
