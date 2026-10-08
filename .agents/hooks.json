@@ -5,7 +5,7 @@
         "matcher": "*",
         "hooks": [
           {
-            "command": "cmd.exe /c node .agents/scripts/block-rm-rf.js"
+            "command": "cmd.exe /c node .agents/scripts/block-rm-rf.cjs"
           }
         ]
       }

@@ -127,7 +127,9 @@ export class GameEngine {
     for (const note of this.queue) {
       totalChars += calculateMinKeystrokes(note.reading || note.word || '');
     }
-    this.scorePerChar = totalChars > 0 ? 1010000 / totalChars : 0;
+    this.totalNotesChars = totalChars > 0 ? totalChars : 1;
+    this.accumulatedChars = 0;
+    this.accumulatedMaxScore = 0;
     store.setMaxScore(1010000);
 
     // 統計トラッキングを初期化（リザルト画面用）
@@ -374,19 +376,22 @@ export class GameEngine {
 
   applyJudgment(judgment) {
     const store = useGameStore.getState();
-    // ノーツの最短打鍵数に応じて配点する（長いノーツほど高得点）
     const noteChars = this.currentTarget
       ? calculateMinKeystrokes(this.currentTarget.reading || this.currentTarget.word || '')
       : 0;
-    const baseScore = this.scorePerChar * noteChars;
+
+    this.accumulatedChars += noteChars;
+    const targetScore = Math.floor((1010000 * this.accumulatedChars) / this.totalNotesChars);
+    const maxPossibleDiff = targetScore - this.accumulatedMaxScore;
+    this.accumulatedMaxScore = targetScore;
 
     if (judgment === 'PERFECT') {
       store.setLastJudgment('PERFECT');
-      store.addScore(Math.floor(baseScore));
+      store.addScore(maxPossibleDiff);
       store.addPerfectCount();
     } else if (judgment === 'GOOD') {
       store.setLastJudgment('GOOD');
-      store.addScore(Math.floor(baseScore * 0.5));
+      store.addScore(Math.floor(maxPossibleDiff * 0.5));
       store.addGoodCount();
     } else if (judgment === 'MISS') {
       store.setLastJudgment('MISS');
