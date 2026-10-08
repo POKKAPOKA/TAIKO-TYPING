@@ -5,3 +5,8 @@ dist
 .env
 .env.local
 .env.*.local
+
+# 一時スクリプト（コード変換用の使い捨てスクリプトをコミットさせない）
+scratch/*.mjs
+scratch/update*.js
+scratch/fix*.js
