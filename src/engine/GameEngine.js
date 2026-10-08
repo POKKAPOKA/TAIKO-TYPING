@@ -155,7 +155,8 @@ export class GameEngine {
     // 前回の音声は reset() で破棄済みのため、ここでは新規生成だけ行う
     this.audio = new Audio(audioUrl);
     this.audio.currentTime = 0;
-    this.audio.playbackRate = store.speedMultiplier;
+    // ※倍速は音声の再生速度(playbackRate)では変えず、ノーツのスクロール速度のみに適用する
+    //   （NotesArea.jsx側で NOTE_SPEED * speedMultiplier を使用）
 
     if (this.leadInTime === 0) {
       this.audio.volume = 0.5;

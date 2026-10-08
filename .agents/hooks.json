@@ -1,0 +1,14 @@
+{
+  "block-rm-rf": {
+    "PreToolUse": [
+      {
+        "matcher": "*",
+        "hooks": [
+          {
+            "command": "node .agents/scripts/block-rm-rf.js"
+          }
+        ]
+      }
+    ]
+  }
+}

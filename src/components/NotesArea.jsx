@@ -41,7 +41,7 @@ const NotesArea = React.memo(() => {
   const wordQueue = useGameStore(state => state.wordQueue);
   const status = useGameStore(state => state.status);
   const loadedScore = useGameStore(state => state.loadedScore);
-  const wallEnabled = useGameStore(state => state.wallEnabled);
+  const wallAmount = useGameStore(state => state.wallAmount);
 
   const [visibleRange, setVisibleRange] = React.useState({ start: -2000, end: 8000 });
 
@@ -87,7 +87,7 @@ const NotesArea = React.memo(() => {
 
         const noteElements = container.children;
         const screenWidth = window.innerWidth;
-        // 設定の倍速をスクロール速度に反映する（音声のplaybackRateと同期させるため）
+        // 設定の倍速をノーツのスクロール速度に反映する（音声のテンポは変えない）
         const noteSpeed = NOTE_SPEED * storeState.speedMultiplier;
 
         for (let i = 0; i < noteElements.length; i++) {
@@ -200,8 +200,11 @@ const NotesArea = React.memo(() => {
 
       <JudgmentPopup />
 
-      {wallEnabled && (
-        <div className="absolute inset-y-0 right-0 w-1/2 bg-neutral-900 z-50 border-l-4 border-neutral-700" />
+      {wallAmount > 0 && (
+        <div
+          className="absolute inset-y-0 right-0 bg-neutral-900 z-[60] border-l-4 border-neutral-700"
+          style={{ width: `calc((100% - ${JUDGE_LINE_X}px) * ${wallAmount / 1000})` }}
+        />
       )}
     </div>
   );

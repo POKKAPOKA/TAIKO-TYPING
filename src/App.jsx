@@ -9,6 +9,7 @@ import { useSystemSE } from './hooks/useSystemSE';
 
 import SongSelect from './components/SongSelect';
 import Leaderboard from './components/Leaderboard';
+import SettingsModal from './components/SettingsModal';
 import { fetchRankingsResult, submitScore } from './api/rankings';
 import { loadSongs } from './api/songList';
 import { Maximize, Minimize, Smartphone, Monitor, User, Settings, Pause, Play, RotateCcw, Home } from 'lucide-react';
@@ -53,13 +54,9 @@ function App() {
   const showSettings = useGameStore(state => state.showSettings);
   const setIsMobileMode = useGameStore(state => state.setIsMobileMode);
   const setShowSettings = useGameStore(state => state.setShowSettings);
-  // 設定値（設定画面のスライダー/トグルと双方向に同期）
+  // 設定画面管理
   const speedMultiplier = useGameStore(state => state.speedMultiplier);
-  const wallEnabled = useGameStore(state => state.wallEnabled);
-  const offsetMs = useGameStore(state => state.offsetMs);
   const setSpeedMultiplier = useGameStore(state => state.setSpeedMultiplier);
-  const setWallEnabled = useGameStore(state => state.setWallEnabled);
-  const setOffsetMs = useGameStore(state => state.setOffsetMs);
 
   const toggleFullscreen = () => {
     if (!document.fullscreenElement) {
@@ -573,67 +570,15 @@ function App() {
       )}
 
       {showSettings && (
-        <div className="absolute inset-0 z-[60] bg-neutral-900 flex flex-col items-center justify-center p-8">
-          <h2 className="text-4xl font-black text-white mb-12">設定</h2>
-
-          <div className="flex flex-col gap-8 w-full max-w-lg mb-12">
-            {/* 倍速（一番上に大きく配置） */}
-            <div className="flex flex-col gap-2">
-              <label className="text-cyan-400 font-black text-2xl tracking-widest">倍速（スクロール速度）</label>
-              <div className="flex items-center gap-4">
-                <input
-                  type="range"
-                  min="0.5" max="3.0" step="0.1"
-                  value={speedMultiplier}
-                  onChange={(e) => setSpeedMultiplier(parseFloat(e.target.value))}
-                  className="w-full accent-cyan-500"
-                />
-                <span className="text-3xl font-black text-white min-w-[4rem]">{speedMultiplier.toFixed(1)}x</span>
-              </div>
-            </div>
-
-            {/* ウォール機能 */}
-            <div className="flex flex-col gap-2">
-              <label className="text-neutral-400 font-bold text-xl">ウォール機能（画面右側のノーツ出現を隠す）</label>
-              <button
-                onClick={() => setWallEnabled(!wallEnabled)}
-                className={`px-6 py-4 rounded-xl font-bold text-xl transition-colors ${wallEnabled ? 'bg-cyan-600 text-white' : 'bg-neutral-800 text-neutral-400'}`}
-              >
-                {wallEnabled ? 'ON（右半分を隠す）' : 'OFF'}
-              </button>
-            </div>
-
-            {/* 判定オフセット */}
-            <div className="flex flex-col gap-2">
-              <label className="text-neutral-400 font-bold text-xl">判定オフセット (ms)</label>
-              <div className="flex items-center gap-4">
-                <input
-                  type="range"
-                  min="-200" max="200" step="10"
-                  value={offsetMs}
-                  onChange={(e) => setOffsetMs(parseInt(e.target.value))}
-                  className="w-full accent-orange-500"
-                />
-                <span className="text-2xl font-black text-white min-w-[4rem]">{offsetMs > 0 ? `+${offsetMs}` : offsetMs}</span>
-              </div>
-            </div>
-          </div>
-
-          <button
-            onClick={() => {
-              setShowSettings(false);
-              if (appMode === "game") {
-                if (isPaused) {
-                  gameEngine.togglePause();
-                }
-                handleRetry();
-              }
-            }}
-            className="px-12 py-4 bg-cyan-600 hover:bg-cyan-500 text-white rounded-full font-black text-xl transition-colors"
-          >
-            閉じる（リトライ）
-          </button>
-        </div>
+        <SettingsModal onClose={() => {
+          setShowSettings(false);
+          if (appMode === "game") {
+            if (isPaused) {
+              gameEngine.togglePause();
+            }
+            handleRetry();
+          }
+        }} />
       )}
 
       {leaderboardData && (

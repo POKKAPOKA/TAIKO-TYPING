@@ -46,7 +46,7 @@ export const useGameStore = create((set) => ({
 
   // 設定（設定画面で変更。プレイ中に変えた場合はリトライで反映）
   speedMultiplier: 1.0,
-  wallEnabled: false,
+  wallAmount: 0,
   offsetMs: 0,
 
   // リザルト画面用の集計データ（プレイ終了時にGameEngineがセットする）
@@ -99,7 +99,7 @@ export const useGameStore = create((set) => ({
   setShowSettings: (showSettings) => set({ showSettings }),
   setShowGuide: (showGuide) => set({ showGuide }),
   setSpeedMultiplier: (speedMultiplier) => set({ speedMultiplier }),
-  setWallEnabled: (wallEnabled) => set({ wallEnabled }),
+  setWallAmount: (wallAmount) => set({ wallAmount }),
   setOffsetMs: (offsetMs) => set({ offsetMs }),
   setStatsData: (statsData) => set({ statsData }),
 
