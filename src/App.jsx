@@ -393,7 +393,7 @@ function App() {
       )}
 
       {appMode === "game" && isPaused && (
-        <div className="absolute inset-0 z-50 bg-black/80 flex flex-col items-center justify-center backdrop-blur-sm">
+        <div className="absolute inset-0 z-[100] bg-black/80 flex flex-col items-center justify-center backdrop-blur-sm">
           <h2 className="text-5xl font-black text-white mb-12 tracking-widest">PAUSE</h2>
           <div className="flex flex-col gap-4 w-full max-w-sm">
             <button
