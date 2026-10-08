@@ -10,6 +10,7 @@ import { useSystemSE } from './hooks/useSystemSE';
 import SongSelect from './components/SongSelect';
 import Leaderboard from './components/Leaderboard';
 import SettingsModal from './components/SettingsModal';
+import FlickKeyboard from './components/FlickKeyboard';
 import { fetchRankingsResult, submitScore } from './api/rankings';
 import { loadSongs } from './api/songList';
 import { Maximize, Minimize, Smartphone, Monitor, User, Settings, Pause, Play, RotateCcw, Home } from 'lucide-react';
@@ -567,6 +568,9 @@ function App() {
             </button>
           </div>
         </div>
+      )}
+      {appMode === "game" && isMobileMode && (
+        <FlickKeyboard />
       )}
 
       {showSettings && (
