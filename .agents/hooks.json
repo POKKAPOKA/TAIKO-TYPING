@@ -2,7 +2,7 @@
   "block-rm-rf": {
     "PreToolUse": [
       {
-        "matcher": "*",
+        "matcher": ".*",
         "hooks": [
           {
             "command": "node .agents/scripts/block-rm-rf.cjs"

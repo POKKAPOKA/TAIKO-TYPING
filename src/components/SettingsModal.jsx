@@ -1,8 +1,10 @@
-import React, { useRef, useCallback } from 'react';
+import React, { useState, useRef, useCallback } from 'react';
 import { useGameStore } from '../store/gameStore';
 import { Settings, X, Plus, Minus } from 'lucide-react';
 
 export default function SettingsModal({ onClose }) {
+  const [activeTab, setActiveTab] = useState('general');
+
   const speedMultiplier = useGameStore(state => state.speedMultiplier);
   const wallAmount = useGameStore(state => state.wallAmount);
   const offsetMs = useGameStore(state => state.offsetMs);
@@ -134,74 +136,100 @@ export default function SettingsModal({ onClose }) {
           </button>
         </div>
 
+        <div className="flex border-b-2 border-neutral-700">
+          <button
+            className={`flex-1 py-4 font-black tracking-widest transition-colors ${activeTab === 'general' ? 'text-cyan-400 border-b-4 border-cyan-400' : 'text-neutral-500 hover:text-neutral-300'}`}
+            onClick={() => setActiveTab('general')}
+          >
+            基本設定
+          </button>
+          <button
+            className={`flex-1 py-4 font-black tracking-widest transition-colors ${activeTab === 'sound' ? 'text-orange-400 border-b-4 border-orange-400' : 'text-neutral-500 hover:text-neutral-300'}`}
+            onClick={() => {
+              setActiveTab('sound');
+              playTick();
+            }}
+          >
+            サウンド＆判定
+          </button>
+        </div>
+
         <div className="flex-1 overflow-y-auto p-8 flex flex-col gap-10">
 
-          <div className="flex flex-col gap-4">
-            <div className="text-xl font-black text-cyan-400 tracking-widest">ハイスピード (倍速)</div>
-            <div className="text-sm text-neutral-400 font-bold mb-2">ノーツのスクロール速度を変更します。音楽のテンポは変わりません。</div>
-            <div className="flex items-center justify-center gap-6 bg-neutral-900 p-6 rounded-2xl">
-              <button onClick={() => handleSpeedChange(-0.1)} className="p-4 bg-neutral-700 hover:bg-neutral-600 text-white rounded-2xl transition-colors">
-                <Minus size={24} />
-              </button>
-              <div className="w-48 text-center flex items-baseline justify-center gap-1">
-                <span className="text-6xl font-black font-mono text-white">{speedMultiplier.toFixed(2)}</span>
-                <span className="text-xl font-bold text-neutral-500">x</span>
+          {activeTab === 'general' && (
+            <>
+              <div className="flex flex-col gap-4">
+                <div className="text-xl font-black text-cyan-400 tracking-widest">ハイスピード (倍速)</div>
+                <div className="text-sm text-neutral-400 font-bold mb-2">ノーツのスクロール速度を変更します。音楽のテンポは変わりません。</div>
+                <div className="flex items-center justify-center gap-6 bg-neutral-900 p-6 rounded-2xl">
+                  <button onClick={() => handleSpeedChange(-0.1)} className="p-4 bg-neutral-700 hover:bg-neutral-600 text-white rounded-2xl transition-colors">
+                    <Minus size={24} />
+                  </button>
+                  <div className="w-48 text-center flex items-baseline justify-center gap-1">
+                    <span className="text-6xl font-black font-mono text-white">{speedMultiplier.toFixed(2)}</span>
+                    <span className="text-xl font-bold text-neutral-500">x</span>
+                  </div>
+                  <button onClick={() => handleSpeedChange(0.1)} className="p-4 bg-neutral-700 hover:bg-neutral-600 text-white rounded-2xl transition-colors">
+                    <Plus size={24} />
+                  </button>
+                </div>
+                <div className="flex justify-center gap-4 mt-2">
+                  <button onClick={() => handleSpeedChange(-0.01)} className="px-6 py-2 bg-neutral-700 hover:bg-neutral-600 text-white rounded-full font-bold text-sm transition-colors">-0.01</button>
+                  <button onClick={() => handleSpeedChange(0.01)} className="px-6 py-2 bg-neutral-700 hover:bg-neutral-600 text-white rounded-full font-bold text-sm transition-colors">+0.01</button>
+                </div>
               </div>
-              <button onClick={() => handleSpeedChange(0.1)} className="p-4 bg-neutral-700 hover:bg-neutral-600 text-white rounded-2xl transition-colors">
-                <Plus size={24} />
-              </button>
-            </div>
-            <div className="flex justify-center gap-4 mt-2">
-              <button onClick={() => handleSpeedChange(-0.01)} className="px-6 py-2 bg-neutral-700 hover:bg-neutral-600 text-white rounded-full font-bold text-sm transition-colors">-0.01</button>
-              <button onClick={() => handleSpeedChange(0.01)} className="px-6 py-2 bg-neutral-700 hover:bg-neutral-600 text-white rounded-full font-bold text-sm transition-colors">+0.01</button>
-            </div>
-          </div>
 
-          <div className="flex flex-col gap-4">
-            <div className="text-xl font-black text-purple-400 tracking-widest">ウォール (レーン隠し)</div>
-            <div className="text-sm text-neutral-400 font-bold">画面右側のノーツ出現位置から指定した割合を隠します。(0=なし, 1000=完全)</div>
-            <div className="bg-neutral-900 p-6 rounded-2xl flex flex-col gap-4">
-              <div className="flex justify-between items-center text-white font-mono font-black text-2xl">
-                <span>0</span>
-                <span className="text-4xl text-purple-400">{wallAmount}</span>
-                <span>1000</span>
+              <div className="flex flex-col gap-4">
+                <div className="text-xl font-black text-purple-400 tracking-widest">ウォール (レーン隠し)</div>
+                <div className="text-sm text-neutral-400 font-bold">画面右側のノーツ出現位置から指定した割合を隠します。(0=なし, 1000=完全)</div>
+                <div className="bg-neutral-900 p-6 rounded-2xl flex flex-col gap-4">
+                  <div className="flex justify-between items-center text-white font-mono font-black text-2xl">
+                    <span>0</span>
+                    <span className="text-4xl text-purple-400">{wallAmount}</span>
+                    <span>1000</span>
+                  </div>
+                  <input
+                    type="range"
+                    min="0"
+                    max="1000"
+                    value={wallAmount}
+                    onChange={handleWallChange}
+                    className="w-full h-4 bg-neutral-700 rounded-full appearance-none cursor-pointer"
+                  />
+                </div>
               </div>
-              <input
-                type="range"
-                min="0"
-                max="1000"
-                value={wallAmount}
-                onChange={handleWallChange}
-                className="w-full h-4 bg-neutral-700 rounded-full appearance-none cursor-pointer"
-              />
-            </div>
-          </div>
+            </>
+          )}
 
-          <div className="flex flex-col gap-4">
-            <div className="text-xl font-black text-orange-400 tracking-widest">判定オフセット</div>
-            <div className="text-sm text-neutral-400 font-bold mb-2">リズム音に合わせてノーツが中央の線に重なるように調整してください。</div>
+          {activeTab === 'sound' && (
+            <>
+              <div className="flex flex-col gap-4">
+                <div className="text-xl font-black text-orange-400 tracking-widest">判定オフセット</div>
+                <div className="text-sm text-neutral-400 font-bold mb-2">リズム音に合わせてノーツが中央の線に重なるように調整してください。</div>
 
-            <div className="h-32 bg-neutral-900 rounded-2xl relative overflow-hidden mb-2 border-2 border-neutral-700 cursor-pointer" onClick={playTick}>
-              <div ref={handleDemoRef} className="absolute inset-0" />
-            </div>
+                <div className="h-32 bg-neutral-900 rounded-2xl relative overflow-hidden mb-2 border-2 border-neutral-700 cursor-pointer" onClick={playTick}>
+                  <div ref={handleDemoRef} className="absolute inset-0" />
+                </div>
 
-            <div className="flex items-center justify-center gap-6">
-              <button onClick={() => handleOffsetChange(-5)} className="p-4 bg-neutral-700 hover:bg-neutral-600 text-white rounded-2xl transition-colors">
-                <Minus size={24} />
-              </button>
-              <div className="w-48 text-center flex items-baseline justify-center gap-1">
-                <span className="text-5xl font-black font-mono text-white">{offsetMs > 0 ? '+' : ''}{offsetMs}</span>
-                <span className="text-xl font-bold text-neutral-500">ms</span>
+                <div className="flex items-center justify-center gap-6">
+                  <button onClick={() => handleOffsetChange(-5)} className="p-4 bg-neutral-700 hover:bg-neutral-600 text-white rounded-2xl transition-colors">
+                    <Minus size={24} />
+                  </button>
+                  <div className="w-48 text-center flex items-baseline justify-center gap-1">
+                    <span className="text-5xl font-black font-mono text-white">{offsetMs > 0 ? '+' : ''}{offsetMs}</span>
+                    <span className="text-xl font-bold text-neutral-500">ms</span>
+                  </div>
+                  <button onClick={() => handleOffsetChange(5)} className="p-4 bg-neutral-700 hover:bg-neutral-600 text-white rounded-2xl transition-colors">
+                    <Plus size={24} />
+                  </button>
+                </div>
+                <div className="flex justify-center gap-4 mt-2">
+                  <button onClick={() => handleOffsetChange(-1)} className="px-6 py-2 bg-neutral-700 hover:bg-neutral-600 text-white rounded-full font-bold text-sm transition-colors">-1ms</button>
+                  <button onClick={() => handleOffsetChange(1)} className="px-6 py-2 bg-neutral-700 hover:bg-neutral-600 text-white rounded-full font-bold text-sm transition-colors">+1ms</button>
+                </div>
               </div>
-              <button onClick={() => handleOffsetChange(5)} className="p-4 bg-neutral-700 hover:bg-neutral-600 text-white rounded-2xl transition-colors">
-                <Plus size={24} />
-              </button>
-            </div>
-            <div className="flex justify-center gap-4 mt-2">
-              <button onClick={() => handleOffsetChange(-1)} className="px-6 py-2 bg-neutral-700 hover:bg-neutral-600 text-white rounded-full font-bold text-sm transition-colors">-1ms</button>
-              <button onClick={() => handleOffsetChange(1)} className="px-6 py-2 bg-neutral-700 hover:bg-neutral-600 text-white rounded-full font-bold text-sm transition-colors">+1ms</button>
-            </div>
-          </div>
+            </>
+          )}
 
         </div>
       </div>

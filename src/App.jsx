@@ -49,9 +49,6 @@ function App() {
   const showSettings = useGameStore(state => state.showSettings);
   const setIsMobileMode = useGameStore(state => state.setIsMobileMode);
   const setShowSettings = useGameStore(state => state.setShowSettings);
-  // 設定画面管理
-  const speedMultiplier = useGameStore(state => state.speedMultiplier);
-  const setSpeedMultiplier = useGameStore(state => state.setSpeedMultiplier);
 
   const toggleFullscreen = () => {
     if (!document.fullscreenElement) {
@@ -174,6 +171,10 @@ function App() {
       <>
         <Toast />
         <SongSelect songsPromise={songsPromise} onBack={() => setAppMode('menu')} onStartGame={() => setAppMode('game')} />
+
+        {showSettings && (
+          <SettingsModal onClose={() => setShowSettings(false)} />
+        )}
       </>
     );
   }
