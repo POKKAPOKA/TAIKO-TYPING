@@ -78,14 +78,14 @@ export class GameEngine {
       // Resume
       store.setIsPaused(false);
       const now = performance.now();
-      
+
       if (!this.audioStarted) {
         // Adjust realStartTime so elapsed time continues correctly
         this.realStartTime = now - (this.currentTime + this.leadInTime);
       } else if (this.isFallbackMode) {
         this.mockStartTime = now - this.currentTime;
       }
-      
+
       if (this.audioStarted && this.audio) {
         this.audio.play().catch(e => console.warn(e));
       }
@@ -218,8 +218,8 @@ export class GameEngine {
       .slice(0, 3)
       .map(entry => ({ char: entry[0], count: entry[1] }));
 
-    const clearRate = store.completedCount > 0 
-      ? (store.completedCount / this.stats.totalNotes) * 100 
+    const clearRate = store.completedCount > 0
+      ? (store.completedCount / this.stats.totalNotes) * 100
       : 0;
 
     store.setStatsData({

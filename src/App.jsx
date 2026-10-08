@@ -205,7 +205,7 @@ function App() {
       <div
         className="h-screen w-screen bg-neutral-900 text-white flex flex-col items-center p-8 font-sans select-none overflow-hidden box-border relative"
       >
-      
+
       <div className="absolute top-4 right-4 z-[55] flex gap-4">
         {(appMode === "menu" || appMode === "songSelect" || appMode === "characterSelect") && (
           <button
@@ -529,7 +529,7 @@ function App() {
         </div>
       )}
 
-      
+
       {appMode === "game" && isPaused && (
         <div className="absolute inset-0 z-50 bg-black/80 flex flex-col items-center justify-center backdrop-blur-sm">
           <h2 className="text-5xl font-black text-white mb-12 tracking-widest">PAUSE</h2>

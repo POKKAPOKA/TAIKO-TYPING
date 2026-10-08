@@ -27,7 +27,10 @@ export const fetchRankings = async (songId) => {
       playerName: entry.player_name,
       score: Number(entry.score) || 0,
       maxCombo: Number(entry.max_combo) || 0,
-      maxKps: Number(entry.peak_kps) || 0
+      maxKps: Number(entry.peak_kps) || 0,
+      perfectCount: Number(entry.perfect_count) || 0,
+      goodCount: Number(entry.good_count) || 0,
+      missCount: Number(entry.miss_count) || 0
     }));
   } catch (error) {
     console.error('Supabase fetch error:', error);
