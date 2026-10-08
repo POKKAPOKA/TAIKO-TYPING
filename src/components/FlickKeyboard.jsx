@@ -121,10 +121,15 @@ export default function FlickKeyboard() {
     setActiveKey(null);
     setFlickDir(0);
     touchStartPos.current = null;
+    detachGlobalListeners(); // 入力が確定したらリスナーを解除する
   };
 
   // グローバルリスナーの登録/解除は、キーが押されている間だけ行う（useEffectは使わずイベント駆動）
+  // 二重登録防止のためフラグで管理する
+  const listenersAttached = useRef(false);
   const attachGlobalListeners = () => {
+    if (listenersAttached.current) return;
+    listenersAttached.current = true;
     window.addEventListener('mousemove', handleGlobalMove.current);
     window.addEventListener('mouseup', handleGlobalEnd.current);
     window.addEventListener('touchmove', handleGlobalMove.current, { passive: false });
@@ -132,6 +137,8 @@ export default function FlickKeyboard() {
     window.addEventListener('touchcancel', handleGlobalEnd.current);
   };
   const detachGlobalListeners = () => {
+    if (!listenersAttached.current) return;
+    listenersAttached.current = false;
     window.removeEventListener('mousemove', handleGlobalMove.current);
     window.removeEventListener('mouseup', handleGlobalEnd.current);
     window.removeEventListener('touchmove', handleGlobalMove.current);

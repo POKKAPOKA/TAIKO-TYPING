@@ -38,14 +38,32 @@ export default function ResultScreen({
     return { rank: "CLEAR", color: "text-white" };
   };
 
-  // 1280x720 に収まるように縮小率を計算（useEffectは使わずレンダリング時に算出）
-  const scale = typeof window !== 'undefined'
-    ? Math.min(1, (window.innerWidth - 32) / 1280, (window.innerHeight - 32) / 720)
-    : 1;
+  // 1280x720 に収まるように縮小率を算出する。
+  // リサイズに追従させるため、useState + resizeイベントで再計算する（useEffectは使わない）
+  const [scale, setScale] = React.useState(() =>
+    typeof window !== 'undefined'
+      ? Math.min(1, (window.innerWidth - 32) / 1280, (window.innerHeight - 32) / 720)
+      : 1
+  );
+
+  // resizeイベントの登録はコールバックrefで行う（初回レンダリング時に1度だけ）
+  const resizeHandlerRef = React.useRef(null);
+  const setResizeListenerRef = React.useCallback((node) => {
+    if (node && !resizeHandlerRef.current) {
+      const handler = () => {
+        setScale(Math.min(1, (window.innerWidth - 32) / 1280, (window.innerHeight - 32) / 720));
+      };
+      window.addEventListener('resize', handler);
+      resizeHandlerRef.current = handler;
+    } else if (!node && resizeHandlerRef.current) {
+      window.removeEventListener('resize', resizeHandlerRef.current);
+      resizeHandlerRef.current = null;
+    }
+  }, []);
 
   return (
     // 1280x720 の固定解像度で設計し、画面が小さい場合は scale で縮小して収める
-    <div className="relative w-full flex justify-center overflow-hidden py-4" style={{ maxHeight: '100%' }}>
+    <div ref={setResizeListenerRef} className="relative w-full flex justify-center overflow-hidden py-4" style={{ maxHeight: '100%' }}>
       <div
         className="bg-neutral-900 relative overflow-hidden shadow-none border-4 border-neutral-700 rounded-3xl flex-shrink-0"
         style={{
