@@ -2,7 +2,7 @@ import React, { useRef, useMemo, useCallback } from 'react';
 import { useGameStore } from '../store/gameStore';
 import { gameEngine } from '../engine/GameEngine';
 
-const NOTE_SPEED = 0.5; // px per ms
+const NOTE_SPEED = 0.5; // px per ms（基準速度。設定の倍速がこれに乗算される）
 const JUDGE_LINE_X = 200; // 判定ラインのX座標(px)
 
 const JudgmentPopup = React.memo(() => {
@@ -17,8 +17,8 @@ const JudgmentPopup = React.memo(() => {
     >
       {lastJudgment && (
         <div key={judgmentCount} className="animate-bounce font-black text-3xl tracking-widest mb-1">
-          {lastJudgment === 'JUSTICE' && <span className="text-yellow-400">JUSTICE</span>}
-          {lastJudgment === 'ATTACK' && <span className="text-green-400">ATTACK</span>}
+          {lastJudgment === 'PERFECT' && <span className="text-yellow-400">PERFECT</span>}
+          {lastJudgment === 'GOOD' && <span className="text-green-400">GOOD</span>}
           {lastJudgment === 'MISS' && <span className="text-neutral-500">MISS</span>}
         </div>
       )}
@@ -41,6 +41,7 @@ const NotesArea = React.memo(() => {
   const wordQueue = useGameStore(state => state.wordQueue);
   const status = useGameStore(state => state.status);
   const loadedScore = useGameStore(state => state.loadedScore);
+  const wallEnabled = useGameStore(state => state.wallEnabled);
 
   const [visibleRange, setVisibleRange] = React.useState({ start: -2000, end: 8000 });
 
@@ -86,13 +87,15 @@ const NotesArea = React.memo(() => {
 
         const noteElements = container.children;
         const screenWidth = window.innerWidth;
+        // 設定の倍速をスクロール速度に反映する（音声のplaybackRateと同期させるため）
+        const noteSpeed = NOTE_SPEED * storeState.speedMultiplier;
 
         for (let i = 0; i < noteElements.length; i++) {
           const el = noteElements[i];
 
           if (el.dataset.isBarline) {
             const barTime = parseFloat(el.dataset.time);
-            const xPos = JUDGE_LINE_X + (barTime - currentTime) * NOTE_SPEED;
+            const xPos = JUDGE_LINE_X + (barTime - currentTime) * noteSpeed;
 
             if (xPos < -100 || xPos > screenWidth + 200) {
                el.style.display = 'none';
@@ -107,7 +110,7 @@ const NotesArea = React.memo(() => {
           if (noteIdStr) {
             const noteData = allNotesMap.get(noteIdStr);
             if (noteData) {
-              const xPos = JUDGE_LINE_X + (noteData.time - currentTime) * NOTE_SPEED;
+              const xPos = JUDGE_LINE_X + (noteData.time - currentTime) * noteSpeed;
 
               if (xPos < -200 || xPos > screenWidth + 200) {
                  el.style.display = 'none';
@@ -196,6 +199,10 @@ const NotesArea = React.memo(() => {
       </div>
 
       <JudgmentPopup />
+
+      {wallEnabled && (
+        <div className="absolute inset-y-0 right-0 w-1/2 bg-neutral-900 z-50 border-l-4 border-neutral-700" />
+      )}
     </div>
   );
 });

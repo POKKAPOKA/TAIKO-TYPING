@@ -9,8 +9,8 @@ const initialPlayState = {
   combo: 0,
   maxCombo: 0,
   missCount: 0,
-  justiceCount: 0,
-  attackCount: 0,
+  perfectCount: 0,
+  goodCount: 0,
   completedCount: 0,
   droppedCount: 0,
   typoCount: 0,
@@ -21,7 +21,8 @@ const initialPlayState = {
   activeWord: null,
   typedIndex: 0,
   lastJudgment: null,
-  wordQueue: []
+  wordQueue: [],
+  statsData: null
 };
 
 export const useGameStore = create((set) => ({
@@ -29,8 +30,8 @@ export const useGameStore = create((set) => ({
   combo: 0,
   maxCombo: 0,
   missCount: 0,
-  justiceCount: 0,
-  attackCount: 0,
+  perfectCount: 0,
+  goodCount: 0,
   completedCount: 0,
   droppedCount: 0,
   typoCount: 0,
@@ -42,6 +43,14 @@ export const useGameStore = create((set) => ({
   isMobileMode: false,
   showSettings: false,
   showGuide: false, // プレイ開始直後に数秒間だけ表示する操作ガイド
+
+  // 設定（設定画面で変更。プレイ中に変えた場合はリトライで反映）
+  speedMultiplier: 1.0,
+  wallEnabled: false,
+  offsetMs: 0,
+
+  // リザルト画面用の集計データ（プレイ終了時にGameEngineがセットする）
+  statsData: null,
 
   // 読み込んだデータ
   loadedScore: null,
@@ -73,8 +82,8 @@ export const useGameStore = create((set) => ({
   })),
 
   addMissCount: () => set((state) => ({ missCount: state.missCount + 1 })),
-  addJusticeCount: () => set((state) => ({ justiceCount: state.justiceCount + 1 })),
-  addAttackCount: () => set((state) => ({ attackCount: state.attackCount + 1 })),
+  addPerfectCount: () => set((state) => ({ perfectCount: state.perfectCount + 1 })),
+  addGoodCount: () => set((state) => ({ goodCount: state.goodCount + 1 })),
 
   addCompletedCount: () => set((state) => ({ completedCount: state.completedCount + 1 })),
   addDroppedCount: () => set((state) => ({ droppedCount: state.droppedCount + 1 })),
@@ -89,6 +98,10 @@ export const useGameStore = create((set) => ({
   setIsMobileMode: (isMobileMode) => set({ isMobileMode }),
   setShowSettings: (showSettings) => set({ showSettings }),
   setShowGuide: (showGuide) => set({ showGuide }),
+  setSpeedMultiplier: (speedMultiplier) => set({ speedMultiplier }),
+  setWallEnabled: (wallEnabled) => set({ wallEnabled }),
+  setOffsetMs: (offsetMs) => set({ offsetMs }),
+  setStatsData: (statsData) => set({ statsData }),
 
   setLoadedScore: (score, fileName) => set({ loadedScore: score, scoreFileName: fileName || null }),
   setAudioUrl: (url, fileName) => set((state) => {

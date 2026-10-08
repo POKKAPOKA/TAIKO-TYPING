@@ -31,7 +31,7 @@ function RankingsList({ rankingsPromise }) {
               entry.rank === 2 ? 'text-neutral-300' :
               entry.rank === 3 ? 'text-orange-600' : 'text-neutral-500'
             }`}>
-              #{entry.rank}
+              {entry.rank}位
             </span>
           </div>
 
@@ -39,7 +39,12 @@ function RankingsList({ rankingsPromise }) {
             <div className="text-2xl font-black text-white truncate">{entry.playerName}</div>
           </div>
 
-          <div className="flex items-center gap-8 text-right">
+          <div className="flex items-center gap-6 text-right">
+            <div className="w-32 text-left border-l-2 border-neutral-700 pl-4 hidden md:block">
+              <div className="flex justify-between text-xs font-bold text-yellow-400"><span>PERFECT</span><span>{entry.perfectCount || 0}</span></div>
+              <div className="flex justify-between text-xs font-bold text-green-400"><span>GOOD</span><span>{entry.goodCount || 0}</span></div>
+              <div className="flex justify-between text-xs font-bold text-neutral-500"><span>MISS</span><span>{entry.missCount || 0}</span></div>
+            </div>
             <div className="w-24">
               <div className="text-xs font-bold text-neutral-500 tracking-widest mb-1">MAX COMBO</div>
               <div className="font-mono text-xl text-yellow-400">{entry.maxCombo}</div>
@@ -66,7 +71,7 @@ export default function Leaderboard({ songTitle, rankingsPromise, onClose }) {
 
         <div className="bg-neutral-900 p-6 flex justify-between items-center border-b-4 border-neutral-700">
           <div>
-            <h2 className="text-3xl font-black text-cyan-400 tracking-widest">LEADERBOARD</h2>
+            <h2 className="text-3xl font-black text-cyan-400 tracking-widest">ランキング</h2>
             <div className="text-neutral-400 font-bold mt-1">{songTitle}</div>
           </div>
           <button

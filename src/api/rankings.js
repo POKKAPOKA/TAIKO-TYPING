@@ -52,7 +52,7 @@ export const fetchRankingsResult = (songId) =>
  */
 export const submitScore = async (payload) => {
   try {
-    const { songId, playerName, score, maxCombo, maxKps } = payload;
+    const { songId, playerName, score, maxCombo, maxKps, perfectCount, goodCount, missCount } = payload;
     const { getDeviceId } = await import('../lib/deviceId');
     const deviceId = getDeviceId();
     
@@ -87,7 +87,10 @@ export const submitScore = async (payload) => {
         player_name: finalPlayerName,
         score,
         max_combo: maxCombo,
-        peak_kps: maxKps
+        peak_kps: maxKps,
+        perfect_count: perfectCount || 0,
+        good_count: goodCount || 0,
+        miss_count: missCount || 0
       }, { onConflict: 'song_id,device_id' })
       .select();
 

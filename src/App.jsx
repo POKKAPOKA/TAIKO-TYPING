@@ -30,8 +30,8 @@ function App() {
   const audioUrl = useGameStore(state => state.audioUrl);
   const maxScore = useGameStore(state => state.maxScore);
   const missCount = useGameStore(state => state.missCount);
-  const justiceCount = useGameStore(state => state.justiceCount);
-  const attackCount = useGameStore(state => state.attackCount);
+  const perfectCount = useGameStore(state => state.perfectCount);
+  const goodCount = useGameStore(state => state.goodCount);
   const completedCount = useGameStore(state => state.completedCount);
   const droppedCount = useGameStore(state => state.droppedCount);
   const typoCount = useGameStore(state => state.typoCount);
@@ -53,6 +53,13 @@ function App() {
   const showSettings = useGameStore(state => state.showSettings);
   const setIsMobileMode = useGameStore(state => state.setIsMobileMode);
   const setShowSettings = useGameStore(state => state.setShowSettings);
+  // 設定値（設定画面のスライダー/トグルと双方向に同期）
+  const speedMultiplier = useGameStore(state => state.speedMultiplier);
+  const wallEnabled = useGameStore(state => state.wallEnabled);
+  const offsetMs = useGameStore(state => state.offsetMs);
+  const setSpeedMultiplier = useGameStore(state => state.setSpeedMultiplier);
+  const setWallEnabled = useGameStore(state => state.setWallEnabled);
+  const setOffsetMs = useGameStore(state => state.setOffsetMs);
 
   const toggleFullscreen = () => {
     if (!document.fullscreenElement) {
@@ -88,7 +95,10 @@ function App() {
         playerName: finalName,
         score,
         maxCombo,
-        maxKps
+        maxKps,
+        perfectCount: useGameStore.getState().perfectCount,
+        goodCount: useGameStore.getState().goodCount,
+        missCount: useGameStore.getState().missCount
       });
       if (res.updated) {
         setSubmitSuccessMessage('ベストスコアを更新してランキングに登録しました');
@@ -411,15 +421,15 @@ function App() {
                 <div className="bg-neutral-900 rounded-2xl p-5 flex flex-col gap-3 flex-1 justify-center">
                   <h3 className="text-center font-black text-sm text-neutral-500 tracking-widest mb-1">リズム判定</h3>
                   <div className="flex justify-between items-center">
-                    <span className="text-neutral-400 font-bold text-lg">良</span>
-                    <span className="font-mono text-3xl text-yellow-400">{justiceCount}</span>
+                    <span className="text-neutral-400 font-bold text-lg">PERFECT</span>
+                    <span className="font-mono text-3xl text-yellow-400">{perfectCount}</span>
                   </div>
                   <div className="flex justify-between items-center">
-                    <span className="text-neutral-400 font-bold text-lg">可</span>
-                    <span className="font-mono text-3xl text-green-400">{attackCount}</span>
+                    <span className="text-neutral-400 font-bold text-lg">GOOD</span>
+                    <span className="font-mono text-3xl text-green-400">{goodCount}</span>
                   </div>
                   <div className="flex justify-between items-center">
-                    <span className="text-neutral-400 font-bold text-lg">不可</span>
+                    <span className="text-neutral-400 font-bold text-lg">MISS</span>
                     <span className="font-mono text-3xl text-red-500">{missCount}</span>
                   </div>
                 </div>
@@ -563,9 +573,52 @@ function App() {
       )}
 
       {showSettings && (
-        <div className="absolute inset-0 z-[60] bg-neutral-900 flex flex-col items-center justify-center">
-          <h2 className="text-4xl font-black text-white mb-8">設定</h2>
-          <div className="text-neutral-400 mb-8">現在準備中です...</div>
+        <div className="absolute inset-0 z-[60] bg-neutral-900 flex flex-col items-center justify-center p-8">
+          <h2 className="text-4xl font-black text-white mb-12">設定</h2>
+
+          <div className="flex flex-col gap-8 w-full max-w-lg mb-12">
+            {/* 倍速（一番上に大きく配置） */}
+            <div className="flex flex-col gap-2">
+              <label className="text-cyan-400 font-black text-2xl tracking-widest">倍速（スクロール速度）</label>
+              <div className="flex items-center gap-4">
+                <input
+                  type="range"
+                  min="0.5" max="3.0" step="0.1"
+                  value={speedMultiplier}
+                  onChange={(e) => setSpeedMultiplier(parseFloat(e.target.value))}
+                  className="w-full accent-cyan-500"
+                />
+                <span className="text-3xl font-black text-white min-w-[4rem]">{speedMultiplier.toFixed(1)}x</span>
+              </div>
+            </div>
+
+            {/* ウォール機能 */}
+            <div className="flex flex-col gap-2">
+              <label className="text-neutral-400 font-bold text-xl">ウォール機能（画面右側のノーツ出現を隠す）</label>
+              <button
+                onClick={() => setWallEnabled(!wallEnabled)}
+                className={`px-6 py-4 rounded-xl font-bold text-xl transition-colors ${wallEnabled ? 'bg-cyan-600 text-white' : 'bg-neutral-800 text-neutral-400'}`}
+              >
+                {wallEnabled ? 'ON（右半分を隠す）' : 'OFF'}
+              </button>
+            </div>
+
+            {/* 判定オフセット */}
+            <div className="flex flex-col gap-2">
+              <label className="text-neutral-400 font-bold text-xl">判定オフセット (ms)</label>
+              <div className="flex items-center gap-4">
+                <input
+                  type="range"
+                  min="-200" max="200" step="10"
+                  value={offsetMs}
+                  onChange={(e) => setOffsetMs(parseInt(e.target.value))}
+                  className="w-full accent-orange-500"
+                />
+                <span className="text-2xl font-black text-white min-w-[4rem]">{offsetMs > 0 ? `+${offsetMs}` : offsetMs}</span>
+              </div>
+            </div>
+          </div>
+
           <button
             onClick={() => {
               setShowSettings(false);

@@ -1,5 +1,5 @@
 import { useGameStore } from '../store/gameStore';
-import { RomajiParser, getKeystrokeCount } from './RomajiParser';
+import { RomajiParser, calculateMinKeystrokes } from './RomajiParser';
 
 const JUDGE_WINDOW = {
   PERFECT: 50,
@@ -40,6 +40,9 @@ export class GameEngine {
     this.fallbackEndTime = 0;
     this.realStartTime = 0;
     this.mockStartTime = 0;
+    // スコア計算・統計もここで初期化する（前回プレイの持ち越し防止）
+    this.scorePerChar = 0;
+    this.stats = { typosByChar: {}, mistakeLog: [], totalNotes: 0 };
   }
 
   updateCurrentTarget(store, newTarget) {
@@ -118,7 +121,21 @@ export class GameEngine {
 
     this.queue = [...loadedScore.notes].sort((a, b) => a.time - b.time).map(note => ({ ...note }));
 
-    store.setMaxScore(this.queue.length * 100);
+    // スコア配点: 全ノーツのローマ字最短打鍵数の合計で 1,010,000 点を按分し、
+    // 全 PERFECT でちょうど理論値 1,010,000 点になるようにする
+    let totalChars = 0;
+    for (const note of this.queue) {
+      totalChars += calculateMinKeystrokes(note.reading || note.word || '');
+    }
+    this.scorePerChar = totalChars > 0 ? 1010000 / totalChars : 0;
+    store.setMaxScore(1010000);
+
+    // 統計トラッキングを初期化（リザルト画面用）
+    this.stats = {
+      typosByChar: {},
+      mistakeLog: [],
+      totalNotes: this.queue.length
+    };
 
     this.updateCurrentTarget(store, this.queue.shift() || null);
     store.setWordQueue([...this.queue]);
@@ -138,6 +155,7 @@ export class GameEngine {
     // 前回の音声は reset() で破棄済みのため、ここでは新規生成だけ行う
     this.audio = new Audio(audioUrl);
     this.audio.currentTime = 0;
+    this.audio.playbackRate = store.speedMultiplier;
 
     if (this.leadInTime === 0) {
       this.audio.volume = 0.5;
@@ -187,11 +205,35 @@ export class GameEngine {
       store.addDroppedCount();
       store.setCombo(0);
       store.setLastJudgment('MISS');
+      this.stats.mistakeLog.push({ time: this.currentTime / 1000, note: this.currentTarget.word, type: "dropped" });
     }
 
     // リザルト画面では現在ターゲットを表示しないため、打ち残しの有無にかかわらず
     // 常にクリアする（次回プレイへの状態持ち越しも防げる）
     this.updateCurrentTarget(store, null);
+
+    // 最終結果を集計してストアに保存（リザルト画面は statsData を参照する）
+    const sortedWorst = Object.entries(this.stats.typosByChar)
+      .sort((a, b) => b[1] - a[1])
+      .slice(0, 3)
+      .map(entry => ({ char: entry[0], count: entry[1] }));
+
+    const clearRate = store.completedCount > 0 
+      ? (store.completedCount / this.stats.totalNotes) * 100 
+      : 0;
+
+    store.setStatsData({
+      worstKeys: sortedWorst,
+      mistakeLog: this.stats.mistakeLog,
+      stats: {
+        maxKps: store.maxKps,
+        clearRate: clearRate.toFixed(2),
+        totalNotes: this.stats.totalNotes,
+        perfectCount: store.perfectCount,
+        goodCount: store.goodCount,
+        missCount: store.missCount
+      }
+    });
 
     store.setStatus('result');
   }
@@ -238,11 +280,12 @@ export class GameEngine {
 
   checkForceTransition() {
     if (!this.currentTarget) return;
+    const offsetMs = useGameStore.getState().offsetMs;
     const nextWordTime = this.queue.length > 0 ? this.queue[0].time : Infinity;
 
     const timeLimit = Math.min(this.currentTarget.endTime + JUDGE_WINDOW.MISS, nextWordTime - JUDGE_WINDOW.MISS);
 
-    if (this.currentTime >= timeLimit) {
+    if (this.currentTime - offsetMs >= timeLimit) {
       this.forceMissAndTransition();
     }
   }
@@ -253,6 +296,7 @@ export class GameEngine {
     store.setLastJudgment('MISS');
     store.setCombo(0);
     store.addDroppedCount();
+    this.stats.mistakeLog.push({ time: this.currentTime / 1000, note: this.currentTarget.word, type: "dropped" });
 
     this.updateCurrentTarget(store, this.queue.shift() || null);
     store.setWordQueue([...this.queue]);
@@ -267,7 +311,8 @@ export class GameEngine {
     if (!/^[a-zA-Z0-9\-]$/.test(e.key)) return;
     if (!this.currentTarget || !this.romajiParser) return;
 
-    const currentTimeMs = this.currentTime;
+    const store = useGameStore.getState();
+    const currentTimeMs = this.currentTime - store.offsetMs;
     const nextWordTime = this.queue.length > 0 ? this.queue[0].time : Infinity;
     const timeLimit = Math.min(this.currentTarget.endTime + JUDGE_WINDOW.MISS, nextWordTime - JUDGE_WINDOW.MISS);
 
@@ -287,27 +332,33 @@ export class GameEngine {
 
       const isCorrect = this.romajiParser.input(e.key);
       if (!isCorrect) {
+        const expectedChar = this.romajiParser.getDisplayState().next[0] || "?";
         useGameStore.getState().addTypoCount();
+        this.stats.typosByChar[expectedChar] = (this.stats.typosByChar[expectedChar] || 0) + 1;
+        this.stats.mistakeLog.push({ time: currentTimeMs / 1000, note: this.currentTarget.word, type: "typo", char: expectedChar });
         return;
       }
 
       if (diff <= JUDGE_WINDOW.PERFECT) {
-        this.applyJudgment('JUSTICE');
+        this.applyJudgment('PERFECT');
       } else if (diff <= JUDGE_WINDOW.GOOD) {
-        this.applyJudgment('ATTACK');
+        this.applyJudgment('GOOD');
       } else if (diff <= JUDGE_WINDOW.MISS) {
         this.applyJudgment('MISS');
         this.firstHitMiss = true;
+        this.stats.mistakeLog.push({ time: currentTimeMs / 1000, note: this.currentTarget.word, type: "miss" });
       }
     } else {
       const isCorrect = this.romajiParser.input(e.key);
       if (!isCorrect) {
+        const expectedChar = this.romajiParser.getDisplayState().next[0] || "?";
         useGameStore.getState().addTypoCount();
+        this.stats.typosByChar[expectedChar] = (this.stats.typosByChar[expectedChar] || 0) + 1;
+        this.stats.mistakeLog.push({ time: currentTimeMs / 1000, note: this.currentTarget.word, type: "typo", char: expectedChar });
         return;
       }
     }
 
-    const store = useGameStore.getState();
     const displayState = this.romajiParser.getDisplayState();
     store.setTargetState(
       this.currentTarget,
@@ -322,22 +373,26 @@ export class GameEngine {
 
   applyJudgment(judgment) {
     const store = useGameStore.getState();
+    // ノーツの最短打鍵数に応じて配点する（長いノーツほど高得点）
+    const noteChars = this.currentTarget
+      ? calculateMinKeystrokes(this.currentTarget.reading || this.currentTarget.word || '')
+      : 0;
+    const baseScore = this.scorePerChar * noteChars;
 
-    if (judgment === 'JUSTICE') {
-      store.setLastJudgment('JUSTICE');
-      store.addScore(100);
-      store.addJusticeCount();
-    } else if (judgment === 'ATTACK') {
-      store.setLastJudgment('ATTACK');
-      store.addScore(50);
-      store.addAttackCount();
+    if (judgment === 'PERFECT') {
+      store.setLastJudgment('PERFECT');
+      store.addScore(Math.floor(baseScore));
+      store.addPerfectCount();
+    } else if (judgment === 'GOOD') {
+      store.setLastJudgment('GOOD');
+      store.addScore(Math.floor(baseScore * 0.5));
+      store.addGoodCount();
     } else if (judgment === 'MISS') {
       store.setLastJudgment('MISS');
       store.setCombo(0);
       store.addMissCount();
     }
   }
-
   completeCurrentTarget() {
     const store = useGameStore.getState();
 
@@ -348,7 +403,7 @@ export class GameEngine {
 
     const durationSec = (this.currentTarget.endTime - this.currentTarget.time) / 1000;
     if (durationSec > 0) {
-      const strokeCount = this.romajiParser.typedString.length;
+      const strokeCount = calculateMinKeystrokes(this.currentTarget.reading || this.currentTarget.word || '');
       const kps = strokeCount / durationSec;
       store.updateMaxKps(kps);
     }
