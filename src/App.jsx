@@ -434,7 +434,7 @@ function App() {
           </div>
         </div>
       )}
-      {appMode === "game" && isMobileMode && (
+      {appMode === "game" && isMobileMode && status !== 'result' && (
         <FlickKeyboard />
       )}
 

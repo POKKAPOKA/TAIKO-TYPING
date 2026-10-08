@@ -3,6 +3,33 @@ import { create } from 'zustand';
 // トースト自動消去用タイマー（UI側のuseEffectを使わずストア側で管理する）
 let toastTimer = null;
 
+// 設定値をlocalStorageに永続化するためのキー
+const SETTINGS_STORAGE_KEY = 'taiko_settings';
+
+// 保存された設定を読み込む（なければデフォルト値）
+function loadSettings() {
+  try {
+    const raw = localStorage.getItem(SETTINGS_STORAGE_KEY);
+    if (!raw) return { speedMultiplier: 1.0, wallAmount: 0, offsetMs: 0 };
+    const parsed = JSON.parse(raw);
+    return {
+      speedMultiplier: typeof parsed.speedMultiplier === 'number' ? parsed.speedMultiplier : 1.0,
+      wallAmount: typeof parsed.wallAmount === 'number' ? parsed.wallAmount : 0,
+      offsetMs: typeof parsed.offsetMs === 'number' ? parsed.offsetMs : 0
+    };
+  } catch {
+    return { speedMultiplier: 1.0, wallAmount: 0, offsetMs: 0 };
+  }
+}
+
+function saveSettings(settings) {
+  try {
+    localStorage.setItem(SETTINGS_STORAGE_KEY, JSON.stringify(settings));
+  } catch {
+    // 保存失敗時は無視（プライベートモード等）
+  }
+}
+
 // プレイ関連状態の初期値（resetPlayState / resetGameState で共用）
 const initialPlayState = {
   score: 0,
@@ -45,9 +72,8 @@ export const useGameStore = create((set) => ({
   showGuide: false, // プレイ開始直後に数秒間だけ表示する操作ガイド
 
   // 設定（設定画面で変更。プレイ中に変えた場合はリトライで反映）
-  speedMultiplier: 1.0,
-  wallAmount: 0,
-  offsetMs: 0,
+  // localStorage に永続化され、リロード後も維持される
+  ...loadSettings(),
 
   // リザルト画面用の集計データ（プレイ終了時にGameEngineがセットする）
   statsData: null,
@@ -98,9 +124,22 @@ export const useGameStore = create((set) => ({
   setIsMobileMode: (isMobileMode) => set({ isMobileMode }),
   setShowSettings: (showSettings) => set({ showSettings }),
   setShowGuide: (showGuide) => set({ showGuide }),
-  setSpeedMultiplier: (speedMultiplier) => set({ speedMultiplier }),
-  setWallAmount: (wallAmount) => set({ wallAmount }),
-  setOffsetMs: (offsetMs) => set({ offsetMs }),
+  // 設定変更時はlocalStorageにも保存する
+  setSpeedMultiplier: (speedMultiplier) => set((state) => {
+    const next = { speedMultiplier, wallAmount: state.wallAmount, offsetMs: state.offsetMs };
+    saveSettings(next);
+    return { speedMultiplier };
+  }),
+  setWallAmount: (wallAmount) => set((state) => {
+    const next = { speedMultiplier: state.speedMultiplier, wallAmount, offsetMs: state.offsetMs };
+    saveSettings(next);
+    return { wallAmount };
+  }),
+  setOffsetMs: (offsetMs) => set((state) => {
+    const next = { speedMultiplier: state.speedMultiplier, wallAmount: state.wallAmount, offsetMs };
+    saveSettings(next);
+    return { offsetMs };
+  }),
   setStatsData: (statsData) => set({ statsData }),
 
   setLoadedScore: (score, fileName) => set({ loadedScore: score, scoreFileName: fileName || null }),

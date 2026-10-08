@@ -38,8 +38,23 @@ export default function ResultScreen({
     return { rank: "CLEAR", color: "text-white" };
   };
 
+  // 1280x720 に収まるように縮小率を計算（useEffectは使わずレンダリング時に算出）
+  const scale = typeof window !== 'undefined'
+    ? Math.min(1, (window.innerWidth - 32) / 1280, (window.innerHeight - 32) / 720)
+    : 1;
+
   return (
-    <div className="w-[1280px] h-[720px] bg-neutral-900 relative overflow-hidden mx-auto shadow-none border-4 border-neutral-700 mt-8 rounded-3xl">
+    // 1280x720 の固定解像度で設計し、画面が小さい場合は scale で縮小して収める
+    <div className="relative w-full flex justify-center overflow-hidden py-4" style={{ maxHeight: '100%' }}>
+      <div
+        className="bg-neutral-900 relative overflow-hidden shadow-none border-4 border-neutral-700 rounded-3xl flex-shrink-0"
+        style={{
+          width: 1280,
+          height: 720,
+          transform: `scale(${scale})`,
+          transformOrigin: 'top center'
+        }}
+      >
       {/* 背景画像が将来入る想定のプレースホルダー */}
       <div className="absolute inset-0 opacity-20 bg-[repeating-linear-gradient(45deg,transparent,transparent_10px,rgba(255,255,255,0.1)_10px,rgba(255,255,255,0.1)_20px)] pointer-events-none" />
 
@@ -177,6 +192,7 @@ export default function ResultScreen({
         >
           戻る
         </button>
+      </div>
       </div>
     </div>
   );

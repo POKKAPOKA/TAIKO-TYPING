@@ -66,7 +66,8 @@ export default function FlickKeyboard() {
     touchStartPos.current = { x: touch.clientX, y: touch.clientY };
   };
 
-  const handleTouchMove = (e) => {
+  // 指を動かしている間の方向判定
+  const handleGlobalMove = useRef((e) => {
     if (!activeKey || !touchStartPos.current) return;
     const touch = e.touches ? e.touches[0] : e;
     const dx = touch.clientX - touchStartPos.current.x;
@@ -82,19 +83,37 @@ export default function FlickKeyboard() {
       else if (dy > threshold) dir = 4; // down
     }
     setFlickDir(dir);
+  });
+  handleGlobalMove.current = (e) => {
+    if (!activeKey || !touchStartPos.current) return;
+    const touch = e.touches ? e.touches[0] : e;
+    const dx = touch.clientX - touchStartPos.current.x;
+    const dy = touch.clientY - touchStartPos.current.y;
+    const threshold = 30;
+
+    let dir = 0;
+    if (Math.abs(dx) > Math.abs(dy)) {
+      if (dx < -threshold) dir = 1;
+      else if (dx > threshold) dir = 3;
+    } else {
+      if (dy < -threshold) dir = 2;
+      else if (dy > threshold) dir = 4;
+    }
+    setFlickDir(dir);
   };
 
-  const handleTouchEnd = (e, keyData) => {
-    if (keyData.isModifier) return;
-    if (activeKey === keyData.id) {
+  // 指を離した瞬間に発火（キー外で離しても確実に発火させるためグローバルで受ける）
+  const handleGlobalEnd = useRef(() => {});
+  handleGlobalEnd.current = () => {
+    if (!activeKey) return;
+    const keyData = KANA_GRID.find(k => k.id === activeKey);
+    if (keyData && !keyData.isModifier) {
       let romaji = keyData.chars[flickDir];
 
-      // Apply modifier
       if (modifier === "dakuon" && DAKUON_MAP[romaji]) romaji = DAKUON_MAP[romaji];
       else if (modifier === "handakuon" && HANDAKUON_MAP[romaji]) romaji = HANDAKUON_MAP[romaji];
       else if (modifier === "small" && SMALL_MAP[romaji]) romaji = SMALL_MAP[romaji];
 
-      // If we applied a modifier or just emitted, reset modifier
       if (modifier !== "none") setModifier("none");
 
       sendKeystrokes(romaji);
@@ -102,6 +121,22 @@ export default function FlickKeyboard() {
     setActiveKey(null);
     setFlickDir(0);
     touchStartPos.current = null;
+  };
+
+  // グローバルリスナーの登録/解除は、キーが押されている間だけ行う（useEffectは使わずイベント駆動）
+  const attachGlobalListeners = () => {
+    window.addEventListener('mousemove', handleGlobalMove.current);
+    window.addEventListener('mouseup', handleGlobalEnd.current);
+    window.addEventListener('touchmove', handleGlobalMove.current, { passive: false });
+    window.addEventListener('touchend', handleGlobalEnd.current);
+    window.addEventListener('touchcancel', handleGlobalEnd.current);
+  };
+  const detachGlobalListeners = () => {
+    window.removeEventListener('mousemove', handleGlobalMove.current);
+    window.removeEventListener('mouseup', handleGlobalEnd.current);
+    window.removeEventListener('touchmove', handleGlobalMove.current);
+    window.removeEventListener('touchend', handleGlobalEnd.current);
+    window.removeEventListener('touchcancel', handleGlobalEnd.current);
   };
 
   return (
@@ -122,14 +157,8 @@ export default function FlickKeyboard() {
               ${keyData.isModifier ? "bg-neutral-800 text-purple-400 border-b-4 border-neutral-950" : "bg-neutral-200 text-neutral-900 border-b-4 border-neutral-400"}
               ${activeKey === keyData.id ? "bg-cyan-200 border-cyan-400 text-cyan-900 scale-95" : ""}
             `}
-            onMouseDown={(e) => handleTouchStart(e, keyData)}
-            onMouseMove={handleTouchMove}
-            onMouseUp={(e) => handleTouchEnd(e, keyData)}
-            onMouseLeave={() => { if (activeKey === keyData.id) { setActiveKey(null); setFlickDir(0); } }}
-            onTouchStart={(e) => handleTouchStart(e, keyData)}
-            onTouchMove={handleTouchMove}
-            onTouchEnd={(e) => handleTouchEnd(e, keyData)}
-            onTouchCancel={() => { setActiveKey(null); setFlickDir(0); }}
+            onMouseDown={(e) => { handleTouchStart(e, keyData); if (!keyData.isModifier) attachGlobalListeners(); }}
+            onTouchStart={(e) => { handleTouchStart(e, keyData); if (!keyData.isModifier) attachGlobalListeners(); }}
           >
             {/* Guide Petals */}
             {activeKey === keyData.id && !keyData.isModifier && (
