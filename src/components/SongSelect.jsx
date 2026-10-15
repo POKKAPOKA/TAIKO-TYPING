@@ -8,8 +8,12 @@ import { Dices, Settings } from 'lucide-react';
 export default function SongSelect({ songsPromise, onBack, onStartGame }) {
   return (
     <Suspense fallback={
-      <div className="min-h-screen bg-neutral-900 text-white flex items-center justify-center font-sans select-none w-full">
-        <div className="text-xl text-neutral-400">曲を読み込み中...</div>
+      <div
+        className="min-h-screen bg-neutral-900 bg-cover bg-center bg-no-repeat bg-fixed text-white flex items-center justify-center font-sans select-none w-full relative"
+        style={{ backgroundImage: 'url(/assets/home_bg.png)' }}
+      >
+        <div className="absolute inset-0 bg-neutral-950/70 pointer-events-none" />
+        <div className="text-xl text-neutral-400 font-bold relative z-10">曲を読み込み中...</div>
       </div>
     }>
       <SongListContent songsPromise={songsPromise} onBack={onBack} onStartGame={onStartGame} />
@@ -20,6 +24,7 @@ export default function SongSelect({ songsPromise, onBack, onStartGame }) {
 function SongListContent({ songsPromise, onBack, onStartGame }) {
   // 曲リストはPromiseから読み取る（React 19のuseフック。useEffectでのフェッチは行わない）
   const { songs, error } = use(songsPromise);
+  const showSettings = useGameStore(state => state.showSettings);
   const setShowSettings = useGameStore(state => state.setShowSettings);
 
   const handleRandomPlay = async () => {
@@ -120,33 +125,43 @@ function SongListContent({ songsPromise, onBack, onStartGame }) {
   };
 
   return (
-    <div className="min-h-screen bg-neutral-900 text-white flex flex-col items-center p-4 md:p-8 font-sans select-none w-full">
-      <div className="w-full max-w-4xl flex justify-between items-center mb-6">
-        <h1 className="text-3xl md:text-4xl font-black text-cyan-400 tracking-wider">曲を選ぶ</h1>
-        <div className="flex gap-2">
-          <button
-            onClick={handleRandomPlay}
-            className="px-4 py-2 bg-purple-600 hover:bg-purple-500 text-white rounded-full font-bold transition-colors flex items-center gap-2 text-sm md:text-base"
-            title="ランダム選曲"
-          >
-            <Dices size={18} />
-            ランダム
-          </button>
-          <button
-            onClick={() => setShowSettings(true)}
-            className="p-2 bg-neutral-700 hover:bg-neutral-600 text-white rounded-full font-bold transition-colors"
-            title="設定"
-          >
-            <Settings size={20} />
-          </button>
-          <button
-            onClick={onBack}
-            className="px-4 md:px-6 py-2 bg-neutral-700 hover:bg-neutral-600 text-white rounded-full font-bold transition-colors text-sm md:text-base"
-          >
-            メニューに戻る
-          </button>
+    <div
+      className="min-h-screen bg-neutral-900 bg-cover bg-center bg-no-repeat bg-fixed text-white flex flex-col items-center p-4 md:p-8 font-sans select-none w-full relative"
+      style={{ backgroundImage: 'url(/assets/home_bg.png)' }}
+    >
+      {/* 半透明ダークオーバーレイ（和風サイバーネオン背景と調和させ、文字やカードの視認性を確保） */}
+      <div className="fixed inset-0 bg-neutral-950/70 pointer-events-none z-0" />
+
+      <div className="w-full max-w-4xl relative z-10 flex flex-col items-center">
+        <div className="w-full flex justify-between items-center mb-6">
+          <h1 className="text-3xl md:text-4xl font-black text-cyan-400 tracking-wider">曲を選ぶ</h1>
+          <div className={`flex gap-2 ${showSettings ? 'pointer-events-none' : ''}`}>
+            <button
+              type="button"
+              onClick={handleRandomPlay}
+              className="px-4 py-2 bg-purple-600 hover:bg-purple-500 text-white rounded-full font-bold transition-colors flex items-center gap-2 text-sm md:text-base shadow-none cursor-pointer"
+              title="ランダム選曲"
+            >
+              <Dices size={18} />
+              ランダム
+            </button>
+            <button
+              type="button"
+              onClick={() => setShowSettings(true)}
+              className="p-2 bg-neutral-700 hover:bg-neutral-600 text-white rounded-full font-bold transition-colors shadow-none cursor-pointer"
+              title="設定"
+            >
+              <Settings size={20} />
+            </button>
+            <button
+              type="button"
+              onClick={onBack}
+              className="px-4 md:px-6 py-2 bg-neutral-700 hover:bg-neutral-600 text-white rounded-full font-bold transition-colors text-sm md:text-base shadow-none cursor-pointer"
+            >
+              メニューに戻る
+            </button>
+          </div>
         </div>
-      </div>
 
       <div className="w-full max-w-4xl text-neutral-400 font-bold tracking-widest text-xs md:text-sm text-center bg-neutral-800 p-4 rounded-xl border-2 border-neutral-700 mb-6">
         遊び方：ノーツが判定枠に重なったら、表示されている最初の文字をタイピングしてください
@@ -272,13 +287,14 @@ function SongListContent({ songsPromise, onBack, onStartGame }) {
         ))}
       </div>
 
-      {selectedLeaderboard && (
-        <Leaderboard
-          songTitle={selectedLeaderboard.songTitle}
-          rankingsPromise={selectedLeaderboard.promise}
-          onClose={() => setSelectedLeaderboard(null)}
-        />
-      )}
+        {selectedLeaderboard && (
+          <Leaderboard
+            songTitle={selectedLeaderboard.songTitle}
+            rankingsPromise={selectedLeaderboard.promise}
+            onClose={() => setSelectedLeaderboard(null)}
+          />
+        )}
+      </div>
     </div>
   );
 }

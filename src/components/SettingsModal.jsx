@@ -1,4 +1,5 @@
 import React, { useState, useRef, useCallback } from 'react';
+import { createPortal } from 'react-dom';
 import { useGameStore } from '../store/gameStore';
 import { playPerfect, playGood, playMiss } from '../hooks/useSystemSE';
 import { Settings, X, Plus, Minus } from 'lucide-react';
@@ -113,32 +114,74 @@ export default function SettingsModal({ onClose }) {
     requestRef.current = requestAnimationFrame(loop);
   }, [playTick]);
 
-  return (
-    <div className="fixed inset-0 bg-black/80 z-[100] flex items-center justify-center p-8 backdrop-blur-sm">
-      <div className="bg-neutral-800 w-full max-w-3xl max-h-full flex flex-col rounded-3xl border-4 border-neutral-700 overflow-hidden shadow-none">
+  // Escapeキーで閉じる処理（useEffectは使用せずコールバックrefで登録・解除、captureフェーズで確実に捕捉）
+  const keyHandlerRef = useRef(null);
+  const modalRootRef = useCallback((node) => {
+    if (node && !keyHandlerRef.current) {
+      const handler = (e) => {
+        if (e.key === 'Escape') {
+          e.preventDefault();
+          e.stopPropagation();
+          onClose();
+        }
+      };
+      window.addEventListener('keydown', handler, true);
+      keyHandlerRef.current = handler;
+    } else if (!node && keyHandlerRef.current) {
+      window.removeEventListener('keydown', keyHandlerRef.current, true);
+      keyHandlerRef.current = null;
+    }
+  }, [onClose]);
 
-        <div className="bg-neutral-900 p-6 flex justify-between items-center border-b-4 border-neutral-700">
+  const modalContent = (
+    <div
+      ref={modalRootRef}
+      className="modal-overlay bg-black/80 flex items-center justify-center p-3 sm:p-6 md:p-8 backdrop-blur-sm overflow-y-auto"
+      style={{ zIndex: 99999, pointerEvents: 'auto' }}
+      onClick={(e) => {
+        if (e.target === e.currentTarget) {
+          onClose();
+        }
+      }}
+    >
+      <div
+        className="bg-neutral-800 w-full max-w-3xl max-h-[calc(100vh-1.5rem)] sm:max-h-[calc(100vh-3rem)] md:max-h-[calc(100vh-4rem)] flex flex-col rounded-2xl sm:rounded-3xl border-4 border-neutral-700 overflow-hidden shadow-none my-auto relative z-10"
+        style={{ pointerEvents: 'auto' }}
+        onClick={(e) => e.stopPropagation()}
+      >
+
+        <div className="bg-neutral-900 p-4 sm:p-6 flex justify-between items-center border-b-4 border-neutral-700 shrink-0 relative z-20">
           <div className="flex items-center gap-3">
             <Settings className="text-neutral-400" size={32} />
-            <h2 className="text-3xl font-black text-white tracking-widest">設定</h2>
+            <h2 className="text-2xl sm:text-3xl font-black text-white tracking-widest">設定</h2>
           </div>
           <button
-            onClick={onClose}
-            className="w-12 h-12 bg-neutral-700 hover:bg-neutral-600 text-white rounded-full font-black text-xl flex items-center justify-center transition-colors"
+            type="button"
+            onClick={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              onClose();
+            }}
+            className="w-11 h-11 sm:w-12 sm:h-12 bg-neutral-700 hover:bg-neutral-600 active:bg-neutral-800 text-white rounded-full font-black text-xl flex items-center justify-center transition-colors cursor-pointer shrink-0 relative z-30 select-none"
+            title="設定を閉じる (Esc)"
+            aria-label="設定を閉じる"
+            style={{ pointerEvents: 'auto' }}
           >
-            <X size={24} />
+            <X size={24} className="pointer-events-none" />
           </button>
         </div>
 
-        <div className="flex border-b-2 border-neutral-700">
+        <div className="flex border-b-2 border-neutral-700 shrink-0">
           <button
-            className={`flex-1 py-4 font-black tracking-widest transition-colors ${activeTab === 'general' ? 'text-cyan-400 border-b-4 border-cyan-400' : 'text-neutral-500 hover:text-neutral-300'}`}
+            type="button"
+            className={`flex-1 py-3 sm:py-4 font-black tracking-widest transition-colors cursor-pointer ${activeTab === 'general' ? 'text-cyan-400 border-b-4 border-cyan-400' : 'text-neutral-500 hover:text-neutral-300'}`}
             onClick={() => setActiveTab('general')}
           >
             基本設定
           </button>
           <button
-            className={`flex-1 py-4 font-black tracking-widest transition-colors ${activeTab === 'sound' ? 'text-orange-400 border-b-4 border-orange-400' : 'text-neutral-500 hover:text-neutral-300'}`}
+            type="button"
+            className={`flex-1 py-3 sm:py-4 font-black tracking-widest transition-colors cursor-pointer ${activeTab === 'sound' ? 'text-orange-400 border-b-4 border-orange-400' : 'text-neutral-500 hover:text-neutral-300'}`}
             onClick={() => {
               setActiveTab('sound');
               playTick();
@@ -148,7 +191,7 @@ export default function SettingsModal({ onClose }) {
           </button>
         </div>
 
-        <div className="flex-1 overflow-y-auto p-8 flex flex-col gap-10">
+        <div className="flex-1 overflow-y-auto p-4 sm:p-6 md:p-8 flex flex-col gap-8 sm:gap-10 min-h-0">
 
           {activeTab === 'general' && (
             <>
@@ -318,4 +361,12 @@ export default function SettingsModal({ onClose }) {
       </div>
     </div>
   );
+
+  const portalTarget = typeof document !== 'undefined'
+    ? (document.fullscreenElement && document.fullscreenElement !== document.documentElement
+        ? document.fullscreenElement
+        : document.body)
+    : null;
+
+  return portalTarget ? createPortal(modalContent, portalTarget) : modalContent;
 }

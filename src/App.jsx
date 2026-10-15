@@ -19,12 +19,21 @@ import { Maximize, Minimize, Smartphone, Monitor, User, Settings, Pause, Play, R
 // 操作ガイドの自動消去をストア購読で行うモジュール（importするだけで有効になる）
 import './engine/gameUiSync';
 
+// モード切替用ボタン画像の事前読み込み（画面切替時のチラつき防止・useEffect不使用）
+if (typeof window !== 'undefined') {
+  const preloadPc = new Image();
+  preloadPc.src = './assets/button_3_pcmode.png';
+  const preloadMobile = new Image();
+  preloadMobile.src = './assets/button_3_mobilemode.png';
+}
+
 function App() {
-  useSystemSE();
+  const { playDecide } = useSystemSE();
 
   const [appMode, setAppMode] = useState('menu'); // 'menu' | 'setup' | 'game' | 'editor' | 'songSelect'
   const [leaderboardData, setLeaderboardData] = useState(null); // { songTitle, promise } | null
   const [songsPromise, setSongsPromise] = useState(null);
+  const [isSwitchingMode, setIsSwitchingMode] = useState(false);
 
   const score = useGameStore(state => state.score);
   const combo = useGameStore(state => state.combo);
@@ -203,7 +212,7 @@ function App() {
           appMode === "menu"
             ? "top-7 right-8 sm:top-10 sm:right-12 md:top-12 md:right-16 gap-3 sm:gap-4 top-right-buttons"
             : "top-4 right-4 gap-4"
-        }`}>
+        } ${showSettings ? "pointer-events-none opacity-0 invisible" : ""}`}>
           {appMode === "menu" ? (
             <>
               {/* 設定ボタン (和風サイバーネオンバッジ) */}
@@ -303,20 +312,26 @@ function App() {
             />
           </button>
 
-          {/* ボタン3: 「PCモード」 */}
+          {/* ボタン3: 「PCモード」 / 「スマホモード」切替トグル */}
           <button
             type="button"
             onClick={() => {
+              playDecide();
               const nextMode = !isMobileMode;
               setIsMobileMode(nextMode);
+              setIsSwitchingMode(true);
               showToast(nextMode ? "スマホモードに切り替えました" : "PCモードに切り替えました");
             }}
-            className="menu-button w-full"
+            onAnimationEnd={() => setIsSwitchingMode(false)}
+            className={`menu-button w-full ${isSwitchingMode ? 'mode-switching' : ''}`}
             style={{ color: '#c084fc' }}
+            aria-label={isMobileMode ? "スマホモード（タップでPCモードに切替）" : "PCモード（タップでスマホモードに切替）"}
+            title={isMobileMode ? "スマホモード（タップでPCモードに切替）" : "PCモード（タップでスマホモードに切替）"}
           >
             <img
-              src="/assets/buttons/btn_pcmode.png"
-              alt="PCモード"
+              key={isMobileMode ? 'mobile' : 'pc'}
+              src={isMobileMode ? "./assets/button_3_mobilemode.png" : "./assets/button_3_pcmode.png"}
+              alt={isMobileMode ? "スマホモード" : "PCモード"}
             />
           </button>
 
@@ -581,6 +596,7 @@ function App() {
           </div>
         </div>
       )}
+      </div>
 
       {showSettings && (
         <SettingsModal onClose={() => {
@@ -603,16 +619,24 @@ function App() {
       )}
 
       {showHowToPlay && (
-        <div className="fixed inset-0 bg-black/80 z-[100] flex items-center justify-center p-8 backdrop-blur-sm">
-          <div className="bg-neutral-800 w-full max-w-xl flex flex-col rounded-3xl border-4 border-neutral-700 overflow-hidden shadow-none">
+        <div
+          className="fixed inset-0 bg-black/80 z-[100] flex items-center justify-center p-4 sm:p-8 backdrop-blur-sm overflow-y-auto"
+          onClick={(e) => {
+            if (e.target === e.currentTarget) {
+              setShowHowToPlay(false);
+            }
+          }}
+        >
+          <div className="bg-neutral-800 w-full max-w-xl flex flex-col rounded-3xl border-4 border-neutral-700 overflow-hidden shadow-none my-auto">
             <div className="bg-neutral-900 p-6 flex justify-between items-center border-b-4 border-neutral-700">
               <div className="flex items-center gap-3">
                 <HelpCircle className="text-emerald-400" size={32} />
                 <h2 className="text-3xl font-black text-white tracking-widest">遊び方</h2>
               </div>
               <button
+                type="button"
                 onClick={() => setShowHowToPlay(false)}
-                className="w-12 h-12 bg-neutral-700 hover:bg-neutral-600 text-white rounded-full font-black text-xl flex items-center justify-center transition-colors"
+                className="w-12 h-12 bg-neutral-700 hover:bg-neutral-600 text-white rounded-full font-black text-xl flex items-center justify-center transition-colors cursor-pointer"
               >
                 <X size={24} />
               </button>
@@ -627,8 +651,9 @@ function App() {
                 <p>3. 正確なタイミングで入力すると「PERFECT」！連続コンボを繋げて1,010,000点（All Perfect）を目指そう！</p>
               </div>
               <button
+                type="button"
                 onClick={() => setShowHowToPlay(false)}
-                className="w-full py-4 bg-emerald-600 hover:bg-emerald-500 text-white rounded-full font-black text-xl transition-colors mt-2"
+                className="w-full py-4 bg-emerald-600 hover:bg-emerald-500 text-white rounded-full font-black text-xl transition-colors mt-2 cursor-pointer"
               >
                 閉じる
               </button>
@@ -636,7 +661,6 @@ function App() {
           </div>
         </div>
       )}
-      </div>
       </div>
     </>
   );

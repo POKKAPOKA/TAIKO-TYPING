@@ -76,3 +76,36 @@
   border: none !important;
   mix-blend-mode: normal; /* 完全透過PNGアセットを使用 */
 }
+
+/* モーダルオーバーレイ（最前面表示およびクリックイベントの保証） */
+.modal-overlay {
+  position: fixed !important;
+  inset: 0 !important;
+  z-index: 99999 !important;
+  pointer-events: auto !important;
+}
+
+/* PC / スマホ モード切替ネオン発光アニメーション */
+@keyframes mode-switch {
+  0% {
+    transform: scale(0.95);
+    filter: brightness(1.8) drop-shadow(0 0 20px #c084fc);
+  }
+  50% {
+    transform: scale(1.05);
+    filter: brightness(1.4) drop-shadow(0 0 16px #a855f7);
+  }
+  100% {
+    transform: scale(1);
+    filter: brightness(1) drop-shadow(0 0 8px currentColor);
+  }
+}
+
+.mode-switching {
+  animation: mode-switch 0.35s ease-out;
+}
+
+.mode-switching img {
+  animation: none;
+}
+
