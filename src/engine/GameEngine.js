@@ -1,5 +1,6 @@
 import { useGameStore } from '../store/gameStore';
 import { RomajiParser, calculateMinKeystrokes } from './RomajiParser';
+import { playPerfect, playGood, playMiss } from '../hooks/useSystemSE';
 
 const JUDGE_WINDOW = {
   PERFECT: 50,
@@ -300,6 +301,7 @@ export class GameEngine {
     store.setCombo(0);
     store.addDroppedCount();
     this.stats.mistakeLog.push({ time: this.currentTime / 1000, note: this.currentTarget.word, type: "dropped" });
+    playMiss();
 
     this.updateCurrentTarget(store, this.queue.shift() || null);
     store.setWordQueue([...this.queue]);
@@ -389,14 +391,17 @@ export class GameEngine {
       store.setLastJudgment('PERFECT');
       store.addScore(maxPossibleDiff);
       store.addPerfectCount();
+      playPerfect();
     } else if (judgment === 'GOOD') {
       store.setLastJudgment('GOOD');
       store.addScore(Math.floor(maxPossibleDiff * 0.5));
       store.addGoodCount();
+      playGood();
     } else if (judgment === 'MISS') {
       store.setLastJudgment('MISS');
       store.setCombo(0);
       store.addMissCount();
+      playMiss();
     }
   }
   completeCurrentTarget() {

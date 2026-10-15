@@ -1,23 +1,24 @@
 import React, { useState, useRef, useCallback } from 'react';
 import { useGameStore } from '../store/gameStore';
+import { playPerfect, playGood, playMiss } from '../hooks/useSystemSE';
 import { Settings, X, Plus, Minus } from 'lucide-react';
 
 export default function SettingsModal({ onClose }) {
   const [activeTab, setActiveTab] = useState('general');
+  const [calibrationSound, setCalibrationSound] = useState('perfect'); // 'perfect' | 'good' | 'miss'
 
   const speedMultiplier = useGameStore(state => state.speedMultiplier);
   const wallAmount = useGameStore(state => state.wallAmount);
   const offsetMs = useGameStore(state => state.offsetMs);
+  const showCustomModes = useGameStore(state => state.showCustomModes);
 
   const setSpeedMultiplier = useGameStore(state => state.setSpeedMultiplier);
   const setWallAmount = useGameStore(state => state.setWallAmount);
   const setOffsetMs = useGameStore(state => state.setOffsetMs);
+  const toggleShowCustomModes = useGameStore(state => state.toggleShowCustomModes);
 
-  const handleSpeedChange = (delta) => {
-    let newVal = speedMultiplier + delta;
-    if (newVal < 1.0) newVal = 1.0;
-    if (newVal > 10.0) newVal = 10.0;
-    setSpeedMultiplier(parseFloat(newVal.toFixed(2)));
+  const handleSpeedSliderChange = (e) => {
+    setSpeedMultiplier(parseFloat(parseFloat(e.target.value).toFixed(2)));
   };
 
   const handleWallChange = (e) => {
@@ -31,34 +32,21 @@ export default function SettingsModal({ onClose }) {
   // デモプレビューの制御（useEffectは使わずコールバックrefで開始/停止）
   const demoRef = useRef(null);
   const requestRef = useRef(null);
-  const audioCtxRef = useRef(null);
   // デモループ内で最新の設定値を参照するためのref（再レンダリングでループを再起動しない）
-  const demoStateRef = useRef({ offsetMs, speedMultiplier, startTime: 0, lastTick: -1 });
+  const demoStateRef = useRef({ offsetMs, speedMultiplier, startTime: 0, lastTick: -1, calibrationSound: 'perfect' });
   demoStateRef.current.offsetMs = offsetMs;
   demoStateRef.current.speedMultiplier = speedMultiplier;
+  demoStateRef.current.calibrationSound = calibrationSound;
 
   const playTick = useCallback(() => {
-    try {
-      if (!audioCtxRef.current) {
-        audioCtxRef.current = new (window.AudioContext || window.webkitAudioContext)();
-      }
-      const ctx = audioCtxRef.current;
-      if (ctx.state === 'suspended') ctx.resume();
-      const osc = ctx.createOscillator();
-      const gain = ctx.createGain();
-      osc.type = 'square';
-      osc.frequency.setValueAtTime(880, ctx.currentTime);
-      osc.frequency.exponentialRampToValueAtTime(440, ctx.currentTime + 0.05);
-      gain.gain.setValueAtTime(0.1, ctx.currentTime);
-      gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.1);
-      osc.connect(gain);
-      gain.connect(ctx.destination);
-      osc.start();
-      osc.stop(ctx.currentTime + 0.1);
-    } catch (e) {
-      console.warn("Audio play failed in settings demo:", e);
+    if (calibrationSound === 'good') {
+      playGood();
+    } else if (calibrationSound === 'miss') {
+      playMiss();
+    } else {
+      playPerfect();
     }
-  }, []);
+  }, [calibrationSound]);
 
   // コールバックref: デモ領域のDOMがマウントされたら描画ループを開始し、
   // アンマウント（設定画面を閉じた）されたら停止する。useEffectは使用しない。
@@ -86,7 +74,13 @@ export default function SettingsModal({ onClose }) {
 
       if (currentBeat > demoStateRef.current.lastTick && currentBeat >= 0) {
         demoStateRef.current.lastTick = currentBeat;
-        playTick();
+        if (demoStateRef.current.calibrationSound === 'good') {
+          playGood();
+        } else if (demoStateRef.current.calibrationSound === 'miss') {
+          playMiss();
+        } else {
+          playPerfect();
+        }
       }
 
       container.innerHTML = '';
@@ -159,23 +153,40 @@ export default function SettingsModal({ onClose }) {
           {activeTab === 'general' && (
             <>
               <div className="flex flex-col gap-4">
-                <div className="text-xl font-black text-cyan-400 tracking-widest">ハイスピード (倍速)</div>
-                <div className="text-sm text-neutral-400 font-bold mb-2">ノーツのスクロール速度を変更します。音楽のテンポは変わりません。</div>
-                <div className="flex items-center justify-center gap-6 bg-neutral-900 p-6 rounded-2xl">
-                  <button onClick={() => handleSpeedChange(-0.1)} className="p-4 bg-neutral-700 hover:bg-neutral-600 text-white rounded-2xl transition-colors">
-                    <Minus size={24} />
-                  </button>
-                  <div className="w-48 text-center flex items-baseline justify-center gap-1">
-                    <span className="text-6xl font-black font-mono text-white">{speedMultiplier.toFixed(2)}</span>
-                    <span className="text-xl font-bold text-neutral-500">x</span>
+                <div className="text-xl font-black text-cyan-400 tracking-widest">レーン速度</div>
+                <div className="text-sm text-neutral-400 font-bold">ノーツが流れる速さを調整します。音楽のテンポや判定時間は変わりません。</div>
+                <div className="bg-neutral-900 p-6 rounded-2xl flex flex-col gap-6 border-2 border-neutral-700">
+                  <div className="flex flex-col items-center justify-center">
+                    <div className="flex items-baseline gap-2">
+                      <span className="text-6xl font-black font-dotgothic text-cyan-400 tracking-wider">
+                        {speedMultiplier.toFixed(2)}
+                      </span>
+                      <span className="text-xl font-bold text-neutral-400 font-dotgothic">/ 10.00</span>
+                    </div>
+                    <div className="text-xs font-bold text-neutral-400 mt-1">
+                      {speedMultiplier < 2.5 ? '低速（初心者向け）' : speedMultiplier < 5.0 ? '中速（標準）' : speedMultiplier < 7.5 ? '高速' : '超高速（上級者向け）'}
+                    </div>
                   </div>
-                  <button onClick={() => handleSpeedChange(0.1)} className="p-4 bg-neutral-700 hover:bg-neutral-600 text-white rounded-2xl transition-colors">
-                    <Plus size={24} />
-                  </button>
-                </div>
-                <div className="flex justify-center gap-4 mt-2">
-                  <button onClick={() => handleSpeedChange(-0.01)} className="px-6 py-2 bg-neutral-700 hover:bg-neutral-600 text-white rounded-full font-bold text-sm transition-colors">-0.01</button>
-                  <button onClick={() => handleSpeedChange(0.01)} className="px-6 py-2 bg-neutral-700 hover:bg-neutral-600 text-white rounded-full font-bold text-sm transition-colors">+0.01</button>
+
+                  <div className="flex flex-col gap-2">
+                    <input
+                      type="range"
+                      min="1.00"
+                      max="10.00"
+                      step="0.01"
+                      value={speedMultiplier}
+                      onChange={handleSpeedSliderChange}
+                      className="w-full h-5 bg-neutral-700 rounded-full appearance-none cursor-pointer focus:outline-none [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:w-7 [&::-webkit-slider-thumb]:h-7 [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-white [&::-webkit-slider-thumb]:border-4 [&::-webkit-slider-thumb]:border-cyan-400 [&::-webkit-slider-thumb]:cursor-pointer [&::-moz-range-thumb]:w-7 [&::-moz-range-thumb]:h-7 [&::-moz-range-thumb]:rounded-full [&::-moz-range-thumb]:bg-white [&::-moz-range-thumb]:border-4 [&::-moz-range-thumb]:border-cyan-400 [&::-moz-range-thumb]:cursor-pointer"
+                      style={{
+                        background: `linear-gradient(to right, #06b6d4 0%, #06b6d4 ${((speedMultiplier - 1.0) / 9.0) * 100}%, #404040 ${((speedMultiplier - 1.0) / 9.0) * 100}%, #404040 100%)`
+                      }}
+                    />
+                    <div className="flex justify-between items-center text-xs font-bold text-neutral-400 px-1 font-dotgothic">
+                      <span>1.00 (非常に遅い)</span>
+                      <span>5.50</span>
+                      <span>10.00 (非常に速い)</span>
+                    </div>
+                  </div>
                 </div>
               </div>
 
@@ -183,7 +194,7 @@ export default function SettingsModal({ onClose }) {
                 <div className="text-xl font-black text-purple-400 tracking-widest">ウォール (レーン隠し)</div>
                 <div className="text-sm text-neutral-400 font-bold">画面右側のノーツ出現位置から指定した割合を隠します。(0=なし, 1000=完全)</div>
                 <div className="bg-neutral-900 p-6 rounded-2xl flex flex-col gap-4">
-                  <div className="flex justify-between items-center text-white font-mono font-black text-2xl">
+                  <div className="flex justify-between items-center text-white font-dotgothic font-black text-2xl">
                     <span>0</span>
                     <span className="text-4xl text-purple-400">{wallAmount}</span>
                     <span>1000</span>
@@ -198,6 +209,27 @@ export default function SettingsModal({ onClose }) {
                   />
                 </div>
               </div>
+
+              <div className="flex flex-col gap-4">
+                <div className="text-xl font-black text-emerald-400 tracking-widest">創作・エディター機能の表示</div>
+                <div className="text-sm text-neutral-400 font-bold">ホーム画面に「創作譜面を遊ぶ」「創作譜面を作る」を表示するか設定します。</div>
+                <div className="bg-neutral-900 p-6 rounded-2xl flex items-center justify-between">
+                  <div>
+                    <div className="text-white font-bold text-lg">エディター・創作モード</div>
+                    <div className="text-neutral-500 font-bold text-sm">オフにするとホーム画面がシンプルになります</div>
+                  </div>
+                  <button
+                    onClick={toggleShowCustomModes}
+                    className={`px-6 py-3 rounded-full font-black text-lg transition-colors ${
+                      showCustomModes
+                        ? 'bg-emerald-500 hover:bg-emerald-400 text-neutral-900'
+                        : 'bg-neutral-700 hover:bg-neutral-600 text-neutral-300'
+                    }`}
+                  >
+                    {showCustomModes ? 'ON (表示)' : 'OFF (非表示)'}
+                  </button>
+                </div>
+              </div>
             </>
           )}
 
@@ -206,6 +238,57 @@ export default function SettingsModal({ onClose }) {
               <div className="flex flex-col gap-4">
                 <div className="text-xl font-black text-orange-400 tracking-widest">判定オフセット</div>
                 <div className="text-sm text-neutral-400 font-bold mb-2">リズム音に合わせてノーツが中央の線に重なるように調整してください。</div>
+
+                <div className="flex items-center justify-between bg-neutral-900 p-4 rounded-2xl border-2 border-neutral-700">
+                  <div>
+                    <div className="text-sm font-bold text-white">判定音テスト (メトロノーム音)</div>
+                    <div className="text-xs text-neutral-400">デモで鳴る判定音を切り替えて確認できます</div>
+                  </div>
+                  <div className="flex gap-2">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setCalibrationSound('perfect');
+                        playPerfect();
+                      }}
+                      className={`px-4 py-2 rounded-xl font-black text-xs transition-colors ${
+                        calibrationSound === 'perfect'
+                          ? 'bg-amber-500 text-neutral-900'
+                          : 'bg-neutral-700 hover:bg-neutral-600 text-neutral-300'
+                      }`}
+                    >
+                      PERFECT音
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setCalibrationSound('good');
+                        playGood();
+                      }}
+                      className={`px-4 py-2 rounded-xl font-black text-xs transition-colors ${
+                        calibrationSound === 'good'
+                          ? 'bg-emerald-500 text-neutral-900'
+                          : 'bg-neutral-700 hover:bg-neutral-600 text-neutral-300'
+                      }`}
+                    >
+                      GOOD音
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setCalibrationSound('miss');
+                        playMiss();
+                      }}
+                      className={`px-4 py-2 rounded-xl font-black text-xs transition-colors ${
+                        calibrationSound === 'miss'
+                          ? 'bg-rose-500 text-white'
+                          : 'bg-neutral-700 hover:bg-neutral-600 text-neutral-300'
+                      }`}
+                    >
+                      MISS音
+                    </button>
+                  </div>
+                </div>
 
                 <div className="h-32 bg-neutral-900 rounded-2xl relative overflow-hidden mb-2 border-2 border-neutral-700 cursor-pointer" onClick={playTick}>
                   <div ref={handleDemoRef} className="absolute inset-0" />
@@ -216,8 +299,8 @@ export default function SettingsModal({ onClose }) {
                     <Minus size={24} />
                   </button>
                   <div className="w-48 text-center flex items-baseline justify-center gap-1">
-                    <span className="text-5xl font-black font-mono text-white">{offsetMs > 0 ? '+' : ''}{offsetMs}</span>
-                    <span className="text-xl font-bold text-neutral-500">ms</span>
+                    <span className="text-5xl font-black font-dotgothic text-white">{offsetMs > 0 ? '+' : ''}{offsetMs}</span>
+                    <span className="text-xl font-bold text-neutral-500 font-dotgothic">ms</span>
                   </div>
                   <button onClick={() => handleOffsetChange(5)} className="p-4 bg-neutral-700 hover:bg-neutral-600 text-white rounded-2xl transition-colors">
                     <Plus size={24} />

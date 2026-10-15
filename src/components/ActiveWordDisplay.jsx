@@ -8,7 +8,7 @@ const ActiveWordDisplay = () => {
 
   if (activeWord) {
     return (
-      <div className="text-6xl font-mono tracking-widest mt-2">
+      <div className="text-4xl sm:text-5xl md:text-6xl font-mono tracking-widest text-center select-none">
         <span className="text-neutral-600">{activeWord.substring(0, typedIndex)}</span>
         <span className="text-white font-black underline decoration-4 underline-offset-8">{activeWord.charAt(typedIndex)}</span>
         <span className="text-neutral-400">{activeWord.substring(typedIndex + 1)}</span>
@@ -16,7 +16,7 @@ const ActiveWordDisplay = () => {
     );
   } else {
     return (
-      <div className="text-2xl text-neutral-500 mt-2 font-bold tracking-widest">
+      <div className="text-xl sm:text-2xl text-neutral-500 font-bold tracking-widest text-center select-none">
         {status === 'playing' ? 'READY...' : 'PRESS START'}
       </div>
     );

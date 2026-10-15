@@ -10,15 +10,18 @@ const SETTINGS_STORAGE_KEY = 'taiko_settings';
 function loadSettings() {
   try {
     const raw = localStorage.getItem(SETTINGS_STORAGE_KEY);
-    if (!raw) return { speedMultiplier: 1.0, wallAmount: 0, offsetMs: 0 };
+    if (!raw) return { speedMultiplier: 1.0, wallAmount: 0, offsetMs: 0, showCustomModes: false };
     const parsed = JSON.parse(raw);
     return {
-      speedMultiplier: typeof parsed.speedMultiplier === 'number' ? parsed.speedMultiplier : 1.0,
+      speedMultiplier: typeof parsed.speedMultiplier === 'number'
+        ? Math.min(10.0, Math.max(1.0, parseFloat(parsed.speedMultiplier.toFixed(2))))
+        : 1.0,
       wallAmount: typeof parsed.wallAmount === 'number' ? parsed.wallAmount : 0,
-      offsetMs: typeof parsed.offsetMs === 'number' ? parsed.offsetMs : 0
+      offsetMs: typeof parsed.offsetMs === 'number' ? parsed.offsetMs : 0,
+      showCustomModes: typeof parsed.showCustomModes === 'boolean' ? parsed.showCustomModes : false
     };
   } catch {
-    return { speedMultiplier: 1.0, wallAmount: 0, offsetMs: 0 };
+    return { speedMultiplier: 1.0, wallAmount: 0, offsetMs: 0, showCustomModes: false };
   }
 }
 
@@ -126,19 +129,33 @@ export const useGameStore = create((set) => ({
   setShowGuide: (showGuide) => set({ showGuide }),
   // 設定変更時はlocalStorageにも保存する
   setSpeedMultiplier: (speedMultiplier) => set((state) => {
-    const next = { speedMultiplier, wallAmount: state.wallAmount, offsetMs: state.offsetMs };
+    const val = typeof speedMultiplier === 'number'
+      ? Math.min(10.0, Math.max(1.0, parseFloat(speedMultiplier.toFixed(2))))
+      : 1.0;
+    const next = { speedMultiplier: val, wallAmount: state.wallAmount, offsetMs: state.offsetMs, showCustomModes: state.showCustomModes };
     saveSettings(next);
-    return { speedMultiplier };
+    return { speedMultiplier: val };
   }),
   setWallAmount: (wallAmount) => set((state) => {
-    const next = { speedMultiplier: state.speedMultiplier, wallAmount, offsetMs: state.offsetMs };
+    const next = { speedMultiplier: state.speedMultiplier, wallAmount, offsetMs: state.offsetMs, showCustomModes: state.showCustomModes };
     saveSettings(next);
     return { wallAmount };
   }),
   setOffsetMs: (offsetMs) => set((state) => {
-    const next = { speedMultiplier: state.speedMultiplier, wallAmount: state.wallAmount, offsetMs };
+    const next = { speedMultiplier: state.speedMultiplier, wallAmount: state.wallAmount, offsetMs, showCustomModes: state.showCustomModes };
     saveSettings(next);
     return { offsetMs };
+  }),
+  setShowCustomModes: (showCustomModes) => set((state) => {
+    const next = { speedMultiplier: state.speedMultiplier, wallAmount: state.wallAmount, offsetMs: state.offsetMs, showCustomModes };
+    saveSettings(next);
+    return { showCustomModes };
+  }),
+  toggleShowCustomModes: () => set((state) => {
+    const showCustomModes = !state.showCustomModes;
+    const next = { speedMultiplier: state.speedMultiplier, wallAmount: state.wallAmount, offsetMs: state.offsetMs, showCustomModes };
+    saveSettings(next);
+    return { showCustomModes };
   }),
   setStatsData: (statsData) => set({ statsData }),
 

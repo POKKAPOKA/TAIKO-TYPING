@@ -1,1 +1,78 @@
+@import url('https://fonts.googleapis.com/css2?family=DotGothic16&display=swap');
 @import "tailwindcss";
+
+@theme {
+  --font-dotgothic: "DotGothic16", sans-serif;
+}
+
+/* 和風サイバーネオンボタンスタイル */
+@keyframes neon-pulse {
+  0%, 100% {
+    filter: drop-shadow(0 0 6px currentColor);
+    transform: scale(1);
+  }
+  50% {
+    filter: drop-shadow(0 0 14px currentColor);
+    transform: scale(1.02);
+  }
+}
+
+.menu-button,
+.icon-button {
+  background: transparent !important;
+  background-color: transparent !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+  border: none !important;
+  box-shadow: none !important;
+  outline: none !important;
+  filter: drop-shadow(0 0 10px rgba(0, 0, 0, 0.5));
+  padding: 0;
+  margin: 0;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  user-select: none;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.menu-button img,
+.icon-button img {
+  background: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+  outline: none !important;
+  backdrop-filter: none !important;
+  mix-blend-mode: normal; /* 完全透過PNGアセットを使用 */
+  pointer-events: auto;
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  animation: neon-pulse 3s ease-in-out infinite;
+  transition: transform 0.2s ease, filter 0.2s ease;
+  will-change: transform, filter;
+}
+
+.menu-button:hover img,
+.icon-button:hover img {
+  animation: none;
+  transform: scale(1.06);
+  filter: brightness(1.25) drop-shadow(0 0 18px currentColor);
+}
+
+.menu-button:active img,
+.icon-button:active img {
+  animation: none;
+  transform: scale(0.97);
+  filter: brightness(1.5) drop-shadow(0 0 22px currentColor);
+  transition-duration: 0.08s;
+}
+
+.top-right-buttons button,
+.top-right-buttons img {
+  background: transparent !important;
+  border: none !important;
+  mix-blend-mode: normal; /* 完全透過PNGアセットを使用 */
+}

@@ -108,11 +108,11 @@ export default function FlickKeyboard() {
   };
 
   return (
-    <div className="absolute bottom-4 left-1/2 -translate-x-1/2 w-[320px] bg-neutral-900/90 p-2 rounded-2xl border-2 border-neutral-700 select-none z-[60] backdrop-blur-md touch-none">
+    <div className="w-full max-w-sm mx-auto bg-neutral-900/95 p-3 pb-4 rounded-t-3xl border-t-2 border-x-2 border-neutral-700 select-none z-10 backdrop-blur-md touch-none flex-shrink-0 shadow-none">
       {/* Modifier Status Bar */}
-      <div className="flex justify-between items-center mb-2 px-2">
-        <span className="text-neutral-400 font-bold text-sm">フリック入力</span>
-        <span className="text-cyan-400 font-black text-sm">
+      <div className="flex justify-between items-center mb-1.5 px-2">
+        <span className="text-neutral-400 font-bold text-xs">フリック入力</span>
+        <span className="text-cyan-400 font-black text-xs">
           {modifier === "dakuon" ? "濁点 (゛)" : modifier === "handakuon" ? "半濁点 (゜)" : modifier === "small" ? "小文字 (ぁ)" : "通常"}
         </span>
       </div>
@@ -121,7 +121,7 @@ export default function FlickKeyboard() {
         {KANA_GRID.map((keyData) => (
           <div
             key={keyData.id}
-            className={`relative flex items-center justify-center h-16 rounded-xl font-black text-2xl transition-colors cursor-pointer
+            className={`relative flex items-center justify-center h-14 sm:h-16 rounded-xl font-black text-2xl transition-colors cursor-pointer
               ${keyData.isModifier ? "bg-neutral-800 text-purple-400 border-b-4 border-neutral-950" : "bg-neutral-200 text-neutral-900 border-b-4 border-neutral-400"}
               ${activeKey === keyData.id ? "bg-cyan-200 border-cyan-400 text-cyan-900 scale-95" : ""}
             `}

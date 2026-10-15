@@ -86,35 +86,35 @@ export default function ResultScreen({
       {/* スコア */}
       <div className="absolute" style={{ top: "140px", left: "80px", transform: "none" }}>
         <div className="text-neutral-500 font-bold tracking-widest text-lg mb-1">SCORE</div>
-        <div className="font-mono text-[100px] leading-none text-white font-black">{Math.round(score)}</div>
+        <div className="font-dotgothic text-[100px] leading-none text-white font-black">{Math.round(score)}</div>
       </div>
 
       {/* 判定回数 */}
       <div className="absolute flex flex-col gap-2" style={{ top: "300px", left: "80px", transform: "none", width: "250px" }}>
         <div className="flex justify-between items-center border-b-2 border-neutral-800 pb-1">
           <span className="text-yellow-400 font-bold text-2xl tracking-widest">PERFECT</span>
-          <span className="font-mono text-4xl text-white font-black">{perfectCount}</span>
+          <span className="font-dotgothic text-4xl text-white font-black">{perfectCount}</span>
         </div>
         <div className="flex justify-between items-center border-b-2 border-neutral-800 pb-1">
           <span className="text-green-400 font-bold text-2xl tracking-widest">GOOD</span>
-          <span className="font-mono text-4xl text-white font-black">{goodCount}</span>
+          <span className="font-dotgothic text-4xl text-white font-black">{goodCount}</span>
         </div>
         <div className="flex justify-between items-center border-b-2 border-neutral-800 pb-1">
           <span className="text-red-500 font-bold text-2xl tracking-widest">MISS</span>
-          <span className="font-mono text-4xl text-white font-black">{missCount}</span>
+          <span className="font-dotgothic text-4xl text-white font-black">{missCount}</span>
         </div>
       </div>
 
       {/* 最大コンボ */}
       <div className="absolute text-left" style={{ top: "500px", left: "80px", transform: "none" }}>
         <div className="text-neutral-500 font-bold tracking-widest text-sm mb-1">MAX COMBO</div>
-        <div className="font-mono text-5xl text-yellow-400 font-black">{maxCombo}</div>
+        <div className="font-dotgothic text-5xl text-yellow-400 font-black">{maxCombo}</div>
       </div>
 
       {/* 最高KPS */}
       <div className="absolute text-left" style={{ top: "500px", left: "260px", transform: "none" }}>
         <div className="text-neutral-500 font-bold tracking-widest text-sm mb-1">PEAK KPS</div>
-        <div className="font-mono text-5xl text-cyan-400 font-black">{maxKps.toFixed(2)}</div>
+        <div className="font-dotgothic text-5xl text-cyan-400 font-black">{maxKps.toFixed(2)}</div>
       </div>
 
       {/* ワースト3 ミスノーツ */}

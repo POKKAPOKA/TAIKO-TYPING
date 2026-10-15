@@ -4,6 +4,8 @@ import { gameEngine } from '../engine/GameEngine';
 
 const NOTE_SPEED = 0.5; // px per ms（基準速度。設定の倍速がこれに乗算される）
 const JUDGE_LINE_X = 200; // 判定ラインのX座標(px)
+const BASE_WIDTH = 896; // 基準コンテナ幅 (PC max-w-4xl と一致)
+const BASE_HEIGHT = 256; // 基準コンテナ高 (PC h-64 と一致、アスペクト比 3.5:1)
 
 const JudgmentPopup = React.memo(() => {
   const combo = useGameStore(state => state.combo);
@@ -17,8 +19,8 @@ const JudgmentPopup = React.memo(() => {
     >
       {lastJudgment && (
         <div key={judgmentCount} className="animate-bounce font-black text-3xl tracking-widest mb-1">
-          {lastJudgment === 'PERFECT' && <span className="text-yellow-400">PERFECT</span>}
-          {lastJudgment === 'GOOD' && <span className="text-green-400">GOOD</span>}
+          {(lastJudgment === 'PERFECT' || lastJudgment === 'JUSTICE') && <span className="text-yellow-400">PERFECT</span>}
+          {(lastJudgment === 'GOOD' || lastJudgment === 'ATTACK') && <span className="text-green-400">GOOD</span>}
           {lastJudgment === 'MISS' && <span className="text-neutral-500">MISS</span>}
         </div>
       )}
@@ -36,14 +38,42 @@ const JudgmentPopup = React.memo(() => {
 const NotesArea = React.memo(() => {
   const containerNodeRef = useRef(null);
   const requestRef = useRef(null);
+  const resizeObserverRef = useRef(null);
 
   const currentTarget = useGameStore(state => state.currentTarget);
   const wordQueue = useGameStore(state => state.wordQueue);
   const status = useGameStore(state => state.status);
   const loadedScore = useGameStore(state => state.loadedScore);
   const wallAmount = useGameStore(state => state.wallAmount);
+  const isMobileMode = useGameStore(state => state.isMobileMode);
 
   const [visibleRange, setVisibleRange] = React.useState({ start: -2000, end: 8000 });
+  const [scale, setScale] = React.useState(1);
+
+  // コンテナサイズに応じたスケール計算（固定アスペクト比を保ちつつ完全一致させる）
+  const handleWrapperRef = useCallback((node) => {
+    if (resizeObserverRef.current) {
+      resizeObserverRef.current.disconnect();
+      resizeObserverRef.current = null;
+    }
+    if (!node) return;
+
+    const updateScale = () => {
+      const rect = node.getBoundingClientRect();
+      if (rect.width > 0 && rect.height > 0) {
+        const s = Math.min(rect.width / BASE_WIDTH, rect.height / BASE_HEIGHT);
+        setScale(s > 0 ? s : 1);
+      }
+    };
+
+    updateScale();
+
+    if (typeof ResizeObserver !== 'undefined') {
+      const ro = new ResizeObserver(updateScale);
+      ro.observe(node);
+      resizeObserverRef.current = ro;
+    }
+  }, []);
 
   // ノーツ描画ループの制御はコールバックrefで行う（useEffectは使わない）。
   // 再生中のみコンテナDOMが存在するため、マウント/アンマウントがそのまま開始/停止の合図になる。
@@ -63,7 +93,7 @@ const NotesArea = React.memo(() => {
 
       // レンダリング対象の絞り込み範囲を更新（再レンダリング抑制のため、大きくずれた時だけ反映）
       const pastMargin = 1500;
-      const futureWindow = (window.innerWidth || 1920) / NOTE_SPEED + 1500;
+      const futureWindow = Math.max(BASE_WIDTH, window.innerWidth || 1920) / NOTE_SPEED + 1500;
       const newStart = currentTime - pastMargin;
       const newEnd = currentTime + futureWindow;
       setVisibleRange(prev => {
@@ -86,7 +116,6 @@ const NotesArea = React.memo(() => {
         }
 
         const noteElements = container.children;
-        const screenWidth = window.innerWidth;
         // 設定の倍速をノーツのスクロール速度に反映する（音声のテンポは変えない）
         const noteSpeed = NOTE_SPEED * storeState.speedMultiplier;
 
@@ -97,7 +126,7 @@ const NotesArea = React.memo(() => {
             const barTime = parseFloat(el.dataset.time);
             const xPos = JUDGE_LINE_X + (barTime - currentTime) * noteSpeed;
 
-            if (xPos < -100 || xPos > screenWidth + 200) {
+            if (xPos < -100 || xPos > BASE_WIDTH + 200) {
                el.style.display = 'none';
             } else {
                el.style.display = 'block';
@@ -112,7 +141,7 @@ const NotesArea = React.memo(() => {
             if (noteData) {
               const xPos = JUDGE_LINE_X + (noteData.time - currentTime) * noteSpeed;
 
-              if (xPos < -200 || xPos > screenWidth + 200) {
+              if (xPos < -200 || xPos > BASE_WIDTH + 200) {
                  el.style.display = 'none';
               } else {
                  el.style.display = 'flex';
@@ -157,55 +186,83 @@ const NotesArea = React.memo(() => {
   }, [loadedScore, visibleRange]);
 
   if (status !== 'playing') {
-    return <div className="h-64 bg-neutral-800 w-full relative flex items-center justify-center text-neutral-400 font-bold text-xl rounded-2xl">Press Start to Play</div>;
+    return (
+      <div
+        ref={handleWrapperRef}
+        className={`relative w-full aspect-[896/256] max-w-[896px] max-h-full overflow-hidden select-none shadow-none flex items-center justify-center ${
+          isMobileMode
+            ? 'rounded-2xl bg-neutral-800 border-2 border-neutral-700'
+            : 'bg-neutral-800 h-64'
+        }`}
+      >
+        <div className="text-neutral-400 font-bold text-xl">Press Start to Play</div>
+      </div>
+    );
   }
 
   return (
-    <div className="h-64 bg-neutral-800 w-full relative overflow-hidden rounded-2xl">
+    <div
+      ref={handleWrapperRef}
+      className={`relative w-full aspect-[896/256] max-w-[896px] max-h-full overflow-hidden select-none shadow-none flex items-center justify-center ${
+        isMobileMode
+          ? 'rounded-2xl bg-neutral-800 border-2 border-neutral-700'
+          : 'bg-neutral-800 h-64'
+      }`}
+    >
       <div
-        className="absolute top-1/2 -translate-y-1/2 w-32 h-32 border-4 border-neutral-600 rounded-full z-0 transform -translate-x-1/2 flex items-center justify-center"
-        style={{ left: `${JUDGE_LINE_X}px` }}
+        style={{
+          width: `${BASE_WIDTH}px`,
+          height: `${BASE_HEIGHT}px`,
+          transform: `scale(${scale})`,
+          transformOrigin: 'center center',
+        }}
+        className="relative flex-shrink-0"
       >
-        <div className="w-4 h-32 bg-neutral-600 rounded-full opacity-50" />
-      </div>
-
-      <div ref={handleContainerRef} className="absolute inset-0">
-        {barlines.map((time, index) => (
-          <div
-            key={`bar-${time}`}
-            data-is-barline="true"
-            data-time={time}
-            className="absolute top-0 w-0.5 h-full bg-white opacity-20 z-0 transform -translate-x-1/2"
-            style={{ left: `2000px` }}
-          />
-        ))}
-
-        {allNotes.map((note) => {
-          const isCurrent = currentTarget?.id === note.id;
-          const displayWord = note.word.length > 4 ? note.word.substring(0, 4) : note.word;
-          return (
-            <div
-              key={note.id}
-              data-id={note.id}
-              className={`absolute top-1/2 -translate-y-1/2 flex items-center justify-center w-28 h-28 rounded-full font-black text-2xl transition-colors z-10 transform -translate-x-1/2 whitespace-nowrap
-                ${isCurrent ? 'bg-orange-500 text-neutral-900 border-4 border-orange-400' : 'bg-cyan-500 text-neutral-900 border-4 border-cyan-400'}
-              `}
-              style={{ left: `2000px` }}
-            >
-              {displayWord}
-            </div>
-          );
-        })}
-      </div>
-
-      <JudgmentPopup />
-
-      {wallAmount > 0 && (
         <div
-          className="absolute inset-y-0 right-0 bg-neutral-900 z-[60] border-l-4 border-neutral-700"
-          style={{ width: `calc((100% - ${JUDGE_LINE_X}px) * ${wallAmount / 1000})` }}
-        />
-      )}
+          className="absolute top-1/2 -translate-y-1/2 w-32 h-32 border-4 border-neutral-600 rounded-full z-0 transform -translate-x-1/2 flex items-center justify-center"
+          style={{ left: `${JUDGE_LINE_X}px` }}
+        >
+          <div className="w-4 h-32 bg-neutral-600 rounded-full opacity-50" />
+        </div>
+
+        <div ref={handleContainerRef} className="absolute inset-0">
+          {barlines.map((time) => (
+            <div
+              key={`bar-${time}`}
+              data-is-barline="true"
+              data-time={time}
+              className="absolute top-0 w-0.5 h-full bg-white opacity-20 z-0 transform -translate-x-1/2"
+              style={{ left: `2000px` }}
+            />
+          ))}
+
+          {allNotes.map((note) => {
+            const isCurrent = currentTarget?.id === note.id;
+            const displayWord = note.word.length > 4 ? note.word.substring(0, 4) : note.word;
+            return (
+              <div
+                key={note.id}
+                data-id={note.id}
+                className={`absolute top-1/2 -translate-y-1/2 flex items-center justify-center w-28 h-28 rounded-full font-black text-2xl transition-colors z-10 transform -translate-x-1/2 whitespace-nowrap
+                  ${isCurrent ? 'bg-orange-500 text-neutral-900 border-4 border-orange-400' : 'bg-cyan-500 text-neutral-900 border-4 border-cyan-400'}
+                `}
+                style={{ left: `2000px` }}
+              >
+                {displayWord}
+              </div>
+            );
+          })}
+        </div>
+
+        <JudgmentPopup />
+
+        {wallAmount > 0 && (
+          <div
+            className="absolute inset-y-0 right-0 bg-neutral-900 z-[60] border-l-4 border-neutral-700"
+            style={{ width: `calc((100% - ${JUDGE_LINE_X}px) * ${wallAmount / 1000})` }}
+          />
+        )}
+      </div>
     </div>
   );
 });
