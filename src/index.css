@@ -109,3 +109,168 @@
   animation: none;
 }
 
+/* =========================================================
+   曲選択画面：和風サイバーネオン・グラスモーフィズム UI
+   ========================================================= */
+
+/* 1. 共通パネル（遊び方説明バー・絞り込み検索バー）の半透明ガラス化 */
+.info-banner,
+.filter-panel {
+  background: linear-gradient(135deg, rgba(24, 12, 58, 0.65) 0%, rgba(42, 16, 82, 0.55) 100%) !important;
+  backdrop-filter: blur(8px) !important;
+  -webkit-backdrop-filter: blur(8px) !important;
+  border: 1px solid rgba(168, 85, 247, 0.55) !important;
+  box-shadow: 0 0 16px rgba(139, 92, 246, 0.25), inset 0 0 12px rgba(0, 245, 255, 0.12) !important;
+  border-radius: 14px !important;
+  color: #f3e8ff !important;
+}
+
+/* 2. 楽曲カード（透過フレーム画像9スライス＋半透明ガラス・フレキシブル高さ対応） */
+.song-card {
+  border-style: solid !important;
+  border-width: 0 !important;
+  border-image: url('./assets/song_card_frame.png') 115 180 fill / 64px 100px / 0 stretch !important;
+  background-color: transparent !important;
+  background-image: none !important;
+  backdrop-filter: blur(6px) !important;
+  -webkit-backdrop-filter: blur(6px) !important;
+  box-shadow: 0 0 18px rgba(168, 85, 247, 0.25) !important;
+  border-radius: 20px !important;
+  box-sizing: border-box !important;
+  height: auto !important;
+  min-height: 0 !important;
+  overflow: hidden !important;
+  padding: 20px 20px !important;
+  transition: transform 0.25s ease, filter 0.25s ease !important;
+}
+
+@media (min-width: 768px) {
+  .song-card {
+    border-image: url('./assets/song_card_frame.png') 115 180 fill / 80px 125px / 0 stretch !important;
+    border-radius: 24px !important;
+    padding: 22px 32px !important;
+  }
+}
+
+.song-card:hover {
+  transform: translateY(-3px) scale(1.01);
+  filter: brightness(1.12) drop-shadow(0 0 16px rgba(192, 132, 252, 0.45));
+}
+
+/* 3. ドロップダウン（難易度・譜面制作・並び替え）とソート順ボタン */
+select,
+.sort-order-btn {
+  background: rgba(15, 10, 40, 0.75) !important;
+  border: 1px solid rgba(0, 240, 255, 0.5) !important;
+  box-shadow: 0 0 8px rgba(0, 240, 255, 0.2) !important;
+  color: #ffffff !important;
+  border-radius: 8px !important;
+}
+
+select option {
+  background-color: #0f0a28;
+  color: #ffffff;
+}
+
+select:focus,
+.sort-order-btn:hover {
+  border-color: #00f5ff !important;
+  box-shadow: 0 0 12px rgba(0, 240, 255, 0.5) !important;
+  outline: none !important;
+}
+
+/* 楽曲カード内バッジ（「⏱ 1:04」「🎵 61 ノーツ」等） */
+.song-badge {
+  background: rgba(30, 15, 65, 0.7) !important;
+  border: 1px solid rgba(192, 132, 252, 0.45) !important;
+  border-radius: 9999px !important;
+  color: #f3e8ff !important;
+}
+
+/* 難易度の星（点灯星のゴールドネオングロー） */
+.star-lit {
+  color: #fbbf24;
+  text-shadow: 0 0 8px rgba(251, 191, 36, 0.8);
+}
+
+.star-unlit {
+  color: rgba(243, 232, 255, 0.3);
+}
+
+/* 4 & 5. 透過PNG画像ボタンのスタイルとホバー・クリック演出 */
+.image-btn {
+  background: transparent !important;
+  background-color: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+  outline: none !important;
+  padding: 0 !important;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  user-select: none;
+  -webkit-tap-highlight-color: transparent;
+  transition: transform 0.2s cubic-bezier(0.25, 1, 0.5, 1), filter 0.2s ease;
+}
+
+.image-btn img {
+  background: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+  mix-blend-mode: normal;
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+.image-btn:hover {
+  transform: scale(1.06);
+  filter: brightness(1.2) drop-shadow(0 0 14px rgba(255, 255, 255, 0.4));
+}
+
+.image-btn:active {
+  transform: scale(0.96);
+}
+
+/* 楽曲カード内「あそぶ」ボタン（視認性強化・サイズ最適化・シアン発光ホバー） */
+.play-btn-container {
+  width: 145px !important;
+  height: auto !important;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: transparent !important;
+  background-color: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+  outline: none !important;
+  padding: 0 !important;
+  cursor: pointer;
+  user-select: none;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.play-btn-container img {
+  width: 100% !important;
+  height: auto !important;
+  object-fit: contain !important;
+  /* 差し替えた際の黒枠防止 */
+  background: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+  mix-blend-mode: normal;
+  display: block;
+  transition: transform 0.2s cubic-bezier(0.25, 1, 0.5, 1), filter 0.2s ease !important;
+}
+
+.play-btn-container:hover img {
+  transform: scale(1.05);
+  filter: brightness(1.2) drop-shadow(0 0 16px rgba(0, 255, 255, 0.7)) !important;
+  transition: transform 0.2s cubic-bezier(0.25, 1, 0.5, 1), filter 0.2s ease !important;
+}
+
+.play-btn-container:active img {
+  transform: scale(0.96);
+}

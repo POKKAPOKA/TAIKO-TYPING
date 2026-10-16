@@ -1,5 +1,34 @@
 import { describe, it, expect } from 'vitest';
-import { calculateMinKeystrokes } from './RomajiParser';
+import { calculateMinKeystrokes, toBaseKana } from './RomajiParser';
+
+describe('toBaseKana', () => {
+  it('濁音を基本の清音に変換する（が→か、ざ→さ、だ→た、ば→は、ヴ/ゔ→う）', () => {
+    expect(toBaseKana('がぎぐげご')).toBe('かきくけこ');
+    expect(toBaseKana('ざじずぜぞ')).toBe('さしすせそ');
+    expect(toBaseKana('だぢづでど')).toBe('たちつてと');
+    expect(toBaseKana('ばびぶべぼ')).toBe('はひふへほ');
+    expect(toBaseKana('ゔヴ')).toBe('うう');
+  });
+
+  it('半濁音を基本の清音に変換する（ぱ→は 等）', () => {
+    expect(toBaseKana('ぱぴぷぺぽ')).toBe('はひふへほ');
+  });
+
+  it('小文字を大文字に変換する（ぁぃぅぇぉ→あいうえお、っ→つ、ゃゅょ→やゆよ、ゎ→わ）', () => {
+    expect(toBaseKana('ぁぃぅぇぉ')).toBe('あいうえお');
+    expect(toBaseKana('っ')).toBe('つ');
+    expect(toBaseKana('ゃゅょ')).toBe('やゆよ');
+    expect(toBaseKana('ゎ')).toBe('わ');
+  });
+
+  it('カタカナや複合語もすべて基本の清音ひらがなに正規化する', () => {
+    expect(toBaseKana('だっぴゃ')).toBe('たつひや');
+    expect(toBaseKana('ガッコウ')).toBe('かつこう');
+    expect(toBaseKana('きゃりーぱみゅぱみゅ')).toBe('きやりーはみゆはみゆ');
+    expect(toBaseKana('')).toBe('');
+    expect(toBaseKana(null)).toBe('');
+  });
+});
 
 describe('calculateMinKeystrokes', () => {
   describe('基本: 清音（あ行〜わ行）', () => {

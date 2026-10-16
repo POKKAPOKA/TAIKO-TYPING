@@ -1,5 +1,5 @@
 import { useGameStore } from '../store/gameStore';
-import { RomajiParser, calculateMinKeystrokes } from './RomajiParser';
+import { RomajiParser, calculateMinKeystrokes, toBaseKana } from './RomajiParser';
 import { playPerfect, playGood, playMiss } from '../hooks/useSystemSE';
 
 const JUDGE_WINDOW = {
@@ -11,9 +11,21 @@ const JUDGE_WINDOW = {
 export class GameEngine {
   constructor() {
     this.handleKeyDown = this.handleKeyDown.bind(this);
+    this.handleFlickInput = this.handleFlickInput.bind(this);
     this.togglePause = this.togglePause.bind(this);
     this.update = this.update.bind(this);
     this.reset();
+  }
+
+  // ノーツごとの基準打鍵数を返す（スマホモード時は清音化された文字数＝1フリック1打鍵、PCモード時は最短ローマ字打鍵数）
+  _getNoteKeystrokes(note, isMobileMode) {
+    if (!note) return 0;
+    const rawReading = note.reading || note.word || '';
+    if (isMobileMode) {
+      const base = toBaseKana(rawReading);
+      return base.length > 0 ? base.length : 1;
+    }
+    return calculateMinKeystrokes(rawReading);
   }
 
   // 内部状態をすべて初期値に戻す。
@@ -34,6 +46,8 @@ export class GameEngine {
     this.queue = [];
     this.currentTarget = null;
     this.romajiParser = null;
+    this.mobileTargetKana = "";
+    this.mobileTypedIndex = 0;
     this.firstHitMiss = false;
     this.isFallbackMode = false;
     this.audioStarted = false;
@@ -50,24 +64,40 @@ export class GameEngine {
     this.currentTarget = newTarget;
     this.firstHitMiss = false;
     if (this.currentTarget) {
-      const reading = this.currentTarget.reading || this.currentTarget.word;
+      const rawReading = this.currentTarget.reading || this.currentTarget.word || "";
+      const reading = store.isMobileMode ? toBaseKana(rawReading) : rawReading;
       let nextReading = "";
       if (this.queue.length > 0) {
         const nextNote = this.queue[0];
         if (Math.abs(this.currentTarget.endTime - nextNote.time) < 1) {
-          nextReading = nextNote.reading || nextNote.word || "";
+          const rawNext = nextNote.reading || nextNote.word || "";
+          nextReading = store.isMobileMode ? toBaseKana(rawNext) : rawNext;
         }
       }
       this.romajiParser = new RomajiParser(reading, nextReading);
 
-      const displayState = this.romajiParser.getDisplayState();
-      store.setTargetState(
-        this.currentTarget,
-        displayState.typed + displayState.next + displayState.remaining,
-        displayState.typed.length
-      );
+      if (store.isMobileMode) {
+        this.mobileTargetKana = reading;
+        this.mobileTypedIndex = 0;
+        store.setTargetState(
+          this.currentTarget,
+          this.mobileTargetKana,
+          this.mobileTypedIndex
+        );
+      } else {
+        this.mobileTargetKana = "";
+        this.mobileTypedIndex = 0;
+        const displayState = this.romajiParser.getDisplayState();
+        store.setTargetState(
+          this.currentTarget,
+          displayState.typed + displayState.next + displayState.remaining,
+          displayState.typed.length
+        );
+      }
     } else {
       this.romajiParser = null;
+      this.mobileTargetKana = "";
+      this.mobileTypedIndex = 0;
       store.setTargetState(null, null, 0);
     }
   }
@@ -122,11 +152,12 @@ export class GameEngine {
 
     this.queue = [...loadedScore.notes].sort((a, b) => a.time - b.time).map(note => ({ ...note }));
 
-    // スコア配点: 全ノーツのローマ字最短打鍵数の合計で 1,010,000 点を按分し、
+    // スコア配点: 全ノーツの基準打鍵数の合計で 1,010,000 点を按分し、
     // 全 PERFECT でちょうど理論値 1,010,000 点になるようにする
+    // （PCモードは最短ローマ字打鍵数、スマホモードは清音化された文字数＝1フリック1打鍵）
     let totalChars = 0;
     for (const note of this.queue) {
-      totalChars += calculateMinKeystrokes(note.reading || note.word || '');
+      totalChars += this._getNoteKeystrokes(note, store.isMobileMode);
     }
     this.totalNotesChars = totalChars > 0 ? totalChars : 1;
     this.accumulatedChars = 0;
@@ -205,7 +236,11 @@ export class GameEngine {
     const store = useGameStore.getState();
 
     // 打ち残し判定
-    if (this.currentTarget && this.romajiParser && !this.romajiParser.isComplete()) {
+    const isCurrentIncomplete = store.isMobileMode
+      ? Boolean(this.mobileTargetKana && this.mobileTypedIndex < this.mobileTargetKana.length)
+      : Boolean(this.romajiParser && !this.romajiParser.isComplete());
+
+    if (this.currentTarget && isCurrentIncomplete) {
       store.addDroppedCount();
       store.setCombo(0);
       store.setLastJudgment('MISS');
@@ -307,6 +342,73 @@ export class GameEngine {
     store.setWordQueue([...this.queue]);
   }
 
+  // スマホモード専用：フリックテンキーからの1文字（清音）入力判定
+  handleFlickInput(inputKana) {
+    if (!inputKana || !this.currentTarget) return;
+    const store = useGameStore.getState();
+    if (store.status !== 'playing' || store.isPaused) return;
+    if (!this.mobileTargetKana) return;
+
+    const currentTimeMs = this.currentTime - store.offsetMs;
+    const nextWordTime = this.queue.length > 0 ? this.queue[0].time : Infinity;
+    const timeLimit = Math.min(this.currentTarget.endTime + JUDGE_WINDOW.MISS, nextWordTime - JUDGE_WINDOW.MISS);
+
+    if (currentTimeMs >= timeLimit) {
+      return;
+    }
+
+    const normalizedInput = toBaseKana(inputKana);
+    const expectedChar = this.mobileTargetKana[this.mobileTypedIndex] || "?";
+    const isFirstHit = this.mobileTypedIndex === 0;
+
+    if (isFirstHit) {
+      const targetTime = this.currentTarget.time;
+      const diff = Math.abs(targetTime - currentTimeMs);
+
+      if (diff > JUDGE_WINDOW.MISS) {
+        return;
+      }
+
+      if (normalizedInput !== expectedChar) {
+        store.addTypoCount();
+        this.stats.typosByChar[expectedChar] = (this.stats.typosByChar[expectedChar] || 0) + 1;
+        this.stats.mistakeLog.push({ time: currentTimeMs / 1000, note: this.currentTarget.word, type: "typo", char: expectedChar });
+        return;
+      }
+
+      if (diff <= JUDGE_WINDOW.PERFECT) {
+        this.applyJudgment('PERFECT');
+      } else if (diff <= JUDGE_WINDOW.GOOD) {
+        this.applyJudgment('GOOD');
+      } else if (diff <= JUDGE_WINDOW.MISS) {
+        this.applyJudgment('MISS');
+        this.firstHitMiss = true;
+        this.stats.mistakeLog.push({ time: currentTimeMs / 1000, note: this.currentTarget.word, type: "miss" });
+      }
+    } else {
+      if (normalizedInput !== expectedChar) {
+        store.addTypoCount();
+        this.stats.typosByChar[expectedChar] = (this.stats.typosByChar[expectedChar] || 0) + 1;
+        this.stats.mistakeLog.push({ time: currentTimeMs / 1000, note: this.currentTarget.word, type: "typo", char: expectedChar });
+        return;
+      }
+    }
+
+    this.mobileTypedIndex += 1;
+    const remainingKana = this.mobileTargetKana.substring(this.mobileTypedIndex);
+    this.romajiParser = new RomajiParser(remainingKana);
+
+    store.setTargetState(
+      this.currentTarget,
+      this.mobileTargetKana,
+      this.mobileTypedIndex
+    );
+
+    if (this.mobileTypedIndex >= this.mobileTargetKana.length) {
+      this.completeCurrentTarget();
+    }
+  }
+
   handleKeyDown(e) {
     if (e.repeat) return;
     if (e.key === 'Escape') {
@@ -325,7 +427,9 @@ export class GameEngine {
       return;
     }
 
-    const isFirstHit = this.romajiParser.typedString.length === 0;
+    const isFirstHit = store.isMobileMode
+      ? (this.mobileTypedIndex === 0 && this.romajiParser.typedString.length === 0)
+      : (this.romajiParser.typedString.length === 0);
 
     if (isFirstHit) {
       const targetTime = this.currentTarget.time;
@@ -337,7 +441,9 @@ export class GameEngine {
 
       const isCorrect = this.romajiParser.input(e.key);
       if (!isCorrect) {
-        const expectedChar = this.romajiParser.getDisplayState().next[0] || "?";
+        const expectedChar = store.isMobileMode
+          ? (this.mobileTargetKana[this.mobileTypedIndex] || "?")
+          : (this.romajiParser.getDisplayState().next[0] || "?");
         useGameStore.getState().addTypoCount();
         this.stats.typosByChar[expectedChar] = (this.stats.typosByChar[expectedChar] || 0) + 1;
         this.stats.mistakeLog.push({ time: currentTimeMs / 1000, note: this.currentTarget.word, type: "typo", char: expectedChar });
@@ -356,7 +462,9 @@ export class GameEngine {
     } else {
       const isCorrect = this.romajiParser.input(e.key);
       if (!isCorrect) {
-        const expectedChar = this.romajiParser.getDisplayState().next[0] || "?";
+        const expectedChar = store.isMobileMode
+          ? (this.mobileTargetKana[this.mobileTypedIndex] || "?")
+          : (this.romajiParser.getDisplayState().next[0] || "?");
         useGameStore.getState().addTypoCount();
         this.stats.typosByChar[expectedChar] = (this.stats.typosByChar[expectedChar] || 0) + 1;
         this.stats.mistakeLog.push({ time: currentTimeMs / 1000, note: this.currentTarget.word, type: "typo", char: expectedChar });
@@ -364,12 +472,25 @@ export class GameEngine {
       }
     }
 
-    const displayState = this.romajiParser.getDisplayState();
-    store.setTargetState(
-      this.currentTarget,
-      displayState.typed + displayState.next + displayState.remaining,
-      displayState.typed.length
-    );
+    if (store.isMobileMode) {
+      const minTokenIdx = this.romajiParser.activeNodes.length > 0
+        ? Math.min(...this.romajiParser.activeNodes.map(n => n.tokenIndex))
+        : this.mobileTargetKana.length;
+      const baseOffset = this.mobileTargetKana.length - this.romajiParser.tokens.length;
+      this.mobileTypedIndex = Math.min(this.mobileTargetKana.length, baseOffset + minTokenIdx);
+      store.setTargetState(
+        this.currentTarget,
+        this.mobileTargetKana,
+        this.mobileTypedIndex
+      );
+    } else {
+      const displayState = this.romajiParser.getDisplayState();
+      store.setTargetState(
+        this.currentTarget,
+        displayState.typed + displayState.next + displayState.remaining,
+        displayState.typed.length
+      );
+    }
 
     if (this.romajiParser.isComplete()) {
       this.completeCurrentTarget();
@@ -378,9 +499,7 @@ export class GameEngine {
 
   applyJudgment(judgment) {
     const store = useGameStore.getState();
-    const noteChars = this.currentTarget
-      ? calculateMinKeystrokes(this.currentTarget.reading || this.currentTarget.word || '')
-      : 0;
+    const noteChars = this._getNoteKeystrokes(this.currentTarget, store.isMobileMode);
 
     this.accumulatedChars += noteChars;
     const targetScore = Math.floor((1010000 * this.accumulatedChars) / this.totalNotesChars);
@@ -414,7 +533,7 @@ export class GameEngine {
 
     const durationSec = (this.currentTarget.endTime - this.currentTarget.time) / 1000;
     if (durationSec > 0) {
-      const strokeCount = calculateMinKeystrokes(this.currentTarget.reading || this.currentTarget.word || '');
+      const strokeCount = this._getNoteKeystrokes(this.currentTarget, store.isMobileMode);
       const kps = strokeCount / durationSec;
       store.updateMaxKps(kps);
     }

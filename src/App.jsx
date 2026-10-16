@@ -369,12 +369,27 @@ function App() {
       )}
 
       {appMode === 'setup' && (
-        <div className="bg-neutral-800 rounded-3xl p-8 flex flex-col items-center gap-8 w-full max-w-xl overflow-y-auto max-h-full">
+        <div className="bg-neutral-800 rounded-3xl p-8 flex flex-col items-center gap-8 w-full max-w-xl overflow-y-auto max-h-full shadow-none">
           <h2 className="text-2xl font-black text-white">セットアップ</h2>
 
-          <div className="text-neutral-400 font-bold tracking-widest text-sm text-center bg-neutral-900 p-4 rounded-xl border-2 border-neutral-700 w-full">
-            遊び方：ノーツが判定枠に重なったら、表示されている最初の文字をタイピングしてください
-          </div>
+          {isMobileMode ? (
+            <div className="text-neutral-200 font-bold text-xs sm:text-sm bg-neutral-900 p-4 rounded-xl border-2 border-neutral-700 w-full flex flex-col gap-2 shadow-none">
+              <div className="flex items-center gap-2">
+                <span className="bg-amber-400 text-neutral-950 text-xs font-black px-2 py-0.5 rounded-md">最重要</span>
+                <span>キーを押した瞬間ではなく、<span className="text-amber-300 font-black">【指を離した瞬間】</span>にタイミング判定されます！</span>
+              </div>
+              <div className="text-neutral-300 text-xs leading-relaxed">
+                💡 早めにタッチしてフリック方向へ滑らせておき、<span className="text-cyan-300 font-black">判定枠に重なる瞬間に指を離す</span>とPERFECTが狙いやすくなります。
+              </div>
+              <div className="text-neutral-300 text-xs leading-relaxed border-t border-neutral-700 pt-2">
+                濁点・半濁点・小文字の<span className="text-pink-300 font-black">変換は不要</span>です。すべて<span className="text-cyan-300 font-black">元の文字（清音）</span>で入力してください（例：『だ』→『た』、『ぴ』→『ひ』、『っ』→『つ』）。
+              </div>
+            </div>
+          ) : (
+            <div className="text-neutral-400 font-bold tracking-widest text-sm text-center bg-neutral-900 p-4 rounded-xl border-2 border-neutral-700 w-full shadow-none">
+              遊び方：ノーツが判定枠に重なったら、表示されている最初の文字をタイピングしてください
+            </div>
+          )}
 
           {loadedScore && audioUrl ? (
             <div className="w-full flex flex-col gap-6">
@@ -474,7 +489,12 @@ function App() {
               <div className="w-full flex-1 flex items-center justify-center min-h-0 overflow-hidden">
                 <NotesArea />
               </div>
-              <div className="w-full py-1.5 flex flex-col items-center justify-center flex-shrink-0">
+              <div className="w-full py-1.5 flex flex-col items-center justify-center flex-shrink-0 gap-1">
+                {showGuide && (
+                  <div className="text-[11px] font-bold text-neutral-300 bg-neutral-800/90 border border-neutral-700 px-3 py-1 rounded-full text-center transition-opacity duration-1000 shadow-none">
+                    <span className="text-amber-300 font-black">【指を離した瞬間】</span>に判定！濁点・小文字は<span className="text-pink-300 font-black">変換不要</span>（清音で入力）
+                  </div>
+                )}
                 <ActiveWordDisplay />
               </div>
             </div>
@@ -631,29 +651,97 @@ function App() {
             <div className="bg-neutral-900 p-6 flex justify-between items-center border-b-4 border-neutral-700">
               <div className="flex items-center gap-3">
                 <HelpCircle className="text-emerald-400" size={32} />
-                <h2 className="text-3xl font-black text-white tracking-widest">遊び方</h2>
+                <h2 className="text-2xl sm:text-3xl font-black text-white tracking-widest">遊び方</h2>
+                <span className={`text-xs font-black px-2.5 py-1 rounded-full border ${
+                  isMobileMode
+                    ? 'bg-cyan-500/20 text-cyan-300 border-cyan-400/60'
+                    : 'bg-purple-500/20 text-purple-300 border-purple-400/60'
+                }`}>
+                  {isMobileMode ? 'スマホモード（フリック入力）' : 'PCモード（キーボード入力）'}
+                </span>
               </div>
               <button
                 type="button"
                 onClick={() => setShowHowToPlay(false)}
-                className="w-12 h-12 bg-neutral-700 hover:bg-neutral-600 text-white rounded-full font-black text-xl flex items-center justify-center transition-colors cursor-pointer"
+                className="w-12 h-12 bg-neutral-700 hover:bg-neutral-600 text-white rounded-full font-black text-xl flex items-center justify-center transition-colors cursor-pointer shadow-none"
               >
                 <X size={24} />
               </button>
             </div>
-            <div className="p-8 flex flex-col gap-6 text-white">
-              <div className="text-xl font-bold text-neutral-200">
-                太鼓タイピングの基本ルール
-              </div>
-              <div className="flex flex-col gap-4 text-neutral-300 leading-relaxed font-bold bg-neutral-900 p-6 rounded-2xl border-2 border-neutral-700">
-                <p>1. 画面右から流れてくるノーツが、左側の白い判定枠に重なるタイミングを見極めよう！</p>
-                <p>2. ノーツに書かれているローマ字（スマホモード時は画面下のフリックキーボード）を正確にタイピング！</p>
-                <p>3. 正確なタイミングで入力すると「PERFECT」！連続コンボを繋げて1,010,000点（All Perfect）を目指そう！</p>
-              </div>
+            <div className="p-6 sm:p-8 flex flex-col gap-5 text-white">
+              {isMobileMode ? (
+                <>
+                  <div className="text-lg sm:text-xl font-black text-cyan-300">
+                    スマホモード（フリック入力）の重要ルール
+                  </div>
+                  <div className="flex flex-col gap-4">
+                    {/* ① 判定のタイミング（最重要） */}
+                    <div className="bg-neutral-900 p-5 rounded-2xl border-2 border-amber-400/60 flex flex-col gap-2 shadow-none">
+                      <div className="flex items-center gap-2">
+                        <span className="bg-amber-400 text-neutral-950 text-xs font-black px-2 py-0.5 rounded-md">
+                          最重要
+                        </span>
+                        <span className="text-amber-300 font-black text-base">
+                          ① 判定のタイミング
+                        </span>
+                      </div>
+                      <p className="text-sm sm:text-base font-bold text-white leading-relaxed">
+                        キーを押した瞬間ではなく、
+                        <span className="inline-block bg-amber-400/25 text-amber-200 border border-amber-400/70 px-1.5 py-0.5 rounded-md font-black mx-0.5">
+                          【指を離した瞬間】
+                        </span>
+                        にタイミング判定されます！
+                      </p>
+                      <p className="text-xs sm:text-sm font-bold text-neutral-300 leading-relaxed bg-neutral-800 border border-neutral-700 rounded-xl p-3 mt-1">
+                        💡 <span className="text-cyan-300 font-black">コツ：</span>早めにキーをタッチしてフリック方向へ指を滑らせておき、
+                        <span className="text-amber-200 font-black">ノーツが判定枠に重なる瞬間に指を離す</span>とPERFECTが狙いやすくなります。
+                      </p>
+                    </div>
+
+                    {/* ② テンキー（フリック）の入力方法 */}
+                    <div className="bg-neutral-900 p-5 rounded-2xl border-2 border-cyan-400/60 flex flex-col gap-2 shadow-none">
+                      <div className="flex items-center gap-2">
+                        <span className="bg-cyan-400 text-neutral-950 text-xs font-black px-2 py-0.5 rounded-md">
+                          入力ルール
+                        </span>
+                        <span className="text-cyan-300 font-black text-base">
+                          ② テンキー（フリック）の入力方法
+                        </span>
+                      </div>
+                      <p className="text-sm sm:text-base font-bold text-white leading-relaxed">
+                        画面下のテンキーをタップ・フリックして文字を入力します。
+                      </p>
+                      <p className="text-xs sm:text-sm font-bold text-neutral-300 leading-relaxed bg-neutral-800 border border-neutral-700 rounded-xl p-3 mt-1">
+                        濁点（゛）・半濁点（゜）・小文字（っ・ゃ・ゅ・ょ等）の
+                        <span className="inline-block bg-pink-500/25 text-pink-200 border border-pink-400/70 px-1.5 py-0.5 rounded-md font-black mx-0.5">
+                          変換は不要
+                        </span>
+                        です！すべて
+                        <span className="text-cyan-300 font-black">元の文字（清音）</span>
+                        で入力してください。
+                        <span className="block text-amber-200 font-black mt-1">
+                          （例：『だ』→『た』、『ぴ』→『ひ』、『っ』→『つ』）
+                        </span>
+                      </p>
+                    </div>
+                  </div>
+                </>
+              ) : (
+                <>
+                  <div className="text-xl font-bold text-neutral-200">
+                    太鼓タイピングの基本ルール（PCモード）
+                  </div>
+                  <div className="flex flex-col gap-4 text-neutral-300 leading-relaxed font-bold bg-neutral-900 p-6 rounded-2xl border-2 border-neutral-700 shadow-none">
+                    <p>1. 画面右から流れてくるノーツが、左側の白い判定枠に重なるタイミングを見極めよう！</p>
+                    <p>2. ノーツが判定枠に重なったら、表示されている最初の文字から正確にローマ字タイピング！</p>
+                    <p>3. 正確なタイミングで入力すると「PERFECT」！連続コンボを繋げて1,010,000点（All Perfect）を目指そう！</p>
+                  </div>
+                </>
+              )}
               <button
                 type="button"
                 onClick={() => setShowHowToPlay(false)}
-                className="w-full py-4 bg-emerald-600 hover:bg-emerald-500 text-white rounded-full font-black text-xl transition-colors mt-2 cursor-pointer"
+                className="w-full py-4 bg-emerald-600 hover:bg-emerald-500 text-white rounded-full font-black text-xl transition-colors mt-2 cursor-pointer shadow-none"
               >
                 閉じる
               </button>
