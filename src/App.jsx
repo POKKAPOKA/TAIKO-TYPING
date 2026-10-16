@@ -19,12 +19,16 @@ import { Maximize, Minimize, Smartphone, Monitor, User, Settings, Pause, Play, R
 // 操作ガイドの自動消去をストア購読で行うモジュール（importするだけで有効になる）
 import './engine/gameUiSync';
 
-// モード切替用ボタン画像の事前読み込み（画面切替時のチラつき防止・useEffect不使用）
+// モード切替用・全画面切替用ボタン画像の事前読み込み（画面切替時のチラつき防止・useEffect不使用）
 if (typeof window !== 'undefined') {
   const preloadPc = new Image();
   preloadPc.src = './assets/button_3_pcmode.png';
   const preloadMobile = new Image();
   preloadMobile.src = './assets/button_3_mobilemode.png';
+  const preloadFullscreen = new Image();
+  preloadFullscreen.src = '/assets/buttons/btn_fullscreen.png';
+  const preloadMinimize = new Image();
+  preloadMinimize.src = '/assets/buttons/btn_minimize.png';
 }
 
 function App() {
@@ -229,17 +233,19 @@ function App() {
                 />
               </button>
 
-              {/* 全画面表示ボタン (和風サイバーネオンバッジ) */}
+              {/* 全画面表示 / 縮小表示ボタン (和風サイバーネオンバッジ) */}
               <button
                 type="button"
                 onClick={toggleFullscreen}
                 className="icon-button w-12 h-12 sm:w-14 sm:h-14 md:w-16 md:h-16"
-                title="全画面表示切替"
+                title={isFullscreen ? "縮小表示（全画面解除）" : "全画面表示"}
+                aria-label={isFullscreen ? "縮小表示（全画面解除）" : "全画面表示"}
                 style={{ color: '#22d3ee' }}
               >
                 <img
-                  src="/assets/buttons/btn_fullscreen.png"
-                  alt="全画面表示"
+                  key={isFullscreen ? 'minimize' : 'fullscreen'}
+                  src={isFullscreen ? "/assets/buttons/btn_minimize.png" : "/assets/buttons/btn_fullscreen.png"}
+                  alt={isFullscreen ? "縮小表示" : "全画面表示"}
                 />
               </button>
             </>
