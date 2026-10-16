@@ -19,16 +19,36 @@ import { Maximize, Minimize, Smartphone, Monitor, User, Settings, Pause, Play, R
 // 操作ガイドの自動消去をストア購読で行うモジュール（importするだけで有効になる）
 import './engine/gameUiSync';
 
-// モード切替用・全画面切替用ボタン画像の事前読み込み（画面切替時のチラつき防止・useEffect不使用）
+// 初回描画完了後に裏で軽量アセットをキャッシュさせる（初期画面表示を邪魔しないアイドル時プリロード・useEffect不使用）
 if (typeof window !== 'undefined') {
-  const preloadPc = new Image();
-  preloadPc.src = './assets/button_3_pcmode.png';
-  const preloadMobile = new Image();
-  preloadMobile.src = './assets/button_3_mobilemode.png';
-  const preloadFullscreen = new Image();
-  preloadFullscreen.src = '/assets/buttons/btn_fullscreen.png';
-  const preloadMinimize = new Image();
-  preloadMinimize.src = '/assets/buttons/btn_minimize.png';
+  const setupIdlePreload = () => {
+    const preloadAssets = [
+      './assets/button_smartphone_mode.png',
+      './assets/button_6_exit_fullscreen.png',
+      './assets/btn_play_v4_perfect.png',
+      './assets/btn_ranking.png',
+      './assets/btn_random.png',
+      './assets/btn_back_menu.png',
+      './assets/song_card_frame.png'
+    ];
+    const runPreload = () => {
+      preloadAssets.forEach((src) => {
+        const img = new Image();
+        img.decoding = 'async';
+        img.src = src;
+      });
+    };
+    if ('requestIdleCallback' in window) {
+      window.requestIdleCallback(runPreload);
+    } else {
+      setTimeout(runPreload, 500);
+    }
+  };
+
+  window.addEventListener('load', setupIdlePreload, { once: true });
+  if (document.readyState === 'complete') {
+    setupIdlePreload();
+  }
 }
 
 function App() {
@@ -207,7 +227,7 @@ function App() {
             ? 'h-screen p-0 bg-cover bg-center bg-no-repeat'
             : 'h-screen p-8'
         }`}
-        style={appMode === 'menu' ? { backgroundImage: 'url(/assets/home_bg.png)' } : undefined}
+        style={appMode === 'menu' ? { backgroundImage: 'url(./assets/bg_main.jpg)' } : undefined}
       >
 
       {/* 右上ボタングループ（設定・全画面表示） */}
@@ -228,8 +248,12 @@ function App() {
                 style={{ color: '#e879f9' }}
               >
                 <img
-                  src="/assets/buttons/btn_settings.png"
+                  src="./assets/button_5_settings.png"
                   alt="設定"
+                  width="56"
+                  height="54"
+                  decoding="async"
+                  fetchPriority="high"
                 />
               </button>
 
@@ -244,8 +268,12 @@ function App() {
               >
                 <img
                   key={isFullscreen ? 'minimize' : 'fullscreen'}
-                  src={isFullscreen ? "/assets/buttons/btn_minimize.png" : "/assets/buttons/btn_fullscreen.png"}
+                  src={isFullscreen ? "./assets/button_6_exit_fullscreen.png" : "./assets/button_6_fullscreen.png"}
                   alt={isFullscreen ? "縮小表示" : "全画面表示"}
+                  width="56"
+                  height="54"
+                  decoding="async"
+                  fetchPriority="high"
                 />
               </button>
             </>
@@ -288,7 +316,7 @@ function App() {
         <h1 className={`text-4xl font-black mb-8 text-orange-400 tracking-wider flex-shrink-0 ${appMode === 'menu' || appMode === 'game' ? 'hidden' : ''}`}>太鼓タイピング</h1>
 
       {appMode === 'menu' && (
-        <div className="w-full max-w-[310px] sm:max-w-[380px] md:max-w-[430px] lg:max-w-[450px] flex flex-col items-center justify-center gap-4 sm:gap-[18px] md:gap-5 my-auto px-4">
+        <div className="w-full max-w-[340px] flex flex-col items-center justify-center gap-4 sm:gap-[18px] md:gap-5 my-auto px-4">
           {/* ボタン1: 「公式譜面で遊ぶ」 */}
           <button
             type="button"
@@ -300,8 +328,12 @@ function App() {
             style={{ color: '#f472b6' }}
           >
             <img
-              src="/assets/buttons/btn_official.png"
+              src="./assets/button_1_official.png"
               alt="公式譜面で遊ぶ"
+              width="340"
+              height="90"
+              decoding="async"
+              fetchPriority="high"
             />
           </button>
 
@@ -313,8 +345,12 @@ function App() {
             style={{ color: '#22d3ee' }}
           >
             <img
-              src="/assets/buttons/btn_howtoplay.png"
+              src="./assets/button_2_howtoplay.png"
               alt="遊び方"
+              width="340"
+              height="90"
+              decoding="async"
+              fetchPriority="high"
             />
           </button>
 
@@ -336,8 +372,12 @@ function App() {
           >
             <img
               key={isMobileMode ? 'mobile' : 'pc'}
-              src={isMobileMode ? "./assets/button_3_mobilemode.png" : "./assets/button_3_pcmode.png"}
+              src={isMobileMode ? "./assets/button_smartphone_mode.png" : "./assets/button_3_pcmode.png"}
               alt={isMobileMode ? "スマホモード" : "PCモード"}
+              width="340"
+              height="90"
+              decoding="async"
+              fetchPriority="high"
             />
           </button>
 
@@ -349,8 +389,12 @@ function App() {
             style={{ color: '#d946ef' }}
           >
             <img
-              src="/assets/buttons/btn_character.png"
+              src="./assets/button_4_character.png"
               alt="キャラクター選択"
+              width="340"
+              height="90"
+              decoding="async"
+              fetchPriority="high"
             />
           </button>
 

@@ -47,12 +47,23 @@
   mix-blend-mode: normal; /* 完全透過PNGアセットを使用 */
   pointer-events: auto;
   display: block;
-  width: 100%;
-  height: 100%;
   object-fit: contain;
   animation: neon-pulse 3s ease-in-out infinite;
   transition: transform 0.2s ease, filter 0.2s ease;
   will-change: transform, filter;
+}
+
+.menu-button img {
+  width: 100%;
+  max-width: 340px;
+  height: auto;
+  aspect-ratio: 340 / 90;
+}
+
+.icon-button img {
+  width: 100%;
+  height: 100%;
+  aspect-ratio: 56 / 54;
 }
 
 .menu-button:hover img,
@@ -125,11 +136,11 @@
   color: #f3e8ff !important;
 }
 
-/* 2. 楽曲カード（透過フレーム画像9スライス＋半透明ガラス・フレキシブル高さ対応） */
+/* 2. 楽曲カード（透過フレーム画像9スライス＋半透明ガラス・フレキシブル高さ対応・同一URLキャッシュ再利用） */
 .song-card {
   border-style: solid !important;
   border-width: 0 !important;
-  border-image: url('./assets/song_card_frame.png') 115 180 fill / 64px 100px / 0 stretch !important;
+  border-image: url('/assets/song_card_frame.png') 69 108 fill / 64px 100px / 0 stretch !important;
   background-color: transparent !important;
   background-image: none !important;
   backdrop-filter: blur(6px) !important;
@@ -146,7 +157,7 @@
 
 @media (min-width: 768px) {
   .song-card {
-    border-image: url('./assets/song_card_frame.png') 115 180 fill / 80px 125px / 0 stretch !important;
+    border-image: url('/assets/song_card_frame.png') 69 108 fill / 80px 125px / 0 stretch !important;
     border-radius: 24px !important;
     padding: 22px 32px !important;
   }
@@ -238,6 +249,7 @@ select:focus,
 .play-btn-container {
   width: 145px !important;
   height: auto !important;
+  aspect-ratio: 145 / 56;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -255,6 +267,7 @@ select:focus,
 .play-btn-container img {
   width: 100% !important;
   height: auto !important;
+  aspect-ratio: 145 / 56;
   object-fit: contain !important;
   /* 差し替えた際の黒枠防止 */
   background: transparent !important;
@@ -273,4 +286,29 @@ select:focus,
 
 .play-btn-container:active img {
   transform: scale(0.96);
+}
+
+/* モバイル端末向けの軽量描画調整（GPU負荷軽減） */
+@media (max-width: 768px) {
+  .info-banner,
+  .filter-panel,
+  .song-card {
+    backdrop-filter: blur(4px) !important;
+    -webkit-backdrop-filter: blur(4px) !important;
+  }
+
+  .menu-button,
+  .icon-button {
+    filter: drop-shadow(0 0 5px rgba(0, 0, 0, 0.4));
+  }
+
+  .menu-button img,
+  .icon-button img {
+    animation-duration: 4s;
+    filter: drop-shadow(0 0 4px currentColor);
+  }
+
+  .song-card:hover {
+    filter: brightness(1.08) drop-shadow(0 0 8px rgba(192, 132, 252, 0.35));
+  }
 }

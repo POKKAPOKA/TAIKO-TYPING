@@ -9,7 +9,7 @@ export default function SongSelect({ songsPromise, onBack, onStartGame }) {
     <Suspense fallback={
       <div
         className="min-h-screen bg-neutral-900 bg-cover bg-center bg-no-repeat bg-fixed text-white flex items-center justify-center font-sans select-none w-full relative"
-        style={{ backgroundImage: 'url(/assets/home_bg.png)' }}
+        style={{ backgroundImage: 'url(./assets/bg_main.jpg)' }}
       >
         <div className="absolute inset-0 bg-[#0c0520]/45 pointer-events-none" />
         <div className="text-xl text-purple-200 font-bold relative z-10">曲を読み込み中...</div>
@@ -127,7 +127,7 @@ function SongListContent({ songsPromise, onBack, onStartGame }) {
   return (
     <div
       className="min-h-screen bg-neutral-900 bg-cover bg-center bg-no-repeat bg-fixed text-white flex flex-col items-center p-4 md:p-8 font-sans select-none w-full relative"
-      style={{ backgroundImage: 'url(/assets/home_bg.png)' }}
+      style={{ backgroundImage: 'url(./assets/bg_main.jpg)' }}
     >
       {/* 背後の桜や雷紋を活かしつつ視認性を保つ薄めのオーバーレイ */}
       <div className="fixed inset-0 bg-[#0c0520]/40 pointer-events-none z-0" />
@@ -153,6 +153,9 @@ function SongListContent({ songsPromise, onBack, onStartGame }) {
               <img
                 src="./assets/btn_random.png"
                 alt="ランダム"
+                width="145"
+                height="56"
+                decoding="async"
                 className="h-full w-auto"
               />
             </button>
@@ -168,6 +171,9 @@ function SongListContent({ songsPromise, onBack, onStartGame }) {
               <img
                 src="./assets/button_5_settings.png"
                 alt="設定"
+                width="56"
+                height="54"
+                decoding="async"
                 className="h-full w-full"
               />
             </button>
@@ -183,6 +189,9 @@ function SongListContent({ songsPromise, onBack, onStartGame }) {
               <img
                 src="./assets/btn_back_menu.png"
                 alt="メニューに戻る"
+                width="145"
+                height="56"
+                decoding="async"
                 className="h-full w-auto"
               />
             </button>
@@ -343,6 +352,10 @@ function SongListContent({ songsPromise, onBack, onStartGame }) {
                     <img
                       src="./assets/btn_ranking.png"
                       alt="ランキング"
+                      width="145"
+                      height="56"
+                      loading="lazy"
+                      decoding="async"
                       className="h-full w-auto object-contain"
                     />
                   </button>
@@ -357,8 +370,12 @@ function SongListContent({ songsPromise, onBack, onStartGame }) {
                     aria-label={`${song.title}であそぶ`}
                   >
                     <img
-                      src="./assets/btn_play.png"
+                      src="./assets/btn_play_v4_perfect.png"
                       alt="あそぶ"
+                      width="145"
+                      height="56"
+                      loading="lazy"
+                      decoding="async"
                     />
                   </button>
                 </div>
