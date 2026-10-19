@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { calculateMinKeystrokes, toBaseKana } from './RomajiParser';
+import { RomajiParser, calculateMinKeystrokes, toBaseKana, canUseSingleN } from './RomajiParser';
 
 describe('toBaseKana', () => {
   it('濁音を基本の清音に変換する（が→か、ざ→さ、だ→た、ば→は、ヴ/ゔ→う）', () => {
@@ -321,6 +321,32 @@ describe('calculateMinKeystrokes', () => {
     it('「ざっし」は zassi(5)', () => {
       // za(2) + s(1) + si(2) = 5
       expect(calculateMinKeystrokes('ざっし')).toBe(5);
+    });
+  });
+
+  describe('RomajiParser: 連続ノーツ間(nextReading)の促音・撥音連携とガイド表示', () => {
+    it('次ノーツが「て」のとき、単独「っ」ノーツは t 1打鍵で完了でき、初期表示も T になる', () => {
+      const parser = new RomajiParser('っ', 'て');
+      expect(parser.getDisplayState()).toEqual({ typed: '', next: 'T', remaining: '' });
+      expect(parser.input('t')).toBe(true);
+      expect(parser.isComplete()).toBe(true);
+    });
+
+    it('次ノーツが「ぐ」のとき、単独「ん」ノーツは n 1打鍵で完了できる', () => {
+      const parser = new RomajiParser('ん', 'ぐ');
+      expect(parser.getDisplayState()).toEqual({ typed: '', next: 'N', remaining: '' });
+      expect(parser.input('n')).toBe(true);
+      expect(parser.isComplete()).toBe(true);
+    });
+
+    it('次が「ん」の場合は単独 n 不可（canUseSingleN("ん") === false）', () => {
+      expect(canUseSingleN('ん')).toBe(false);
+    });
+
+    it('「がっこう」の初期ガイド表示が G A X T S U K O U ではなく G A K K O U になる', () => {
+      const parser = new RomajiParser('がっこう');
+      const disp = parser.getDisplayState();
+      expect(disp.typed + disp.next + disp.remaining).toBe('GAKKOU');
     });
   });
 });

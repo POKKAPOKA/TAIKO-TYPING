@@ -20,6 +20,7 @@ export default function ResultScreen({
   const goodCount = useGameStore(state => state.goodCount);
   const missCount = useGameStore(state => state.missCount);
   const maxKps = useGameStore(state => state.maxKps);
+  const loadedScore = useGameStore(state => state.loadedScore);
   // エンジン内部に直接触れず、ストアに集計された statsData を参照する
   const statsData = useGameStore(state => state.statsData);
   const stats = statsData || { worstKeys: [], mistakeLog: [] };
@@ -253,18 +254,20 @@ export default function ResultScreen({
         >
           リトライ
         </button>
-        <button
-          onClick={() => {
-            const songId = scoreFileName ? scoreFileName.replace(/\.json$/i, "") : "Unknown";
-            setLeaderboardData({
-              songTitle: "LEADERBOARD",
-              promise: fetchRankingsResult(songId)
-            });
-          }}
-          className="w-full py-4 bg-yellow-600 hover:bg-yellow-500 text-white rounded-full font-black text-xl transition-colors"
-        >
-          ランキング
-        </button>
+        {!isLocalPlay && scoreFileName && (
+          <button
+            onClick={() => {
+              const songId = scoreFileName.replace(/\.json$/i, "");
+              setLeaderboardData({
+                songTitle: loadedScore?.title || songId,
+                promise: fetchRankingsResult(songId)
+              });
+            }}
+            className="w-full py-4 bg-yellow-600 hover:bg-yellow-500 text-white rounded-full font-black text-xl transition-colors"
+          >
+            ランキング
+          </button>
+        )}
         <button
           onClick={onBack}
           className="w-full py-4 bg-neutral-700 hover:bg-neutral-600 text-white rounded-full font-black text-xl transition-colors"

@@ -50,6 +50,7 @@ export class GameEngine {
     this.mobileTypedIndex = 0;
     this.firstHitMiss = false;
     this.currentTargetJudged = false;
+    this.absorbTrailingN = false;
     this.isFallbackMode = false;
     this.audioStarted = false;
     this.leadInTime = 0;
@@ -65,13 +66,14 @@ export class GameEngine {
     this.currentTarget = newTarget;
     this.firstHitMiss = false;
     this.currentTargetJudged = false;
+    this.absorbTrailingN = false;
     if (this.currentTarget) {
       const rawReading = this.currentTarget.reading || this.currentTarget.word || "";
       const reading = store.isMobileMode ? toBaseKana(rawReading) : rawReading;
       let nextReading = "";
       if (this.queue.length > 0) {
         const nextNote = this.queue[0];
-        if (Math.abs(this.currentTarget.endTime - nextNote.time) < 1) {
+        if (Math.abs(this.currentTarget.endTime - nextNote.time) <= 50) {
           const rawNext = nextNote.reading || nextNote.word || "";
           nextReading = store.isMobileMode ? toBaseKana(rawNext) : rawNext;
         }
@@ -457,10 +459,11 @@ export class GameEngine {
       this.togglePause();
       return;
     }
+    const store = useGameStore.getState();
+    if (store.status !== 'playing' || store.isPaused) return;
     if (!/^[a-zA-Z0-9\-]$/.test(e.key)) return;
     if (!this.currentTarget || !this.romajiParser) return;
 
-    const store = useGameStore.getState();
     const currentTimeMs = this.currentTime - store.offsetMs;
     const timeLimit = this._getTimeLimit(store);
 
@@ -473,6 +476,14 @@ export class GameEngine {
       : (this.romajiParser.typedString.length === 0);
 
     if (isFirstHit) {
+      // 直前のノーツ末尾の「ん」を単独 n で完了した直後に、慣れで2打目の n (nn) が打たれた場合は吸収してミスにしない
+      if (this.absorbTrailingN) {
+        this.absorbTrailingN = false;
+        if (e.key.toLowerCase() === 'n') {
+          return;
+        }
+      }
+
       const targetTime = this.currentTarget.time;
       const diff = Math.abs(targetTime - currentTimeMs);
 
@@ -502,6 +513,7 @@ export class GameEngine {
         this.stats.mistakeLog.push({ time: currentTimeMs / 1000, note: this.currentTarget.word, type: "miss" });
       }
     } else {
+      this.absorbTrailingN = false;
       const isCorrect = this.romajiParser.input(e.key);
       if (!isCorrect) {
         const expectedChar = store.isMobileMode
@@ -573,6 +585,16 @@ export class GameEngine {
   completeCurrentTarget() {
     const store = useGameStore.getState();
 
+    const completedWithSingleN = Boolean(
+      !store.isMobileMode &&
+      this.romajiParser &&
+      this.romajiParser.tokens.length > 0 &&
+      this.romajiParser.tokens[this.romajiParser.tokens.length - 1] === 'ん' &&
+      this.romajiParser.typedString.endsWith('n') &&
+      !this.romajiParser.typedString.endsWith('nn') &&
+      !this.romajiParser.typedString.endsWith('xn')
+    );
+
     store.addCompletedCount();
     if (!this.firstHitMiss) {
       store.setCombo(store.combo + 1);
@@ -587,6 +609,7 @@ export class GameEngine {
     }
 
     this.updateCurrentTarget(store, this.queue.shift() || null);
+    this.absorbTrailingN = completedWithSingleN;
     store.setWordQueue([...this.queue]);
   }
 

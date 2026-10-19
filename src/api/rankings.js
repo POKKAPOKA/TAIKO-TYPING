@@ -11,6 +11,9 @@ let submitQueue = Promise.resolve();
  */
 export const fetchRankings = async (songId) => {
   try {
+    // リザルト画面遷移直後の自動スコア送信が進行中の場合は完了を待ってから取得する
+    await submitQueue.catch(() => {});
+
     const { data, error } = await supabase
       .from('rankings')
       .select('*')

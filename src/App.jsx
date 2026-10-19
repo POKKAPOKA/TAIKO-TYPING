@@ -958,20 +958,14 @@ function App() {
               プレーに戻る
             </button>
             <button
-              onClick={() => {
-                gameEngine.togglePause();
-                handleRetry();
-              }}
+              onClick={handleRetry}
               className="w-full py-4 bg-orange-500 hover:bg-orange-400 text-neutral-900 rounded-full font-black text-xl transition-colors flex items-center justify-center gap-2"
             >
               <RotateCcw size={24} />
               リトライ
             </button>
             <button
-              onClick={() => {
-                gameEngine.togglePause();
-                handleBackToMenu();
-              }}
+              onClick={handleBackToMenu}
               className="w-full py-4 bg-neutral-700 hover:bg-neutral-600 text-white rounded-full font-black text-xl transition-colors flex items-center justify-center gap-2"
             >
               <Home size={24} />
@@ -992,10 +986,7 @@ function App() {
       {showSettings && (
         <SettingsModal onClose={() => {
           setShowSettings(false);
-          if (appMode === "game") {
-            if (isPaused) {
-              gameEngine.togglePause();
-            }
+          if (appMode === "game" && status === "playing") {
             handleRetry();
           }
         }} />

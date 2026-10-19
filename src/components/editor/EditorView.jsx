@@ -399,7 +399,10 @@ export default function EditorView({ onExit }) {
         <div className="flex flex-wrap justify-between items-center mb-2 px-2 gap-4">
           <div className="flex flex-wrap gap-2 items-center">
              <button
-               onClick={onExit}
+               onClick={() => {
+                 useEditorStore.getState().setIsPlaying(false);
+                 onExit();
+               }}
                className="px-6 py-2 bg-neutral-700 hover:bg-neutral-600 text-white rounded-full font-bold transition-colors mr-2 flex-shrink-0"
              >
                もどる

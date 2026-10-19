@@ -55,6 +55,7 @@ export default function EditorTimeline() {
   const setIsPlaying = useEditorStore(state => state.setIsPlaying);
 
   const audioDuration = useEditorStore(state => state.audioDuration);
+  const audioPeaks = useEditorStore(state => state.audioPeaks);
 
   const measureWidth = baseMeasureWidth * zoomLevel;
 
@@ -300,13 +301,13 @@ export default function EditorTimeline() {
         style={{ ...gridBackground }}
       >
         {/* 波形表示 */}
-        {useEditorStore.getState().audioPeaks?.length > 0 && (
+        {audioPeaks?.length > 0 && (
           <svg className="absolute inset-0 w-full h-full pointer-events-none opacity-20" preserveAspectRatio="none">
             <polyline
               fill="none"
               stroke="#06b6d4" // cyan-500
               strokeWidth="2"
-              points={useEditorStore.getState().audioPeaks.map((peak, index) => {
+              points={audioPeaks.map((peak, index) => {
                 const absoluteMs = index * 50;
                 const x = absoluteMs * pxPerMs;
                 const y = 100 - (peak * 100);

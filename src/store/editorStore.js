@@ -130,7 +130,7 @@ export const useEditorStore = create((set) => ({
   clearEditorNotes: () => set((state) => ({
     ...state.saveHistory(state),
     editorNotes: [],
-    selectedNoteId: null
+    selectedNoteIds: []
   })),
 
   undo: () => set((state) => {
@@ -141,7 +141,7 @@ export const useEditorStore = create((set) => ({
       pastNotes: newPastNotes,
       futureNotes: [state.editorNotes, ...state.futureNotes],
       editorNotes: previousNotes,
-      selectedNoteId: null
+      selectedNoteIds: []
     };
   }),
 
@@ -154,7 +154,7 @@ export const useEditorStore = create((set) => ({
       pastNotes: newPast,
       futureNotes: newFutureNotes,
       editorNotes: nextNotes,
-      selectedNoteId: null
+      selectedNoteIds: []
     };
   }),
 }));

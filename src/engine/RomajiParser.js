@@ -89,7 +89,7 @@ export function toBaseKana(str) {
 export function canUseSingleN(nextHiraganaChar) {
   if (!nextHiraganaChar) return false; // 最後が「ん」の場合は "nn" が必要
   // 母音、な行、や行 が次に来る場合は単独nは不可
-  const invalidNextChars = "あいうえおなにぬねのやゆよぁぃぅぇぉゃゅょ";
+  const invalidNextChars = "あいうえおなにぬねのやゆよんぁぃぅぇぉゃゅょ";
   return !invalidNextChars.includes(nextHiraganaChar);
 }
 
@@ -126,7 +126,9 @@ export class RomajiParser {
     // カタカナをひらがなに変換（入力されるreadingのみ）
     this.normalizedReading = toHiragana(this.reading);
     this.tokens = tokenizeReading(this.normalizedReading);
-    this.tokenOptions = this._buildTokenOptions(this.tokens);
+    const nextTokens = this.nextReading ? tokenizeReading(toHiragana(this.nextReading)) : [];
+    const lookaheadToken = nextTokens.length > 0 ? nextTokens[0] : null;
+    this.tokenOptions = this._buildTokenOptions(this.tokens, lookaheadToken);
 
     // 状態: { tokenIndex: 0, optionIndex: X, charIndex: 0 }
     this.activeNodes = [];
@@ -148,7 +150,7 @@ export class RomajiParser {
       if (token === "ん") {
         const nextChar = tokens[i+1] ? tokens[i+1][0] : (lookaheadToken ? lookaheadToken[0] : null);
         if (nextChar && canUseSingleN(nextChar)) {
-          options.push("n");
+          options.unshift("n");
         }
       }
 
@@ -156,10 +158,10 @@ export class RomajiParser {
         const nextToken = tokens[i+1] || lookaheadToken;
         if (nextToken && ROMAJI_DICT[nextToken]) {
           const nextOptions = ROMAJI_DICT[nextToken];
-          nextOptions.forEach(opt => {
+          [...nextOptions].reverse().forEach(opt => {
             const firstChar = opt[0];
             if (!"aiueo".includes(firstChar)) {
-              options.push(firstChar);
+              options.unshift(firstChar);
             }
           });
         }
