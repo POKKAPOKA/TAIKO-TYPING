@@ -127,9 +127,17 @@ function App() {
 
 
   // ランキング登録用のプレイヤー名（localStorageに保存して次回起動時も使う）
-  const [playerName, setPlayerName] = useState(() => localStorage.getItem('taiko_player_name') || '');
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [submitSuccessMessage, setSubmitSuccessMessage] = useState(null);
+  const [playerName, setPlayerName] = useState(() => {
+    try {
+      return localStorage.getItem('taiko_player_name') || '';
+    } catch {
+      return '';
+    }
+  });
+  const isSubmitting = useGameStore(state => state.isSubmittingScore);
+  const submitSuccessMessage = useGameStore(state => state.submitSuccessMessage);
+  const setIsSubmitting = useGameStore(state => state.setIsSubmittingScore);
+  const setSubmitSuccessMessage = useGameStore(state => state.setSubmitSuccessMessage);
 
   const handleNameChange = (e) => {
     setPlayerName(e.target.value);
@@ -140,7 +148,11 @@ function App() {
     setIsSubmitting(true);
     setSubmitSuccessMessage(null);
     const finalName = playerName.trim() || 'Guest';
-    localStorage.setItem('taiko_player_name', finalName);
+    try {
+      localStorage.setItem('taiko_player_name', finalName);
+    } catch {
+      // localStorage 保存不可時は無視
+    }
     try {
       const res = await submitScore({
         songId: scoreFileName.replace(/\.json$/i, ''),
@@ -150,12 +162,13 @@ function App() {
         maxKps,
         perfectCount: useGameStore.getState().perfectCount,
         goodCount: useGameStore.getState().goodCount,
-        missCount: useGameStore.getState().missCount
+        missCount: useGameStore.getState().missCount,
+        isAuto: false
       });
       if (res.updated) {
-        setSubmitSuccessMessage('ベストスコアを更新してランキングに登録しました');
+        setSubmitSuccessMessage(res.message || 'ベストスコアを更新してランキングに登録しました');
       } else {
-        setSubmitSuccessMessage('ベストスコア未更新のため登録されませんでした');
+        setSubmitSuccessMessage(res.message || 'ベストスコア未更新のため登録されませんでした');
       }
     } catch (err) {
       showToast('送信失敗: ' + (err.message || '不明なエラー'));
@@ -182,7 +195,7 @@ function App() {
   };
 
   const handleBackToMenu = () => {
-    gameEngine.stop();
+    gameEngine.stop(false);
     resetGameState();
     setSubmitSuccessMessage(null);
     if (isLocalPlay) {

@@ -87,7 +87,9 @@ const initialPlayState = {
   lastJudgment: null,
   wordQueue: [],
   statsData: null,
-  vocalState: 'sing_1'
+  vocalState: 'sing_1',
+  isSubmittingScore: false,
+  submitSuccessMessage: null
 };
 
 export const useGameStore = create((set) => ({
@@ -120,6 +122,10 @@ export const useGameStore = create((set) => ({
 
   // リザルト画面用の集計データ（プレイ終了時にGameEngineがセットする）
   statsData: null,
+
+  // ランキング送信状態（曲終了時の自動登録とリザルト画面の手動登録で共用）
+  isSubmittingScore: false,
+  submitSuccessMessage: null,
 
   // 読み込んだデータ
   loadedScore: null,
@@ -235,6 +241,8 @@ export const useGameStore = create((set) => ({
     return { showCustomModes };
   }),
   setStatsData: (statsData) => set({ statsData }),
+  setIsSubmittingScore: (isSubmittingScore) => set({ isSubmittingScore }),
+  setSubmitSuccessMessage: (submitSuccessMessage) => set({ submitSuccessMessage }),
 
   setLoadedScore: (score, fileName) => set({ loadedScore: score, scoreFileName: fileName || null }),
   setAudioUrl: (url, fileName) => set((state) => {

@@ -228,7 +228,7 @@ export class GameEngine {
     }
   }
 
-  stop() {
+  stop(finishToResult = true) {
     if (this.animationFrameId) {
       cancelAnimationFrame(this.animationFrameId);
       this.animationFrameId = null;
@@ -239,6 +239,11 @@ export class GameEngine {
     window.removeEventListener('keydown', this.handleKeyDown);
 
     const store = useGameStore.getState();
+
+    if (!finishToResult) {
+      this.updateCurrentTarget(store, null);
+      return;
+    }
 
     // 打ち残し判定（曲終了時点で未完了ノーツが残っていた場合は統計のみ記録し、余計な最終判定ポップアップは出さない）
     const isCurrentIncomplete = store.isMobileMode
@@ -577,7 +582,7 @@ export class GameEngine {
     const durationSec = (this.currentTarget.endTime - this.currentTarget.time) / 1000;
     if (durationSec > 0) {
       const strokeCount = this._getNoteKeystrokes(this.currentTarget, store.isMobileMode);
-      const kps = strokeCount / durationSec;
+      const kps = Math.min(30, strokeCount / durationSec);
       store.updateMaxKps(kps);
     }
 
