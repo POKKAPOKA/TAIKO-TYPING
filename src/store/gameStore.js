@@ -8,6 +8,7 @@ let vocalMissTimer = null;
 // 設定値をlocalStorageに永続化するためのキー
 const SETTINGS_STORAGE_KEY = 'taiko_settings';
 const CHARACTER_STORAGE_KEY = 'taiko_selected_character';
+const INPUT_MODE_STORAGE_KEY = 'taiko_input_mode';
 
 function loadSelectedCharacter() {
   try {
@@ -15,6 +16,27 @@ function loadSelectedCharacter() {
   } catch {
     return 'char_test';
   }
+}
+
+// 入力モード（PC / スマホ）の初期値を決定する
+// ユーザーがまだ手動でモードを選択していない場合は、端末（画面幅768px以下 または タッチ端末 pointer: coarse）を検知して自動設定する
+function loadInitialMobileMode() {
+  try {
+    const savedMode = localStorage.getItem(INPUT_MODE_STORAGE_KEY);
+    if (savedMode === 'mobile') return true;
+    if (savedMode === 'pc') return false;
+  } catch {
+    // localStorage アクセス不可時は端末判定へフォールバック
+  }
+
+  if (typeof window !== 'undefined') {
+    const isSmallScreen = window.innerWidth <= 768 ||
+      (typeof window.matchMedia === 'function' && window.matchMedia('(max-width: 768px)').matches);
+    const isCoarsePointer = typeof window.matchMedia === 'function' &&
+      window.matchMedia('(pointer: coarse)').matches;
+    return Boolean(isSmallScreen || isCoarsePointer);
+  }
+  return false;
 }
 
 // 保存された設定を読み込む（なければデフォルト値）
@@ -84,7 +106,7 @@ export const useGameStore = create((set) => ({
   status: 'idle', // 'idle' | 'playing' | 'result'
   isPaused: false,
   isFullscreen: false,
-  isMobileMode: false,
+  isMobileMode: loadInitialMobileMode(),
   showSettings: false,
   showGuide: false, // プレイ開始直後に数秒間だけ表示する操作ガイド
 
@@ -172,7 +194,14 @@ export const useGameStore = create((set) => ({
   setStatus: (status) => set({ status }),
   setIsPaused: (isPaused) => set({ isPaused }),
   setIsFullscreen: (isFullscreen) => set({ isFullscreen }),
-  setIsMobileMode: (isMobileMode) => set({ isMobileMode }),
+  setIsMobileMode: (isMobileMode) => {
+    try {
+      localStorage.setItem(INPUT_MODE_STORAGE_KEY, isMobileMode ? 'mobile' : 'pc');
+    } catch {
+      // 保存失敗時は無視
+    }
+    set({ isMobileMode });
+  },
   setShowSettings: (showSettings) => set({ showSettings }),
   setShowGuide: (showGuide) => set({ showGuide }),
   // 設定変更時はlocalStorageにも保存する

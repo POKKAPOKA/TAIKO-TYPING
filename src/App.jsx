@@ -43,7 +43,6 @@ const SAKURA_PETALS = [
 if (typeof window !== 'undefined') {
   const setupIdlePreload = () => {
     const preloadAssets = [
-      './assets/button_smartphone_mode.png',
       './assets/button_6_exit_fullscreen.png',
       './assets/btn_play_v4_perfect.png',
       './assets/btn_ranking.png',
@@ -80,7 +79,6 @@ function App() {
   const [appMode, setAppMode] = useState('menu'); // 'menu' | 'setup' | 'game' | 'editor' | 'songSelect'
   const [leaderboardData, setLeaderboardData] = useState(null); // { songTitle, promise } | null
   const [songsPromise, setSongsPromise] = useState(null);
-  const [isSwitchingMode, setIsSwitchingMode] = useState(false);
 
   const score = useGameStore(state => state.score);
   const combo = useGameStore(state => state.combo);
@@ -438,32 +436,60 @@ function App() {
             />
           </button>
 
-          {/* ボタン3: 「PCモード」 / 「スマホモード」切替トグル */}
-          <button
-            type="button"
-            onClick={() => {
-              playDecide();
-              const nextMode = !isMobileMode;
-              setIsMobileMode(nextMode);
-              setIsSwitchingMode(true);
-              showToast(nextMode ? "スマホモードに切り替えました" : "PCモードに切り替えました");
-            }}
-            onAnimationEnd={() => setIsSwitchingMode(false)}
-            className={`menu-button w-full ${isSwitchingMode ? 'mode-switching' : ''}`}
-            style={{ color: '#c084fc' }}
-            aria-label={isMobileMode ? "スマホモード（タップでPCモードに切替）" : "PCモード（タップでスマホモードに切替）"}
-            title={isMobileMode ? "スマホモード（タップでPCモードに切替）" : "PCモード（タップでスマホモードに切替）"}
+          {/* ボタン3: 「PCモード」 / 「スマホモード」画像ボタン横並び切替（非選択側を暗く表示） */}
+          <div
+            role="group"
+            aria-label="入力モード切替"
+            className="w-[calc(100vw-24px)] max-w-[420px] sm:max-w-[480px] grid grid-cols-2 gap-2 sm:gap-3 items-center justify-items-center"
           >
-            <img
-              key={isMobileMode ? 'mobile' : 'pc'}
-              src={isMobileMode ? "./assets/button_smartphone_mode.png" : "./assets/button_3_pcmode.png"}
-              alt={isMobileMode ? "スマホモード" : "PCモード"}
-              width="340"
-              height="90"
-              decoding="async"
-              fetchPriority="high"
-            />
-          </button>
+            <button
+              type="button"
+              aria-pressed={!isMobileMode}
+              onClick={() => {
+                if (isMobileMode) {
+                  playDecide();
+                  setIsMobileMode(false);
+                  showToast("PCモードに切り替えました");
+                }
+              }}
+              className={`menu-button w-full ${isMobileMode ? 'is-inactive' : ''}`}
+              style={{ color: '#c084fc' }}
+              title="PCモード（キーボード入力）"
+            >
+              <img
+                src="./assets/button_3_pcmode.png"
+                alt="PCモード"
+                width="340"
+                height="90"
+                decoding="async"
+                fetchPriority="high"
+              />
+            </button>
+
+            <button
+              type="button"
+              aria-pressed={isMobileMode}
+              onClick={() => {
+                if (!isMobileMode) {
+                  playDecide();
+                  setIsMobileMode(true);
+                  showToast("スマホモードに切り替えました");
+                }
+              }}
+              className={`menu-button w-full ${!isMobileMode ? 'is-inactive' : ''}`}
+              style={{ color: '#c084fc' }}
+              title="スマホモード（フリック入力）"
+            >
+              <img
+                src="./assets/button_smartphone_mode.png"
+                alt="スマホモード"
+                width="340"
+                height="90"
+                decoding="async"
+                fetchPriority="high"
+              />
+            </button>
+          </div>
 
           {/* ボタン4: 「キャラクター選択」 */}
           <button
