@@ -266,13 +266,17 @@ function App() {
         className={`w-screen bg-neutral-900 text-white flex flex-col items-center font-sans select-none overflow-hidden box-border relative ${
           appMode === 'game' && status !== 'result'
             ? isMobileMode
-              ? 'h-[100dvh] p-1.5 sm:p-2'
-              : 'h-screen p-2 sm:p-4 md:p-6'
+              ? 'h-[100dvh] p-1.5 sm:p-2 bg-cover bg-center bg-no-repeat'
+              : 'h-screen p-2 sm:p-4 md:p-6 bg-cover bg-center bg-no-repeat'
             : appMode === 'menu'
             ? 'h-screen p-0 bg-cover bg-center bg-no-repeat'
             : 'h-screen p-4 sm:p-8'
         }`}
-        style={appMode === 'menu' ? { backgroundImage: 'url(./assets/bg_main.jpg)' } : undefined}
+        style={
+          appMode === 'menu' || (appMode === 'game' && status !== 'result')
+            ? { backgroundImage: 'url(./assets/bg_main.jpg)' }
+            : undefined
+        }
       >
 
       {/* 右上ボタングループ（設定・全画面表示） */}
@@ -637,8 +641,7 @@ function App() {
           <div className="w-full h-full flex flex-col justify-between items-center min-h-0 max-w-lg relative overflow-hidden rounded-2xl border border-cyan-500/40 bg-[#08051a]">
             {/* 背景ライブステージ層（ミス発生時は .is-miss で暗転） */}
             <div
-              className={`game-stage-bg absolute inset-0 bg-cover bg-center bg-no-repeat pointer-events-none z-0 ${isMissState ? 'is-miss' : ''}`}
-              style={{ backgroundImage: 'url(./assets/bg_main.jpg)' }}
+              className={`game-stage-bg absolute inset-0 pointer-events-none z-0 ${isMissState ? 'is-miss' : ''}`}
             >
               <div className="absolute inset-0 bg-gradient-to-b from-[#090418]/75 via-[#12072b]/35 to-[#060312]/90" />
             </div>
@@ -762,8 +765,7 @@ function App() {
           >
             {/* 背景ライブステージ層（ミス発生時は .is-miss で暗転＆エフェクト停止） */}
             <div
-              className={`game-stage-bg absolute inset-0 bg-cover bg-center bg-no-repeat pointer-events-none z-0 ${isMissState ? 'is-miss' : ''}`}
-              style={{ backgroundImage: 'url(./assets/bg_main.jpg)' }}
+              className={`game-stage-bg absolute inset-0 pointer-events-none z-0 ${isMissState ? 'is-miss' : ''}`}
             >
               {/* ステージ照明グラデーションオーバーレイ */}
               <div className="absolute inset-0 bg-gradient-to-b from-[#09041a]/65 via-[#13072e]/25 to-[#060312]/90" />
