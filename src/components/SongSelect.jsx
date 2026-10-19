@@ -26,6 +26,18 @@ function SongListContent({ songsPromise, onBack, onStartGame }) {
   const showSettings = useGameStore(state => state.showSettings);
   const setShowSettings = useGameStore(state => state.setShowSettings);
   const isMobileMode = useGameStore(state => state.isMobileMode);
+  const isFullscreen = useGameStore(state => state.isFullscreen);
+  const showToast = useGameStore(state => state.showToast);
+
+  const toggleFullscreen = () => {
+    if (!document.fullscreenElement) {
+      document.documentElement.requestFullscreen().catch(() => {
+        showToast('全画面表示に失敗しました');
+      });
+    } else if (document.exitFullscreen) {
+      document.exitFullscreen();
+    }
+  };
 
   const handleRandomPlay = async () => {
     if (!songs || songs.length === 0) return;
@@ -56,7 +68,11 @@ function SongListContent({ songsPromise, onBack, onStartGame }) {
       const scoreFileName = song.scorePath.split('/').pop();
       const audioFileName = song.audioPath.split('/').pop();
 
-      setLoadedScore(data, scoreFileName);
+      setLoadedScore({
+        ...data,
+        title: song.title || data.title || '楽曲',
+        difficulty: song.difficulty ?? data.difficulty ?? 1
+      }, scoreFileName);
       setAudioUrl(song.audioPath, audioFileName);
 
       const store = useGameStore.getState();
@@ -178,6 +194,25 @@ function SongListContent({ songsPromise, onBack, onStartGame }) {
               />
             </button>
 
+            {/* 全画面表示 / 縮小表示アイコンボタン（ホーム画面と共通） */}
+            <button
+              type="button"
+              onClick={toggleFullscreen}
+              className="image-btn h-9 w-9 sm:h-12 sm:w-12 md:h-14 md:w-14"
+              title={isFullscreen ? "縮小表示（全画面解除）" : "全画面表示"}
+              aria-label={isFullscreen ? "縮小表示（全画面解除）" : "全画面表示"}
+            >
+              <img
+                key={isFullscreen ? 'minimize' : 'fullscreen'}
+                src={isFullscreen ? "./assets/button_6_exit_fullscreen.png" : "./assets/button_6_fullscreen.png"}
+                alt={isFullscreen ? "縮小表示" : "全画面表示"}
+                width="56"
+                height="54"
+                decoding="async"
+                className="h-full w-full"
+              />
+            </button>
+
             {/* メニューに戻るボタン */}
             <button
               type="button"
@@ -203,11 +238,11 @@ function SongListContent({ songsPromise, onBack, onStartGame }) {
           <div className="info-banner w-full max-w-4xl font-bold tracking-wide text-xs md:text-sm text-center px-4 py-3 mb-6 leading-relaxed">
             遊び方：ノーツが判定枠に重なる<span className="text-amber-300 font-black">【指を離した瞬間】</span>にタイミング判定されます！
             <br className="hidden sm:inline" />
-            濁点・小文字の<span className="text-pink-300 font-black">変換は不要</span>で、すべて<span className="text-cyan-300 font-black">元の清音</span>で入力できます（例：『だ』→『た』、『っ』→『つ』）。
+            濁点・小文字の<span className="text-pink-300 font-black">変換は不要</span>で、すべて<span className="text-cyan-300 font-black">元の清音</span>で入力できます（<span className="text-emerald-300 font-black">700,000点以上でクリア！</span>）。
           </div>
         ) : (
           <div className="info-banner w-full max-w-4xl font-bold tracking-widest text-xs md:text-sm text-center p-4 mb-6">
-            遊び方：ノーツが判定枠に重なったら、表示されている最初の文字をタイピングしてください
+            遊び方：ノーツが判定枠に重なったら、表示されている最初の文字をタイピングしてください（<span className="text-emerald-300 font-black">スコア 700,000点以上でクリア！</span>）
           </div>
         )}
 

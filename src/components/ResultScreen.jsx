@@ -29,14 +29,70 @@ export default function ResultScreen({
     .sort((a, b) => b[1] - a[1])
     .slice(0, 3);
 
+  const isCleared = score >= 700000;
+
   const getClearRank = () => {
-    if (missCount === 0 && goodCount === 0 && perfectCount > 0) return { rank: "ALL PERFECT!!", color: "text-yellow-400" };
-    if (missCount === 0 && perfectCount > 0) return { rank: "FULL COMBO!", color: "text-cyan-400" };
-    if (score >= 900000) return { rank: "RANK S", color: "text-yellow-400" };
-    if (score >= 800000) return { rank: "RANK A", color: "text-green-400" };
-    if (score >= 700000) return { rank: "RANK B", color: "text-blue-400" };
-    return { rank: "CLEAR", color: "text-white" };
+    if (!isCleared) {
+      return {
+        statusLabel: "FAILED",
+        rank: "FAILED",
+        color: "text-rose-500",
+        statusBadgeClass: "bg-rose-950 text-rose-300 border-2 border-rose-500/70",
+        rankBadge: "未クリア（700,000点以上でCLEAR）",
+        rankBadgeClass: "bg-neutral-800 text-rose-300 border-2 border-rose-500/50"
+      };
+    }
+    if (missCount === 0 && goodCount === 0 && perfectCount > 0) {
+      return {
+        statusLabel: "CLEAR",
+        rank: "ALL PERFECT!!",
+        color: "text-yellow-400",
+        statusBadgeClass: "bg-emerald-500 text-neutral-950 border-2 border-emerald-300",
+        rankBadge: "RANK S+",
+        rankBadgeClass: "bg-yellow-400 text-neutral-950 border-2 border-yellow-200"
+      };
+    }
+    if (missCount === 0 && perfectCount > 0) {
+      return {
+        statusLabel: "CLEAR",
+        rank: "FULL COMBO!",
+        color: "text-cyan-400",
+        statusBadgeClass: "bg-emerald-500 text-neutral-950 border-2 border-emerald-300",
+        rankBadge: "FULL COMBO",
+        rankBadgeClass: "bg-cyan-400 text-neutral-950 border-2 border-cyan-200"
+      };
+    }
+    if (score >= 900000) {
+      return {
+        statusLabel: "CLEAR",
+        rank: "CLEAR",
+        color: "text-emerald-400",
+        statusBadgeClass: "bg-emerald-500 text-neutral-950 border-2 border-emerald-300",
+        rankBadge: "RANK S",
+        rankBadgeClass: "bg-yellow-400 text-neutral-950 border-2 border-yellow-200"
+      };
+    }
+    if (score >= 800000) {
+      return {
+        statusLabel: "CLEAR",
+        rank: "CLEAR",
+        color: "text-emerald-400",
+        statusBadgeClass: "bg-emerald-500 text-neutral-950 border-2 border-emerald-300",
+        rankBadge: "RANK A",
+        rankBadgeClass: "bg-green-400 text-neutral-950 border-2 border-green-200"
+      };
+    }
+    return {
+      statusLabel: "CLEAR",
+      rank: "CLEAR",
+      color: "text-emerald-400",
+      statusBadgeClass: "bg-emerald-500 text-neutral-950 border-2 border-emerald-300",
+      rankBadge: "RANK B",
+      rankBadgeClass: "bg-cyan-400 text-neutral-950 border-2 border-cyan-200"
+    };
   };
+
+  const clearInfo = getClearRank();
 
   // 1280x720 に収まるように縮小率を算出する。
   // リサイズに追従させるため、useState + resizeイベントで再計算する（useEffectは使わない）
@@ -63,24 +119,29 @@ export default function ResultScreen({
 
   return (
     // 1280x720 の固定解像度で設計し、画面が小さい場合は scale で縮小して収める
-    <div ref={setResizeListenerRef} className="relative w-full flex justify-center overflow-hidden py-4" style={{ maxHeight: '100%' }}>
+    <div ref={setResizeListenerRef} className="relative w-full h-full flex items-center justify-center overflow-hidden py-4" style={{ maxHeight: '100%' }}>
       <div
-        className="bg-neutral-900 relative overflow-hidden shadow-none border-4 border-neutral-700 rounded-3xl flex-shrink-0"
+        className={`bg-neutral-900 relative overflow-hidden shadow-none border-4 rounded-3xl flex-shrink-0 ${
+          isCleared ? 'border-emerald-500/60' : 'border-rose-500/50'
+        }`}
         style={{
           width: 1280,
           height: 720,
           transform: `scale(${scale})`,
-          transformOrigin: 'top center'
+          transformOrigin: 'center center'
         }}
       >
       {/* 背景画像が将来入る想定のプレースホルダー */}
       <div className="absolute inset-0 opacity-20 bg-[repeating-linear-gradient(45deg,transparent,transparent_10px,rgba(255,255,255,0.1)_10px,rgba(255,255,255,0.1)_20px)] pointer-events-none" />
 
-      {/* クリアランク */}
-      <div className="absolute w-full text-center" style={{ top: "40px", left: "0px", transform: "none" }}>
-        <h2 className={`text-6xl font-black tracking-widest ${getClearRank().color}`}>
-          {getClearRank().rank}
+      {/* クリア判定（700,000点以上でCLEAR / 未満でFAILED）＆ クリアランク */}
+      <div className="absolute w-full flex items-center justify-center gap-4" style={{ top: "36px", left: "0px", transform: "none" }}>
+        <h2 className={`text-6xl font-black tracking-widest ${clearInfo.color}`}>
+          {clearInfo.rank}
         </h2>
+        <span className={`px-4 py-1.5 rounded-2xl font-black text-lg tracking-wider shadow-none ${clearInfo.rankBadgeClass}`}>
+          {clearInfo.rankBadge}
+        </span>
       </div>
 
       {/* スコア */}

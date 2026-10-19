@@ -6,6 +6,7 @@ import EditorView from './components/editor/EditorView';
 import ActiveWordDisplay from './components/ActiveWordDisplay';
 import Toast from './components/Toast';
 import { useSystemSE } from './hooks/useSystemSE';
+import { CHARACTERS, getCharacterById } from './config/characters';
 
 import SongSelect from './components/SongSelect';
 import Leaderboard from './components/Leaderboard';
@@ -16,8 +17,27 @@ import { fetchRankingsResult, submitScore } from './api/rankings';
 import { loadSongs } from './api/songList';
 import { Maximize, Minimize, Smartphone, Monitor, User, Settings, Pause, Play, RotateCcw, Home, HelpCircle, X } from 'lucide-react';
 
-// 操作ガイドの自動消去をストア購読で行うモジュール（importするだけで有効になる）
+// 操作ガイドの自動消去・ボーカリスト歌唱ループをストア購読で行うモジュール（importするだけで有効になる）
 import './engine/gameUiSync';
+
+// PCモード限定：背景ステージに舞い散る15個の軽量桜パーティクル設定
+const SAKURA_PETALS = [
+  { id: 0, left: '6%', delay: '0s', duration: '9s', size: 13 },
+  { id: 1, left: '13%', delay: '1.8s', duration: '11s', size: 15 },
+  { id: 2, left: '20%', delay: '3.2s', duration: '8.5s', size: 11 },
+  { id: 3, left: '27%', delay: '0.7s', duration: '10.2s', size: 14 },
+  { id: 4, left: '34%', delay: '4.5s', duration: '9.6s', size: 12 },
+  { id: 5, left: '41%', delay: '2.1s', duration: '11.4s', size: 15 },
+  { id: 6, left: '48%', delay: '5.3s', duration: '8.8s', size: 12 },
+  { id: 7, left: '55%', delay: '1.1s', duration: '10.5s', size: 14 },
+  { id: 8, left: '62%', delay: '3.9s', duration: '9.2s', size: 11 },
+  { id: 9, left: '69%', delay: '0.4s', duration: '11.8s', size: 15 },
+  { id: 10, left: '75%', delay: '2.7s', duration: '9.4s', size: 13 },
+  { id: 11, left: '81%', delay: '4.9s', duration: '10.1s', size: 12 },
+  { id: 12, left: '87%', delay: '1.5s', duration: '8.9s', size: 14 },
+  { id: 13, left: '92%', delay: '3.5s', duration: '10.8s', size: 12 },
+  { id: 14, left: '96%', delay: '5.8s', duration: '9.7s', size: 13 },
+];
 
 // 初回描画完了後に裏で軽量アセットをキャッシュさせる（初期画面表示を邪魔しないアイドル時プリロード・useEffect不使用）
 if (typeof window !== 'undefined') {
@@ -29,7 +49,10 @@ if (typeof window !== 'undefined') {
       './assets/btn_ranking.png',
       './assets/btn_random.png',
       './assets/btn_back_menu.png',
-      './assets/song_card_frame.png'
+      './assets/song_card_frame.png',
+      './assets/characters/char_test/sing_1.svg',
+      './assets/characters/char_test/sing_2.svg',
+      './assets/characters/char_test/miss.svg'
     ];
     const runPreload = () => {
       preloadAssets.forEach((src) => {
@@ -62,6 +85,9 @@ function App() {
   const score = useGameStore(state => state.score);
   const combo = useGameStore(state => state.combo);
   const maxCombo = useGameStore(state => state.maxCombo);
+  const perfectCount = useGameStore(state => state.perfectCount);
+  const goodCount = useGameStore(state => state.goodCount);
+  const missCount = useGameStore(state => state.missCount);
   const status = useGameStore(state => state.status);
   const loadedScore = useGameStore(state => state.loadedScore);
   const audioUrl = useGameStore(state => state.audioUrl);
@@ -69,7 +95,9 @@ function App() {
   const scoreFileName = useGameStore(state => state.scoreFileName);
   const audioFileName = useGameStore(state => state.audioFileName);
   const isLocalPlay = useGameStore(state => state.isLocalPlay);
-  const showGuide = useGameStore(state => state.showGuide);
+  const vocalState = useGameStore(state => state.vocalState);
+  const selectedCharacterId = useGameStore(state => state.selectedCharacterId);
+  const setSelectedCharacterId = useGameStore(state => state.setSelectedCharacterId);
 
   const setLoadedScore = useGameStore(state => state.setLoadedScore);
   const setAudioUrl = useGameStore(state => state.setAudioUrl);
@@ -148,10 +176,6 @@ function App() {
     gameEngine.start();
   };
 
-  const handleStop = () => {
-    gameEngine.stop();
-  };
-
   const handleRetry = () => {
     resetPlayState();
     setSubmitSuccessMessage(null);
@@ -199,6 +223,14 @@ function App() {
     }
   };
 
+  const activeCharacter = getCharacterById(selectedCharacterId);
+  const isMissState = vocalState === 'miss';
+  const currentSongTitle = loadedScore?.title || (scoreFileName ? scoreFileName.replace(/\.json$/i, '') : 'さくら');
+  const currentDifficulty = Math.min(10, Math.max(1, Number(loadedScore?.difficulty) || 2));
+  const clearGaugePercent = Math.min(100, Math.max(0, (score / 1010000) * 100));
+  const clearThresholdPercent = (700000 / 1010000) * 100;
+  const isClearReached = score >= 700000;
+
   if (appMode === 'editor') {
     return <EditorView onExit={() => setAppMode('menu')} />;
   }
@@ -221,11 +253,13 @@ function App() {
       <Toast />
       <div
         className={`w-screen bg-neutral-900 text-white flex flex-col items-center font-sans select-none overflow-hidden box-border relative ${
-          isMobileMode && appMode === 'game'
-            ? 'h-[100dvh] p-2'
+          appMode === 'game' && status !== 'result'
+            ? isMobileMode
+              ? 'h-[100dvh] p-1.5 sm:p-2'
+              : 'h-screen p-2 sm:p-4 md:p-6'
             : appMode === 'menu'
             ? 'h-screen p-0 bg-cover bg-center bg-no-repeat'
-            : 'h-screen p-8'
+            : 'h-screen p-4 sm:p-8'
         }`}
         style={appMode === 'menu' ? { backgroundImage: 'url(./assets/bg_main.jpg)' } : undefined}
       >
@@ -299,12 +333,62 @@ function App() {
       )}
 
       {appMode === "characterSelect" && (
-        <div className="z-10 flex flex-col items-center justify-center w-full h-full gap-6">
-          <h2 className="text-4xl font-black text-white tracking-widest">キャラクター選択</h2>
-          <div className="text-neutral-400">現在準備中です...</div>
+        <div className="z-10 flex flex-col items-center justify-center w-full max-w-3xl h-full gap-6 my-auto">
+          <h2
+            className="text-3xl sm:text-4xl font-black text-cyan-300 tracking-widest"
+            style={{ textShadow: '0 0 12px rgba(0, 245, 255, 0.6)' }}
+          >
+            キャラクター選択
+          </h2>
+          <div className="grid grid-cols-1 gap-4 w-full">
+            {CHARACTERS.map((char) => {
+              const isSelected = char.id === selectedCharacterId;
+              return (
+                <div
+                  key={char.id}
+                  onClick={() => {
+                    setSelectedCharacterId(char.id);
+                    showToast(`ボーカリスト「${char.name}」を選択しました`);
+                  }}
+                  className={`cyber-glass-panel p-5 flex flex-col sm:flex-row items-center gap-6 cursor-pointer transition-all ${
+                    isSelected ? 'border-cyan-300 ring-2 ring-cyan-400/60' : 'opacity-80 hover:opacity-100'
+                  }`}
+                >
+                  <div className="flex items-center gap-3">
+                    <div className="flex flex-col items-center bg-slate-950/70 p-2 rounded-xl border border-cyan-500/40">
+                      <img src={char.sprites.sing_1} alt="sing_1" className="w-20 h-24 object-contain" decoding="async" />
+                      <span className="text-[10px] font-bold text-cyan-300 mt-1">通常 (sing_1)</span>
+                    </div>
+                    <div className="flex flex-col items-center bg-slate-950/70 p-2 rounded-xl border border-pink-500/40">
+                      <img src={char.sprites.sing_2} alt="sing_2" className="w-20 h-24 object-contain" decoding="async" />
+                      <span className="text-[10px] font-bold text-pink-300 mt-1">熱唱 (sing_2)</span>
+                    </div>
+                    <div className="flex flex-col items-center bg-slate-950/70 p-2 rounded-xl border border-rose-500/40">
+                      <img src={char.sprites.miss} alt="miss" className="w-20 h-24 object-contain" decoding="async" />
+                      <span className="text-[10px] font-bold text-rose-300 mt-1">ミス (miss)</span>
+                    </div>
+                  </div>
+                  <div className="flex-1 flex flex-col items-center sm:items-start text-center sm:text-left gap-1.5">
+                    <div className="flex items-center gap-2">
+                      <span className="text-xl font-black text-white">{char.name}</span>
+                      {isSelected && (
+                        <span className="px-2.5 py-0.5 bg-cyan-400 text-slate-950 text-xs font-black rounded-full">
+                          選択中
+                        </span>
+                      )}
+                    </div>
+                    <p className="text-xs sm:text-sm text-purple-200/80 font-bold">{char.description}</p>
+                    <p className="text-[11px] text-cyan-300/75 font-bold mt-1">
+                      ※本番イラスト完成後は `public/assets/characters/` の画像を差し替えるだけで反映されます。
+                    </p>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
           <button
             onClick={() => setAppMode("menu")}
-            className="px-8 py-3 bg-neutral-700 hover:bg-neutral-600 text-white rounded-full font-black transition-colors flex items-center gap-2 mt-8"
+            className="px-8 py-3 bg-neutral-800 hover:bg-neutral-700 border border-cyan-400/60 text-white rounded-full font-black transition-colors flex items-center gap-2 mt-2 cursor-pointer"
           >
             <Home size={20} />
             戻る
@@ -312,7 +396,7 @@ function App() {
         </div>
       )}
 
-      <div className={`flex flex-col items-center w-full h-full ${appMode === 'menu' ? 'justify-center' : 'z-10'} ${isMobileMode && appMode === 'game' ? 'min-h-0' : ''}`}>
+      <div className={`flex flex-col items-center w-full h-full ${appMode === 'menu' || (appMode === 'game' && !isMobileMode) ? 'justify-center z-10' : 'z-10'} ${isMobileMode && appMode === 'game' ? 'min-h-0' : ''}`}>
         <h1 className={`text-4xl font-black mb-8 text-orange-400 tracking-wider flex-shrink-0 ${appMode === 'menu' || appMode === 'game' ? 'hidden' : ''}`}>太鼓タイピング</h1>
 
       {appMode === 'menu' && (
@@ -434,10 +518,14 @@ function App() {
               <div className="text-neutral-300 text-xs leading-relaxed border-t border-neutral-700 pt-2">
                 濁点・半濁点・小文字の<span className="text-pink-300 font-black">変換は不要</span>です。すべて<span className="text-cyan-300 font-black">元の文字（清音）</span>で入力してください（例：『だ』→『た』、『ぴ』→『ひ』、『っ』→『つ』）。
               </div>
+              <div className="text-emerald-300 text-xs font-black border-t border-neutral-700 pt-2">
+                🏆 クリア条件：スコア 700,000点（70万点）以上でクリア！（最大1,010,000点）
+              </div>
             </div>
           ) : (
-            <div className="text-neutral-400 font-bold tracking-widest text-sm text-center bg-neutral-900 p-4 rounded-xl border-2 border-neutral-700 w-full shadow-none">
-              遊び方：ノーツが判定枠に重なったら、表示されている最初の文字をタイピングしてください
+            <div className="text-neutral-400 font-bold tracking-widest text-sm text-center bg-neutral-900 p-4 rounded-xl border-2 border-neutral-700 w-full shadow-none flex flex-col gap-1">
+              <div>遊び方：ノーツが判定枠に重なったら、表示されている最初の文字をタイピングしてください</div>
+              <div className="text-emerald-400 text-xs font-black">🏆 スコア 700,000点（70万点）以上でクリア！（最大1,010,000点）</div>
             </div>
           )}
 
@@ -504,97 +592,301 @@ function App() {
 
       {appMode === 'game' && status !== 'result' && (
         isMobileMode ? (
-          /* スマホモード時の最適化レイアウト（100dvh・ドッキング構造） */
-          <div className="w-full h-full flex flex-col justify-between items-center min-h-0 max-w-lg">
-            {/* 1. 【上部】ヘッダー: コンパクトなスコア表示 + 一時停止ボタン */}
-            <div className="w-full flex justify-between items-center px-4 py-2 bg-neutral-800 rounded-2xl flex-shrink-0 border-2 border-neutral-700">
-              <div className="flex items-center gap-4">
-                <div className="flex items-baseline gap-1.5">
-                  <span className="text-neutral-400 text-xs font-bold font-mono">SCORE</span>
-                  <span className="font-dotgothic text-2xl font-black text-white">{score.toString().padStart(6, '0')}</span>
-                </div>
-                <div className="flex items-baseline gap-1.5">
-                  <span className="text-neutral-400 text-xs font-bold font-mono">KPS</span>
-                  <span className="font-dotgothic text-xl font-black text-cyan-400">{maxKps.toFixed(2)}</span>
-                </div>
-                {combo > 0 && (
-                  <div className="flex items-baseline gap-1 text-yellow-400">
-                    <span className="font-dotgothic text-xl font-black">{combo}</span>
-                    <span className="text-xs font-bold">COMBO</span>
-                  </div>
-                )}
-              </div>
-              <button
-                onClick={() => gameEngine.togglePause()}
-                className="px-4 py-2 bg-neutral-700 hover:bg-neutral-600 active:bg-neutral-500 text-white rounded-xl font-black text-sm flex items-center gap-1.5 transition-colors"
-                title="一時停止"
-              >
-                <Pause size={18} />
-                <span>ポーズ</span>
-              </button>
+          /* =========================================================
+             スマホモード：和風サイバーライブステージ＆下部レーン＋テンキードッキング
+             ========================================================= */
+          <div className="w-full h-full flex flex-col justify-between items-center min-h-0 max-w-lg relative overflow-hidden rounded-2xl border border-cyan-500/40 bg-[#08051a]">
+            {/* 背景ライブステージ層（ミス発生時は .is-miss で暗転） */}
+            <div
+              className={`game-stage-bg absolute inset-0 bg-cover bg-center bg-no-repeat pointer-events-none z-0 ${isMissState ? 'is-miss' : ''}`}
+              style={{ backgroundImage: 'url(./assets/bg_main.jpg)' }}
+            >
+              <div className="absolute inset-0 bg-gradient-to-b from-[#090418]/75 via-[#12072b]/35 to-[#060312]/90" />
             </div>
 
-            {/* 2. 【中間】ゲーム領域（ノーツレーン + アクティブワード）のアスペクト比固定＆最大化 */}
-            <div className="flex-1 w-full flex flex-col justify-center items-center my-1 min-h-0 overflow-hidden relative">
-              <div className="w-full flex-1 flex items-center justify-center min-h-0 overflow-hidden">
+            {/* 1. 【上部】コンパクトヘッダー（曲名・★・クリアゲージ・SCORE・ポーズを省スペース集約、MAX KPS＆判定内訳は非表示） */}
+            <div className="cyber-glass-panel w-full px-3 py-2 flex flex-col gap-1.5 flex-shrink-0 relative z-20">
+              <div className="w-full flex justify-between items-center gap-2">
+                <div className="flex flex-col min-w-0">
+                  <div
+                    className="text-sm sm:text-base font-black text-white truncate"
+                    style={{ textShadow: '0 0 8px rgba(0, 245, 255, 0.5)' }}
+                  >
+                    {currentSongTitle}
+                  </div>
+                  <div className="text-[11px] leading-none tracking-tight">
+                    {Array.from({ length: 10 }, (_, idx) => (
+                      <span key={idx} className={idx < currentDifficulty ? 'star-lit' : 'star-unlit'}>
+                        {idx < currentDifficulty ? '★' : '☆'}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+
+                <div className="flex items-baseline gap-1.5 flex-shrink-0">
+                  <span className="text-cyan-300 text-xs font-black tracking-wider" style={{ fontFamily: "'Orbitron', sans-serif" }}>
+                    SCORE
+                  </span>
+                  <span className="orbitron-digital text-2xl sm:text-3xl font-black tracking-wider">
+                    {Math.round(score).toString().padStart(6, '0')}
+                  </span>
+                </div>
+              </div>
+
+              <div className="w-full flex items-center justify-between gap-2.5">
+                <div className="flex-1 flex flex-col gap-0.5">
+                  <div className="flex justify-between items-center text-[9px] font-black tracking-widest text-cyan-200/80">
+                    <span>CLEAR GAUGE</span>
+                    <span className={isClearReached ? 'text-yellow-300' : 'text-purple-200/70'}>
+                      {isClearReached ? 'CLEAR!!' : 'CLEAR 700,000'}
+                    </span>
+                  </div>
+                  <div className="clear-gauge-track w-full h-2.5">
+                    <div
+                      className="clear-gauge-fill"
+                      style={{ width: `${clearGaugePercent}%` }}
+                    />
+                    {/* 700,000点 クリア境界ライン */}
+                    <div
+                      className="absolute -top-1 -bottom-1 w-[3px] bg-yellow-300 rounded-full z-10"
+                      style={{
+                        left: `${clearThresholdPercent}%`,
+                        boxShadow: '0 0 8px #fde047, 0 0 14px #facc15'
+                      }}
+                      title="クリアライン (700,000点)"
+                    />
+                  </div>
+                </div>
+
+                <button
+                  type="button"
+                  onClick={() => gameEngine.togglePause()}
+                  className="px-3 py-1 bg-slate-900/90 hover:bg-slate-800 border border-cyan-400/70 text-cyan-100 rounded-full font-black text-xs flex items-center gap-1 transition-colors flex-shrink-0 cursor-pointer"
+                  title="一時停止"
+                >
+                  <Pause size={13} />
+                  <span>ポーズ</span>
+                </button>
+              </div>
+            </div>
+
+            {/* 2. 【中央〜下部】ボーカリストステージ ＆ 下部サイバーノーツレーン ＋ ローマ字表示 */}
+            <div className="flex-1 w-full flex flex-col justify-between items-center min-h-0 relative z-10 px-1 pt-1">
+              {/* 中央ボーカリストキャラクター立ち絵（3表情をプリマウント切替で0ms即応） */}
+              <div className="flex-1 w-full flex items-center justify-center min-h-0 relative overflow-hidden">
+                <div className={`relative h-full max-h-[220px] aspect-[420/520] flex items-center justify-center ${isMissState ? 'vocalist-miss' : 'vocalist-sing'}`}>
+                  <img
+                    src={activeCharacter.sprites.sing_1}
+                    alt={`${activeCharacter.name} sing_1`}
+                    decoding="async"
+                    className={`absolute inset-0 w-full h-full object-contain transition-none ${vocalState === 'sing_1' ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}
+                  />
+                  <img
+                    src={activeCharacter.sprites.sing_2}
+                    alt={`${activeCharacter.name} sing_2`}
+                    decoding="async"
+                    className={`absolute inset-0 w-full h-full object-contain transition-none ${vocalState === 'sing_2' ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}
+                  />
+                  <img
+                    src={activeCharacter.sprites.miss}
+                    alt={`${activeCharacter.name} miss`}
+                    decoding="async"
+                    className={`absolute inset-0 w-full h-full object-contain transition-none ${vocalState === 'miss' ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}
+                  />
+                </div>
+              </div>
+
+              {/* 下部ノーツレーン（縦棒判定ライン＆上外側リアルタイム判定） */}
+              <div className="w-full flex-shrink-0">
                 <NotesArea />
               </div>
-              <div className="w-full py-1.5 flex flex-col items-center justify-center flex-shrink-0 gap-1">
-                {showGuide && (
-                  <div className="text-[11px] font-bold text-neutral-300 bg-neutral-800/90 border border-neutral-700 px-3 py-1 rounded-full text-center transition-opacity duration-1000 shadow-none">
-                    <span className="text-amber-300 font-black">【指を離した瞬間】</span>に判定！濁点・小文字は<span className="text-pink-300 font-black">変換不要</span>（清音で入力）
-                  </div>
-                )}
+
+              {/* タイピング文字表示（大きな白文字＋シアンネオンアンダーライン） */}
+              <div className="w-full py-1.5 flex items-center justify-center flex-shrink-0 min-h-[48px]">
                 <ActiveWordDisplay />
               </div>
             </div>
 
-            {/* 3. 【下部】ドッキングされたフリックキーボード */}
-            <FlickKeyboard />
+            {/* 3. 【最下部】ドッキングされたフリックキーボード */}
+            <div className="w-full relative z-20 flex-shrink-0">
+              <FlickKeyboard />
+            </div>
           </div>
         ) : (
-          /* PCモード時のプレイ画面 */
-          <div className="w-full max-w-4xl flex flex-col items-center">
-            <div className="absolute top-4 left-4 z-40">
-              <button
-                onClick={() => gameEngine.togglePause()}
-                className="p-3 bg-neutral-800 hover:bg-neutral-700 text-neutral-400 hover:text-white rounded-xl transition-colors"
-                title="一時停止 (Esc)"
-              >
-                <Pause size={24} />
-              </button>
+          /* =========================================================
+             PCモード：和風サイバーネオン・ライブステージ＆下部レーン型（候補A）
+             ========================================================= */
+          <div className="w-full max-w-6xl h-full max-h-[820px] relative flex flex-col justify-between p-4 sm:p-6 md:p-7 rounded-3xl border-2 border-cyan-400/70 overflow-hidden my-auto bg-[#070417]"
+            style={{
+              boxShadow: '0 0 28px rgba(0, 245, 255, 0.25), inset 0 0 32px rgba(217, 70, 239, 0.18)'
+            }}
+          >
+            {/* 背景ライブステージ層（ミス発生時は .is-miss で暗転＆エフェクト停止） */}
+            <div
+              className={`game-stage-bg absolute inset-0 bg-cover bg-center bg-no-repeat pointer-events-none z-0 ${isMissState ? 'is-miss' : ''}`}
+              style={{ backgroundImage: 'url(./assets/bg_main.jpg)' }}
+            >
+              {/* ステージ照明グラデーションオーバーレイ */}
+              <div className="absolute inset-0 bg-gradient-to-b from-[#09041a]/65 via-[#13072e]/25 to-[#060312]/90" />
+
+              {/* PCモード限定：ゆっくり揺れるネオンレーザー光 */}
+              <div className="stage-laser-beam laser-left-1" />
+              <div className="stage-laser-beam laser-left-2" />
+              <div className="stage-laser-beam laser-right-1" />
+              <div className="stage-laser-beam laser-right-2" />
+
+              {/* PCモード限定：舞い散る15枚の桜の花びらパーティクル */}
+              {SAKURA_PETALS.map((petal) => (
+                <div
+                  key={petal.id}
+                  className="sakura-petal"
+                  style={{
+                    left: petal.left,
+                    width: `${petal.size}px`,
+                    height: `${Math.round(petal.size * 0.72)}px`,
+                    animationDelay: petal.delay,
+                    animationDuration: petal.duration
+                  }}
+                />
+              ))}
             </div>
-            <div className="w-full bg-neutral-800 rounded-t-3xl p-6 flex justify-between items-center border-b-4 border-neutral-900">
-              <div className="flex gap-8 items-center">
-                <div className="text-xl">
-                  <span className="text-neutral-400 text-sm font-bold block">SCORE</span>
-                  <span className="font-dotgothic text-4xl font-bold text-white">{score.toString().padStart(6, '0')}</span>
+
+            {/* 1. 【上部】左上パネル（楽曲情報＆クリアゲージ） ＆ 右上パネル（SCORE / MAX KPS / ポーズ） */}
+            <div className="w-full flex flex-wrap justify-between items-start gap-3 relative z-20">
+              {/* 左上パネル：曲名・難易度（★）・横型クリアゲージ */}
+              <div className="cyber-glass-panel px-5 py-3.5 min-w-[260px] sm:min-w-[320px] flex flex-col gap-1.5">
+                <div
+                  className="text-xl sm:text-2xl md:text-3xl font-black text-white tracking-wider truncate"
+                  style={{ textShadow: '0 0 12px rgba(0, 245, 255, 0.65)' }}
+                >
+                  {currentSongTitle}
                 </div>
-                <div className="text-xl">
-                  <span className="text-neutral-400 text-sm font-bold block">MAX KPS</span>
-                  <span className="font-dotgothic text-4xl font-bold text-cyan-400">{maxKps.toFixed(2)}</span>
+                <div className="text-sm sm:text-base tracking-wider leading-none">
+                  {Array.from({ length: 10 }, (_, idx) => (
+                    <span key={idx} className={idx < currentDifficulty ? 'star-lit' : 'star-unlit'}>
+                      {idx < currentDifficulty ? '★' : '☆'}
+                    </span>
+                  ))}
+                </div>
+                <div className="mt-1 flex flex-col gap-1">
+                  <div className="clear-gauge-track w-full h-3.5">
+                    <div
+                      className="clear-gauge-fill"
+                      style={{ width: `${clearGaugePercent}%` }}
+                    />
+                    {/* 700,000点 クリアライン */}
+                    <div
+                      className="absolute -top-1 -bottom-1 w-[3px] bg-yellow-300 rounded-full z-10"
+                      style={{
+                        left: `${clearThresholdPercent}%`,
+                        boxShadow: '0 0 8px #fde047, 0 0 14px #facc15'
+                      }}
+                      title="クリアライン (700,000点)"
+                    />
+                  </div>
+                  <div className="flex justify-between items-center text-[11px] font-black tracking-widest">
+                    <span className="text-amber-200/90" style={{ fontFamily: "'Orbitron', sans-serif" }}>
+                      CLEAR GAUGE
+                    </span>
+                    <span className={isClearReached ? 'text-emerald-300' : 'text-cyan-200/75'}>
+                      {isClearReached ? 'CLEAR REACHED!!' : 'CLEAR LINE: 700,000'}
+                    </span>
+                  </div>
                 </div>
               </div>
 
-              <button
-                onClick={handleStop}
-                className="px-8 py-3 bg-red-500 hover:bg-red-400 text-neutral-900 rounded-full font-black transition-colors"
-              >
-                STOP
-              </button>
-            </div>
-
-            <div className="w-full bg-neutral-800 border-b-4 border-neutral-900 overflow-hidden h-64">
-              <NotesArea />
-            </div>
-
-            <div className="w-full bg-neutral-800 rounded-b-3xl p-8 flex flex-col items-center justify-center min-h-[160px] relative">
-              {showGuide && (
-                <div className="absolute top-4 text-neutral-500 font-bold tracking-widest text-sm transition-opacity duration-1000 opacity-50">
-                  遊び方：ノーツが判定枠に重なったら、表示されている最初の文字をタイピングしてください
+              {/* 右上パネル：OrbitronデジタルSCORE ＆ MAX KPS ＆ ポーズボタン */}
+              <div className="flex flex-col items-end gap-2">
+                <div className="cyber-glass-panel px-5 py-3 flex flex-col items-end gap-1">
+                  <div className="flex items-baseline gap-3">
+                    <span
+                      className="text-cyan-300 text-sm sm:text-base font-black tracking-widest"
+                      style={{ fontFamily: "'Orbitron', sans-serif", textShadow: '0 0 8px rgba(0, 245, 255, 0.5)' }}
+                    >
+                      SCORE
+                    </span>
+                    <span className="orbitron-digital text-3xl sm:text-4xl md:text-5xl font-black tracking-wider leading-none">
+                      {Math.round(score).toString().padStart(6, '0')}
+                    </span>
+                  </div>
+                  {/* MAX KPS（スマホ幅 768px 以下では .pc-only-hud により自動非表示） */}
+                  <div className="pc-only-hud flex items-baseline gap-3 border-t border-cyan-500/30 pt-1 w-full justify-end">
+                    <span
+                      className="text-amber-300 text-xs sm:text-sm font-black tracking-widest"
+                      style={{ fontFamily: "'Orbitron', sans-serif" }}
+                    >
+                      MAX KPS
+                    </span>
+                    <span className="orbitron-digital text-xl sm:text-2xl font-black tracking-wider leading-none">
+                      {maxKps.toFixed(2)}
+                    </span>
+                  </div>
                 </div>
-              )}
-              <ActiveWordDisplay />
+
+                <button
+                  type="button"
+                  onClick={() => gameEngine.togglePause()}
+                  className="px-5 py-2 bg-slate-950/85 hover:bg-slate-900 border-2 border-cyan-400/75 text-cyan-100 rounded-full font-black text-sm flex items-center gap-2 transition-colors cursor-pointer"
+                  style={{ boxShadow: '0 0 12px rgba(0, 245, 255, 0.35)' }}
+                  title="一時停止 (Esc)"
+                  aria-label="一時停止"
+                >
+                  <Pause size={16} />
+                  <span>ポーズ</span>
+                </button>
+              </div>
+            </div>
+
+            {/* 2. 【中央ステージ】ボーカリストキャラクター立ち絵（中央配置） ＆ 左下判定内訳カウンター */}
+            <div className="flex-1 w-full relative flex items-center justify-center min-h-0 z-10 my-1">
+              {/* 左下パネル：リアルタイム判定内訳記録（PC版 769px 以上のみ表示） */}
+              <div
+                className="pc-only-hud cyber-glass-panel absolute left-0 bottom-2 px-4 py-3 flex flex-col gap-1 min-w-[165px] z-20"
+                style={{ fontFamily: "'Orbitron', monospace", fontVariantNumeric: 'tabular-nums' }}
+              >
+                <div className="flex justify-between items-center text-xs font-black">
+                  <span className="text-yellow-300 tracking-wider">PERFECT:</span>
+                  <span className="text-white text-sm">{perfectCount}</span>
+                </div>
+                <div className="flex justify-between items-center text-xs font-black">
+                  <span className="text-cyan-300 tracking-wider">GOOD:</span>
+                  <span className="text-white text-sm">{goodCount}</span>
+                </div>
+                <div className="flex justify-between items-center text-xs font-black">
+                  <span className="text-rose-400 tracking-wider">MISS:</span>
+                  <span className="text-white text-sm">{missCount}</span>
+                </div>
+              </div>
+
+              {/* 中央ボーカリストキャラクター（sing_1 / sing_2 / miss 即時切替） */}
+              <div className={`relative h-full max-h-[340px] aspect-[420/520] flex items-center justify-center ${isMissState ? 'vocalist-miss' : 'vocalist-sing'}`}>
+                <img
+                  src={activeCharacter.sprites.sing_1}
+                  alt={`${activeCharacter.name} sing_1`}
+                  decoding="async"
+                  className={`absolute inset-0 w-full h-full object-contain transition-none ${vocalState === 'sing_1' ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}
+                />
+                <img
+                  src={activeCharacter.sprites.sing_2}
+                  alt={`${activeCharacter.name} sing_2`}
+                  decoding="async"
+                  className={`absolute inset-0 w-full h-full object-contain transition-none ${vocalState === 'sing_2' ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}
+                />
+                <img
+                  src={activeCharacter.sprites.miss}
+                  alt={`${activeCharacter.name} miss`}
+                  decoding="async"
+                  className={`absolute inset-0 w-full h-full object-contain transition-none ${vocalState === 'miss' ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}
+                />
+              </div>
+            </div>
+
+            {/* 3. 【下部】半透明サイバーガラスレーン（シアン縦棒判定ライン）＆ ローマ字表示 */}
+            <div className="w-full flex flex-col items-center gap-2 relative z-20 flex-shrink-0">
+              <NotesArea />
+              <div className="w-full py-1.5 flex items-center justify-center min-h-[68px]">
+                <ActiveWordDisplay />
+              </div>
             </div>
           </div>
         )
@@ -645,16 +937,6 @@ function App() {
             >
               <Home size={24} />
               曲選択画面に戻る
-            </button>
-            <button
-              onClick={() => {
-                gameEngine.togglePause();
-                handleStop();
-                handleBackToMenu();
-              }}
-              className="w-full py-4 bg-red-600 hover:bg-red-500 text-white rounded-full font-black text-xl transition-colors flex items-center justify-center gap-2"
-            >
-              演奏を中断 (STOP)
             </button>
             <button
               onClick={() => setShowSettings(true)}
@@ -774,6 +1056,26 @@ function App() {
                         </span>
                       </p>
                     </div>
+
+                    {/* ③ クリア条件（目標スコア） */}
+                    <div className="bg-neutral-900 p-5 rounded-2xl border-2 border-emerald-400/60 flex flex-col gap-2 shadow-none">
+                      <div className="flex items-center gap-2">
+                        <span className="bg-emerald-400 text-neutral-950 text-xs font-black px-2 py-0.5 rounded-md">
+                          クリア条件
+                        </span>
+                        <span className="text-emerald-300 font-black text-base">
+                          ③ 目標スコア
+                        </span>
+                      </div>
+                      <p className="text-sm sm:text-base font-bold text-white leading-relaxed">
+                        <span className="inline-block bg-emerald-500/25 text-emerald-200 border border-emerald-400/70 px-2 py-0.5 rounded-md font-black mr-1">
+                          スコア 700,000点（70万点）以上でクリア！
+                        </span>
+                        <span className="text-neutral-300 text-xs sm:text-sm font-black">
+                          （最大1,010,000点）
+                        </span>
+                      </p>
+                    </div>
                   </div>
                 </>
               ) : (
@@ -784,7 +1086,26 @@ function App() {
                   <div className="flex flex-col gap-4 text-neutral-300 leading-relaxed font-bold bg-neutral-900 p-6 rounded-2xl border-2 border-neutral-700 shadow-none">
                     <p>1. 画面右から流れてくるノーツが、左側の白い判定枠に重なるタイミングを見極めよう！</p>
                     <p>2. ノーツが判定枠に重なったら、表示されている最初の文字から正確にローマ字タイピング！</p>
-                    <p>3. 正確なタイミングで入力すると「PERFECT」！連続コンボを繋げて1,010,000点（All Perfect）を目指そう！</p>
+                    <p>3. 正確なタイミングで入力すると「PERFECT」！連続コンボを繋げてハイスコアを目指そう！</p>
+                  </div>
+                  {/* クリア条件（目標スコア） */}
+                  <div className="bg-neutral-900 p-5 rounded-2xl border-2 border-emerald-400/60 flex flex-col gap-2 shadow-none">
+                    <div className="flex items-center gap-2">
+                      <span className="bg-emerald-400 text-neutral-950 text-xs font-black px-2 py-0.5 rounded-md">
+                        クリア条件
+                      </span>
+                      <span className="text-emerald-300 font-black text-base">
+                        目標スコア
+                      </span>
+                    </div>
+                    <p className="text-base font-bold text-white leading-relaxed">
+                      <span className="inline-block bg-emerald-500/25 text-emerald-200 border border-emerald-400/70 px-2 py-0.5 rounded-md font-black mr-1">
+                        スコア 700,000点（70万点）以上でクリア！
+                      </span>
+                      <span className="text-neutral-300 text-sm font-black">
+                        （最大1,010,000点）
+                      </span>
+                    </p>
                   </div>
                 </>
               )}

@@ -1,0 +1,92 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 420 520" fill="none">
+  <defs>
+    <linearGradient id="kimonoGradMiss" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#27173a"/>
+      <stop offset="50%" stop-color="#171126"/>
+      <stop offset="100%" stop-color="#090d16"/>
+    </linearGradient>
+    <linearGradient id="hairGradMiss" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#1f1633"/>
+      <stop offset="65%" stop-color="#311b47"/>
+      <stop offset="100%" stop-color="#334155"/>
+    </linearGradient>
+    <radialGradient id="auraMiss" cx="50%" cy="45%" r="48%">
+      <stop offset="0%" stop-color="#f43f5e" stop-opacity="0.28"/>
+      <stop offset="60%" stop-color="#475569" stop-opacity="0.15"/>
+      <stop offset="100%" stop-color="#000000" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+
+  <!-- 背面ショックオーラ -->
+  <circle cx="210" cy="245" r="185" fill="url(#auraMiss)"/>
+
+  <!-- 焦りマーク＆冷や汗エフェクト -->
+  <path d="M96 95 L118 112 M92 115 L116 122" stroke="#38bdf8" stroke-width="4" stroke-linecap="round"/>
+  <path d="M318 92 C312 108 312 118 318 122 C324 118 324 108 318 92 Z" fill="#38bdf8"/>
+  <path d="M335 114 C330 128 330 136 335 140 C340 136 340 128 335 114 Z" fill="#38bdf8"/>
+
+  <!-- 振袖（少し下がる） -->
+  <path d="M135 252 L55 372 L105 432 L165 326 Z" fill="url(#kimonoGradMiss)" stroke="#64748b" stroke-width="3.5"/>
+  <path d="M285 252 L365 372 L315 432 L255 326 Z" fill="url(#kimonoGradMiss)" stroke="#64748b" stroke-width="3.5"/>
+
+  <!-- 着物ボディ -->
+  <path d="M145 236 L275 236 L305 495 L115 495 Z" fill="url(#kimonoGradMiss)" stroke="#64748b" stroke-width="3"/>
+  <path d="M168 236 L210 300 L252 236" stroke="#94a3b8" stroke-width="5" stroke-linecap="round"/>
+
+  <!-- 帯 -->
+  <rect x="148" y="315" width="124" height="46" rx="8" fill="#18122b" stroke="#fb7185" stroke-width="3"/>
+  <circle cx="210" cy="338" r="10" fill="#fb7185"/>
+
+  <!-- 首 -->
+  <rect x="194" y="196" width="32" height="42" rx="10" fill="#ffe4d6"/>
+
+  <!-- 後ろ髪・お団子 -->
+  <circle cx="132" cy="102" r="28" fill="url(#hairGradMiss)" stroke="#64748b" stroke-width="2"/>
+  <circle cx="288" cy="102" r="28" fill="url(#hairGradMiss)" stroke="#64748b" stroke-width="2"/>
+  <path d="M126 115 C112 180 120 225 142 240 L278 240 C300 225 308 180 294 115 Z" fill="url(#hairGradMiss)"/>
+
+  <!-- 顔輪郭 -->
+  <path d="M148 122 C148 79 272 79 272 122 C272 172 246 206 210 206 C174 206 148 172 148 122 Z" fill="#ffedd5" stroke="#cbd5e1" stroke-width="2"/>
+  <!-- 顔の上部の青ざめグラデ -->
+  <path d="M150 118 C150 82 270 82 270 118 L270 142 L150 142 Z" fill="#64748b" fill-opacity="0.22"/>
+
+  <!-- 前髪 -->
+  <path d="M144 129 C146 78 274 78 276 129 C262 102 248 126 236 106 C224 130 196 130 184 106 C172 126 158 102 144 129 Z" fill="url(#hairGradMiss)" stroke="#64748b" stroke-width="2"/>
+
+  <!-- 桜の髪飾り -->
+  <g transform="translate(268, 96)">
+    <circle cx="0" cy="-12" r="8" fill="#9f1239"/>
+    <circle cx="11" cy="-4" r="8" fill="#9f1239"/>
+    <circle cx="7" cy="9" r="8" fill="#9f1239"/>
+    <circle cx="-7" cy="9" r="8" fill="#9f1239"/>
+    <circle cx="-11" cy="-4" r="8" fill="#9f1239"/>
+    <circle cx="0" cy="0" r="5" fill="#ca8a04"/>
+  </g>
+
+  <!-- 目（見開いて焦る瞳：miss） -->
+  <circle cx="180" cy="148" r="15" fill="#ffffff" stroke="#1e1b4b" stroke-width="3"/>
+  <circle cx="180" cy="148" r="5.5" fill="#1e1b4b"/>
+  <circle cx="178" cy="146" r="2" fill="#ffffff"/>
+
+  <circle cx="240" cy="148" r="15" fill="#ffffff" stroke="#1e1b4b" stroke-width="3"/>
+  <circle cx="240" cy="148" r="5.5" fill="#1e1b4b"/>
+  <circle cx="238" cy="146" r="2" fill="#ffffff"/>
+
+  <!-- 困り眉（ハの字） -->
+  <path d="M164 130 Q180 120 194 124" stroke="#1e1b4b" stroke-width="3.5" stroke-linecap="round" fill="none"/>
+  <path d="M226 124 Q240 120 256 130" stroke="#1e1b4b" stroke-width="3.5" stroke-linecap="round" fill="none"/>
+
+  <!-- 頬の冷や汗 -->
+  <path d="M261 148 C258 156 258 162 261 164 C264 162 264 156 261 148 Z" fill="#38bdf8"/>
+
+  <!-- 口（つっかえて波打つ焦り口：miss） -->
+  <path d="M192 178 Q201 170 210 178 Q219 186 228 178" stroke="#be123c" stroke-width="4" stroke-linecap="round" fill="none"/>
+
+  <!-- 両手（あたふたポーズ） -->
+  <circle cx="312" cy="252" r="13" fill="#ffedd5" stroke="#64748b" stroke-width="2"/>
+  <g transform="translate(112, 196) rotate(-40)">
+    <rect x="0" y="12" width="58" height="14" rx="7" fill="#1e293b" stroke="#64748b" stroke-width="2"/>
+    <circle cx="64" cy="19" r="13" fill="#334155" stroke="#fb7185" stroke-width="2.5"/>
+    <circle cx="28" cy="20" r="12" fill="#ffedd5"/>
+  </g>
+</svg>

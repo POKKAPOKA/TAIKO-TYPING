@@ -1,0 +1,95 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 420 520" fill="none">
+  <defs>
+    <linearGradient id="kimonoGrad2" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#4c1d95"/>
+      <stop offset="50%" stop-color="#1e1042"/>
+      <stop offset="100%" stop-color="#0f172a"/>
+    </linearGradient>
+    <linearGradient id="neonTrim2" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0%" stop-color="#00f5ff"/>
+      <stop offset="50%" stop-color="#f472b6"/>
+      <stop offset="100%" stop-color="#00f5ff"/>
+    </linearGradient>
+    <linearGradient id="hairGrad2" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#311b52"/>
+      <stop offset="65%" stop-color="#581c87"/>
+      <stop offset="100%" stop-color="#22d3ee"/>
+    </linearGradient>
+    <radialGradient id="aura2" cx="50%" cy="45%" r="50%">
+      <stop offset="0%" stop-color="#f472b6" stop-opacity="0.4"/>
+      <stop offset="55%" stop-color="#00f5ff" stop-opacity="0.22"/>
+      <stop offset="100%" stop-color="#000000" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+
+  <!-- 背面サイバーオーラ（歌唱時強調） -->
+  <circle cx="210" cy="236" r="200" fill="url(#aura2)"/>
+
+  <!-- 音符エフェクト -->
+  <text x="82" y="120" fill="#00f5ff" font-size="34" font-weight="900">♪</text>
+  <text x="315" y="108" fill="#f472b6" font-size="36" font-weight="900">♫</text>
+
+  <!-- 振袖（左右の袖・少し広がる） -->
+  <path d="M135 242 L35 348 L88 418 L165 318 Z" fill="url(#kimonoGrad2)" stroke="url(#neonTrim2)" stroke-width="4"/>
+  <path d="M285 242 L385 338 L332 408 L255 318 Z" fill="url(#kimonoGrad2)" stroke="url(#neonTrim2)" stroke-width="4"/>
+
+  <!-- 着物ボディ＆スカート -->
+  <path d="M145 228 L275 228 L305 495 L115 495 Z" fill="url(#kimonoGrad2)" stroke="#00f5ff" stroke-width="3.5"/>
+  <path d="M168 228 L210 293 L252 228" stroke="url(#neonTrim2)" stroke-width="6" stroke-linecap="round"/>
+
+  <!-- 帯 -->
+  <rect x="148" y="308" width="124" height="46" rx="8" fill="#1e0b36" stroke="#00f5ff" stroke-width="3.5"/>
+  <line x1="150" y1="331" x2="270" y2="331" stroke="#f472b6" stroke-width="3"/>
+  <circle cx="210" cy="331" r="11" fill="#00f5ff" stroke="#ffffff" stroke-width="2.5"/>
+
+  <!-- 首 -->
+  <rect x="194" y="190" width="32" height="42" rx="10" fill="#ffe4d6"/>
+  <rect x="193" y="204" width="34" height="8" rx="4" fill="#1e1b4b" stroke="#00f5ff" stroke-width="1.5"/>
+
+  <!-- 後ろ髪・お団子 -->
+  <circle cx="132" cy="94" r="28" fill="url(#hairGrad2)" stroke="#00f5ff" stroke-width="2.5"/>
+  <circle cx="288" cy="94" r="28" fill="url(#hairGrad2)" stroke="#f472b6" stroke-width="2.5"/>
+  <path d="M126 108 C112 173 120 218 142 233 L278 233 C300 218 308 173 294 108 Z" fill="url(#hairGrad2)"/>
+
+  <!-- 顔輪郭 -->
+  <path d="M148 116 C148 73 272 73 272 116 C272 166 246 200 210 200 C174 200 148 166 148 116 Z" fill="#ffedd5" stroke="#f9a8d4" stroke-width="2"/>
+
+  <!-- 前髪 -->
+  <path d="M144 123 C146 72 274 72 276 123 C262 96 248 120 236 100 C224 124 196 124 184 100 C172 120 158 96 144 123 Z" fill="url(#hairGrad2)" stroke="#00f5ff" stroke-width="2"/>
+
+  <!-- 桜の髪飾り -->
+  <g transform="translate(268, 90)">
+    <circle cx="0" cy="-12" r="8" fill="#f472b6"/>
+    <circle cx="11" cy="-4" r="8" fill="#f472b6"/>
+    <circle cx="7" cy="9" r="8" fill="#f472b6"/>
+    <circle cx="-7" cy="9" r="8" fill="#f472b6"/>
+    <circle cx="-11" cy="-4" r="8" fill="#f472b6"/>
+    <circle cx="0" cy="0" r="5" fill="#fde047"/>
+  </g>
+
+  <!-- 目（満面のスマイルアーチ＋ウインク風熱唱：sing_2） -->
+  <path d="M166 146 Q180 130 194 146" stroke="#1e1b4b" stroke-width="4.5" stroke-linecap="round" fill="none"/>
+  <path d="M226 146 Q240 130 254 146" stroke="#1e1b4b" stroke-width="4.5" stroke-linecap="round" fill="none"/>
+
+  <!-- 眉 -->
+  <path d="M165 121 Q180 113 193 121" stroke="#311b52" stroke-width="3" stroke-linecap="round"/>
+  <path d="M227 121 Q240 113 255 121" stroke="#311b52" stroke-width="3" stroke-linecap="round"/>
+
+  <!-- チーク -->
+  <ellipse cx="162" cy="158" rx="10" ry="5.5" fill="#fb7185" fill-opacity="0.7"/>
+  <ellipse cx="258" cy="158" rx="10" ry="5.5" fill="#fb7185" fill-opacity="0.7"/>
+
+  <!-- 口（大きく開けて熱唱：sing_2） -->
+  <path d="M193 164 L227 164 C227 186 193 186 193 164 Z" fill="#be123c" stroke="#881337" stroke-width="2.5"/>
+  <path d="M199 175 Q210 169 221 175 C218 182 202 182 199 175 Z" fill="#fb7185"/>
+
+  <!-- 左手（高く掲げるライブポーズ） -->
+  <circle cx="326" cy="215" r="14" fill="#ffedd5" stroke="#f472b6" stroke-width="2.5"/>
+
+  <!-- 右手＆サイバーマイク -->
+  <g transform="translate(122, 172) rotate(-20)">
+    <rect x="0" y="12" width="58" height="14" rx="7" fill="#1e293b" stroke="#00f5ff" stroke-width="2.5"/>
+    <circle cx="64" cy="19" r="13" fill="#334155" stroke="#00f5ff" stroke-width="3"/>
+    <circle cx="28" cy="20" r="12" fill="#ffedd5"/>
+  </g>
+</svg>

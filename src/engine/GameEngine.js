@@ -49,6 +49,7 @@ export class GameEngine {
     this.mobileTargetKana = "";
     this.mobileTypedIndex = 0;
     this.firstHitMiss = false;
+    this.currentTargetJudged = false;
     this.isFallbackMode = false;
     this.audioStarted = false;
     this.leadInTime = 0;
@@ -63,6 +64,7 @@ export class GameEngine {
   updateCurrentTarget(store, newTarget) {
     this.currentTarget = newTarget;
     this.firstHitMiss = false;
+    this.currentTargetJudged = false;
     if (this.currentTarget) {
       const rawReading = this.currentTarget.reading || this.currentTarget.word || "";
       const reading = store.isMobileMode ? toBaseKana(rawReading) : rawReading;
@@ -150,7 +152,10 @@ export class GameEngine {
     store.resetPlayState();
     store.setStatus('playing');
 
-    this.queue = [...loadedScore.notes].sort((a, b) => a.time - b.time).map(note => ({ ...note }));
+    this.queue = [...loadedScore.notes]
+      .filter(note => note && String(note.word || note.reading || '').trim().length > 0)
+      .sort((a, b) => a.time - b.time)
+      .map(note => ({ ...note }));
 
     // スコア配点: 全ノーツの基準打鍵数の合計で 1,010,000 点を按分し、
     // 全 PERFECT でちょうど理論値 1,010,000 点になるようにする
@@ -235,7 +240,7 @@ export class GameEngine {
 
     const store = useGameStore.getState();
 
-    // 打ち残し判定
+    // 打ち残し判定（曲終了時点で未完了ノーツが残っていた場合は統計のみ記録し、余計な最終判定ポップアップは出さない）
     const isCurrentIncomplete = store.isMobileMode
       ? Boolean(this.mobileTargetKana && this.mobileTypedIndex < this.mobileTargetKana.length)
       : Boolean(this.romajiParser && !this.romajiParser.isComplete());
@@ -243,7 +248,9 @@ export class GameEngine {
     if (this.currentTarget && isCurrentIncomplete) {
       store.addDroppedCount();
       store.setCombo(0);
-      store.setLastJudgment('MISS');
+      if (!this.currentTargetJudged) {
+        store.addMissCount();
+      }
       this.stats.mistakeLog.push({ time: this.currentTime / 1000, note: this.currentTarget.word, type: "dropped" });
     }
 
@@ -317,14 +324,36 @@ export class GameEngine {
     this.animationFrameId = requestAnimationFrame(this.update);
   }
 
+  // 現在ターゲットの制限時刻を算出する
+  // ・1打目未入力(!this.currentTargetJudged)の場合：
+  //   ノーツが判定ラインを通過して MISS 判定幅（+150ms）を過ぎた瞬間に即 MISS 確定とする。
+  //   （次のノーツが判定ライン手前に来たタイミングで遅れて MISS が出たり、最後のノーツ通過後に謎の遅れ判定が出るのを防ぐ）
+  // ・1打目入力済み(this.currentTargetJudged)の場合：
+  //   残りの文字を打ち切る猶予を endTime または次ノーツの判定開始枠まで持たせる。
+  _getTimeLimit(store) {
+    if (!this.currentTarget) return Infinity;
+
+    if (!this.currentTargetJudged) {
+      return this.currentTarget.time + JUDGE_WINDOW.MISS;
+    }
+
+    const nextWordTime = this.queue.length > 0 ? this.queue[0].time : Infinity;
+    const maxTypingEnd = Math.min(
+      this.currentTarget.endTime,
+      this.currentTarget.time + Math.max(500, this._getNoteKeystrokes(this.currentTarget, store.isMobileMode) * 300)
+    );
+    return Math.max(
+      this.currentTarget.time + JUDGE_WINDOW.MISS,
+      Math.min(maxTypingEnd, nextWordTime - JUDGE_WINDOW.MISS)
+    );
+  }
+
   checkForceTransition() {
     if (!this.currentTarget) return;
-    const offsetMs = useGameStore.getState().offsetMs;
-    const nextWordTime = this.queue.length > 0 ? this.queue[0].time : Infinity;
+    const store = useGameStore.getState();
+    const timeLimit = this._getTimeLimit(store);
 
-    const timeLimit = Math.min(this.currentTarget.endTime + JUDGE_WINDOW.MISS, nextWordTime - JUDGE_WINDOW.MISS);
-
-    if (this.currentTime - offsetMs >= timeLimit) {
+    if (this.currentTime - store.offsetMs >= timeLimit) {
       this.forceMissAndTransition();
     }
   }
@@ -332,11 +361,18 @@ export class GameEngine {
   forceMissAndTransition() {
     const store = useGameStore.getState();
 
-    store.setLastJudgment('MISS');
-    store.setCombo(0);
-    store.addDroppedCount();
-    this.stats.mistakeLog.push({ time: this.currentTime / 1000, note: this.currentTarget.word, type: "dropped" });
-    playMiss();
+    if (!this.currentTargetJudged) {
+      // 1打目未入力のまま判定ライン（+150ms）を通過した場合：ここで MISS 判定を1回だけ発生させる
+      this.applyJudgment('MISS');
+      store.addDroppedCount();
+      this.stats.mistakeLog.push({ time: this.currentTime / 1000, note: this.currentTarget.word, type: "dropped" });
+    } else {
+      // 1打目は判定ライン上で既に判定済みだが、2文字目以降を時間内に打ち切れなかった場合：
+      // 判定ラインから離れた場所で2回目の遅れ MISS ポップアップが出ないよう、コンボリセットと打ち残し記録のみ行う
+      store.setCombo(0);
+      store.addDroppedCount();
+      this.stats.mistakeLog.push({ time: this.currentTime / 1000, note: this.currentTarget.word, type: "dropped" });
+    }
 
     this.updateCurrentTarget(store, this.queue.shift() || null);
     store.setWordQueue([...this.queue]);
@@ -350,8 +386,7 @@ export class GameEngine {
     if (!this.mobileTargetKana) return;
 
     const currentTimeMs = this.currentTime - store.offsetMs;
-    const nextWordTime = this.queue.length > 0 ? this.queue[0].time : Infinity;
-    const timeLimit = Math.min(this.currentTarget.endTime + JUDGE_WINDOW.MISS, nextWordTime - JUDGE_WINDOW.MISS);
+    const timeLimit = this._getTimeLimit(store);
 
     if (currentTimeMs >= timeLimit) {
       return;
@@ -371,6 +406,7 @@ export class GameEngine {
 
       if (normalizedInput !== expectedChar) {
         store.addTypoCount();
+        store.triggerVocalMiss();
         this.stats.typosByChar[expectedChar] = (this.stats.typosByChar[expectedChar] || 0) + 1;
         this.stats.mistakeLog.push({ time: currentTimeMs / 1000, note: this.currentTarget.word, type: "typo", char: expectedChar });
         return;
@@ -388,6 +424,7 @@ export class GameEngine {
     } else {
       if (normalizedInput !== expectedChar) {
         store.addTypoCount();
+        store.triggerVocalMiss();
         this.stats.typosByChar[expectedChar] = (this.stats.typosByChar[expectedChar] || 0) + 1;
         this.stats.mistakeLog.push({ time: currentTimeMs / 1000, note: this.currentTarget.word, type: "typo", char: expectedChar });
         return;
@@ -420,8 +457,7 @@ export class GameEngine {
 
     const store = useGameStore.getState();
     const currentTimeMs = this.currentTime - store.offsetMs;
-    const nextWordTime = this.queue.length > 0 ? this.queue[0].time : Infinity;
-    const timeLimit = Math.min(this.currentTarget.endTime + JUDGE_WINDOW.MISS, nextWordTime - JUDGE_WINDOW.MISS);
+    const timeLimit = this._getTimeLimit(store);
 
     if (currentTimeMs >= timeLimit) {
       return;
@@ -444,7 +480,8 @@ export class GameEngine {
         const expectedChar = store.isMobileMode
           ? (this.mobileTargetKana[this.mobileTypedIndex] || "?")
           : (this.romajiParser.getDisplayState().next[0] || "?");
-        useGameStore.getState().addTypoCount();
+        store.addTypoCount();
+        store.triggerVocalMiss();
         this.stats.typosByChar[expectedChar] = (this.stats.typosByChar[expectedChar] || 0) + 1;
         this.stats.mistakeLog.push({ time: currentTimeMs / 1000, note: this.currentTarget.word, type: "typo", char: expectedChar });
         return;
@@ -465,7 +502,8 @@ export class GameEngine {
         const expectedChar = store.isMobileMode
           ? (this.mobileTargetKana[this.mobileTypedIndex] || "?")
           : (this.romajiParser.getDisplayState().next[0] || "?");
-        useGameStore.getState().addTypoCount();
+        store.addTypoCount();
+        store.triggerVocalMiss();
         this.stats.typosByChar[expectedChar] = (this.stats.typosByChar[expectedChar] || 0) + 1;
         this.stats.mistakeLog.push({ time: currentTimeMs / 1000, note: this.currentTarget.word, type: "typo", char: expectedChar });
         return;
@@ -499,6 +537,7 @@ export class GameEngine {
 
   applyJudgment(judgment) {
     const store = useGameStore.getState();
+    this.currentTargetJudged = true;
     const noteChars = this._getNoteKeystrokes(this.currentTarget, store.isMobileMode);
 
     this.accumulatedChars += noteChars;
@@ -510,16 +549,19 @@ export class GameEngine {
       store.setLastJudgment('PERFECT');
       store.addScore(maxPossibleDiff);
       store.addPerfectCount();
+      store.triggerVocalSing();
       playPerfect();
     } else if (judgment === 'GOOD') {
       store.setLastJudgment('GOOD');
       store.addScore(Math.floor(maxPossibleDiff * 0.5));
       store.addGoodCount();
+      store.triggerVocalSing();
       playGood();
     } else if (judgment === 'MISS') {
       store.setLastJudgment('MISS');
       store.setCombo(0);
       store.addMissCount();
+      store.triggerVocalMiss();
       playMiss();
     }
   }
@@ -529,6 +571,7 @@ export class GameEngine {
     store.addCompletedCount();
     if (!this.firstHitMiss) {
       store.setCombo(store.combo + 1);
+      store.triggerVocalSing();
     }
 
     const durationSec = (this.currentTarget.endTime - this.currentTarget.time) / 1000;

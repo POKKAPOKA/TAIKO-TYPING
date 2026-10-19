@@ -2,9 +2,20 @@ import { create } from 'zustand';
 
 // トースト自動消去用タイマー（UI側のuseEffectを使わずストア側で管理する）
 let toastTimer = null;
+// ボーカリストのミス表情維持用タイマー（1.2秒間維持）
+let vocalMissTimer = null;
 
 // 設定値をlocalStorageに永続化するためのキー
 const SETTINGS_STORAGE_KEY = 'taiko_settings';
+const CHARACTER_STORAGE_KEY = 'taiko_selected_character';
+
+function loadSelectedCharacter() {
+  try {
+    return localStorage.getItem(CHARACTER_STORAGE_KEY) || 'char_test';
+  } catch {
+    return 'char_test';
+  }
+}
 
 // 保存された設定を読み込む（なければデフォルト値）
 function loadSettings() {
@@ -40,6 +51,7 @@ const initialPlayState = {
   maxCombo: 0,
   missCount: 0,
   perfectCount: 0,
+  greatCount: 0,
   goodCount: 0,
   completedCount: 0,
   droppedCount: 0,
@@ -52,7 +64,8 @@ const initialPlayState = {
   typedIndex: 0,
   lastJudgment: null,
   wordQueue: [],
-  statsData: null
+  statsData: null,
+  vocalState: 'sing_1'
 };
 
 export const useGameStore = create((set) => ({
@@ -61,6 +74,7 @@ export const useGameStore = create((set) => ({
   maxCombo: 0,
   missCount: 0,
   perfectCount: 0,
+  greatCount: 0,
   goodCount: 0,
   completedCount: 0,
   droppedCount: 0,
@@ -73,6 +87,10 @@ export const useGameStore = create((set) => ({
   isMobileMode: false,
   showSettings: false,
   showGuide: false, // プレイ開始直後に数秒間だけ表示する操作ガイド
+
+  // ボーカリスト演出用ステート ('sing_1' | 'sing_2' | 'miss')
+  selectedCharacterId: loadSelectedCharacter(),
+  vocalState: 'sing_1',
 
   // 設定（設定画面で変更。プレイ中に変えた場合はリトライで反映）
   // localStorage に永続化され、リロード後も維持される
@@ -112,7 +130,37 @@ export const useGameStore = create((set) => ({
 
   addMissCount: () => set((state) => ({ missCount: state.missCount + 1 })),
   addPerfectCount: () => set((state) => ({ perfectCount: state.perfectCount + 1 })),
+  addGreatCount: () => set((state) => ({ greatCount: state.greatCount + 1 })),
   addGoodCount: () => set((state) => ({ goodCount: state.goodCount + 1 })),
+
+  setSelectedCharacterId: (selectedCharacterId) => {
+    try {
+      localStorage.setItem(CHARACTER_STORAGE_KEY, selectedCharacterId);
+    } catch {
+      // ignore
+    }
+    set({ selectedCharacterId });
+  },
+  setVocalState: (vocalState) => set({ vocalState }),
+  triggerVocalSing: () => {
+    if (vocalMissTimer) {
+      clearTimeout(vocalMissTimer);
+      vocalMissTimer = null;
+    }
+    set((state) => ({
+      vocalState: state.vocalState === 'sing_1' ? 'sing_2' : 'sing_1'
+    }));
+  },
+  triggerVocalMiss: () => {
+    if (vocalMissTimer) {
+      clearTimeout(vocalMissTimer);
+    }
+    set({ vocalState: 'miss' });
+    vocalMissTimer = setTimeout(() => {
+      vocalMissTimer = null;
+      set((state) => (state.vocalState === 'miss' ? { vocalState: 'sing_1' } : {}));
+    }, 1200);
+  },
 
   addCompletedCount: () => set((state) => ({ completedCount: state.completedCount + 1 })),
   addDroppedCount: () => set((state) => ({ droppedCount: state.droppedCount + 1 })),
@@ -195,12 +243,24 @@ export const useGameStore = create((set) => ({
 
   // プレイ結果系の状態だけを初期化する（譜面・音源・maxScoreは保持。リトライ時に使用）
   // ポーズ・設定表示もここで解除しないと、リトライ直後にポーズ画面が残ってしまう
-  resetPlayState: () => set({ ...initialPlayState, isPaused: false, showSettings: false }),
+  resetPlayState: () => {
+    if (vocalMissTimer) {
+      clearTimeout(vocalMissTimer);
+      vocalMissTimer = null;
+    }
+    set({ ...initialPlayState, isPaused: false, showSettings: false });
+  },
 
   // プレイ結果系に加えてmaxScoreも初期化する（メニューへ戻る際に使用）
   // ※譜面・音源はあえて保持する。メニューから再びセットアップ画面へ進んだとき、
   //   再読み込みなしで同じデータを使えるようにするため
-  resetGameState: () => set({ ...initialPlayState, maxScore: 0, isPaused: false, showSettings: false })
+  resetGameState: () => {
+    if (vocalMissTimer) {
+      clearTimeout(vocalMissTimer);
+      vocalMissTimer = null;
+    }
+    set({ ...initialPlayState, maxScore: 0, isPaused: false, showSettings: false });
+  }
 }));
 
 
