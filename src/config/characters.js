@@ -1,12 +1,13 @@
 // ボーカリストキャラクター定義ファイル
 // サークルメンバーの本番イラスト（透過PNG等）が揃った際は、
-// sprites のパスを差し替えるか、配列にキャラクターを追加するだけで反映されます。
+// chibi / sprites のパスを差し替えるか、配列にキャラクターを追加するだけで反映されます。
 
 export const CHARACTERS = [
   {
     id: 'char_test',
     name: '桜音 ネオン (テスト用)',
-    description: '和風サイバーライブステージのテスト用デフォルトボーカリスト',
+    description: '和風サイバーライブステージのテスト用デフォルトボーカリスト。軽快な歌声とネオン振袖でステージを彩る。',
+    chibi: './assets/characters/char_test/chibi.svg',
     sprites: {
       sing_1: './assets/characters/char_test/sing_1.svg',
       sing_2: './assets/characters/char_test/sing_2.svg',

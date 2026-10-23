@@ -6,9 +6,10 @@ import EditorView from './components/editor/EditorView';
 import ActiveWordDisplay from './components/ActiveWordDisplay';
 import Toast from './components/Toast';
 import { useSystemSE } from './hooks/useSystemSE';
-import { CHARACTERS, getCharacterById } from './config/characters';
+import { getCharacterById } from './config/characters';
 
 import SongSelect from './components/SongSelect';
+import CharacterSelectScreen from './components/CharacterSelectScreen';
 import Leaderboard from './components/Leaderboard';
 import SettingsModal from './components/SettingsModal';
 import FlickKeyboard from './components/FlickKeyboard';
@@ -49,6 +50,7 @@ if (typeof window !== 'undefined') {
       './assets/btn_random.png',
       './assets/btn_back_menu.png',
       './assets/song_card_frame.png',
+      './assets/characters/char_test/chibi.svg',
       './assets/characters/char_test/sing_1.svg',
       './assets/characters/char_test/sing_2.svg',
       './assets/characters/char_test/miss.svg'
@@ -259,6 +261,19 @@ function App() {
     );
   }
 
+  if (appMode === 'characterSelect') {
+    return (
+      <>
+        <Toast />
+        <CharacterSelectScreen onBack={() => setAppMode('menu')} />
+
+        {showSettings && (
+          <SettingsModal onClose={() => setShowSettings(false)} />
+        )}
+      </>
+    );
+  }
+
   return (
     <>
       <Toast />
@@ -280,7 +295,7 @@ function App() {
       >
 
       {/* 右上ボタングループ（設定・全画面表示） */}
-      {(appMode === "menu" || appMode === "songSelect" || appMode === "characterSelect") && (
+      {(appMode === "menu" || appMode === "songSelect") && (
         <div className={`absolute z-30 flex items-center ${
           appMode === "menu"
             ? "top-7 right-8 sm:top-10 sm:right-12 md:top-12 md:right-16 gap-3 sm:gap-4 top-right-buttons"
@@ -344,70 +359,6 @@ function App() {
               </button>
             </>
           )}
-        </div>
-      )}
-
-      {appMode === "characterSelect" && (
-        <div className="z-10 flex flex-col items-center justify-center w-full max-w-3xl h-full gap-6 my-auto">
-          <h2
-            className="text-3xl sm:text-4xl font-black text-cyan-300 tracking-widest"
-            style={{ textShadow: '0 0 12px rgba(0, 245, 255, 0.6)' }}
-          >
-            キャラクター選択
-          </h2>
-          <div className="grid grid-cols-1 gap-4 w-full">
-            {CHARACTERS.map((char) => {
-              const isSelected = char.id === selectedCharacterId;
-              return (
-                <div
-                  key={char.id}
-                  onClick={() => {
-                    setSelectedCharacterId(char.id);
-                    showToast(`ボーカリスト「${char.name}」を選択しました`);
-                  }}
-                  className={`cyber-glass-panel p-5 flex flex-col sm:flex-row items-center gap-6 cursor-pointer transition-all ${
-                    isSelected ? 'border-cyan-300 ring-2 ring-cyan-400/60' : 'opacity-80 hover:opacity-100'
-                  }`}
-                >
-                  <div className="flex items-center gap-3">
-                    <div className="flex flex-col items-center bg-slate-950/70 p-2 rounded-xl border border-cyan-500/40">
-                      <img src={char.sprites.sing_1} alt="sing_1" className="w-20 h-24 object-contain" decoding="async" />
-                      <span className="text-[10px] font-bold text-cyan-300 mt-1">通常 (sing_1)</span>
-                    </div>
-                    <div className="flex flex-col items-center bg-slate-950/70 p-2 rounded-xl border border-pink-500/40">
-                      <img src={char.sprites.sing_2} alt="sing_2" className="w-20 h-24 object-contain" decoding="async" />
-                      <span className="text-[10px] font-bold text-pink-300 mt-1">熱唱 (sing_2)</span>
-                    </div>
-                    <div className="flex flex-col items-center bg-slate-950/70 p-2 rounded-xl border border-rose-500/40">
-                      <img src={char.sprites.miss} alt="miss" className="w-20 h-24 object-contain" decoding="async" />
-                      <span className="text-[10px] font-bold text-rose-300 mt-1">ミス (miss)</span>
-                    </div>
-                  </div>
-                  <div className="flex-1 flex flex-col items-center sm:items-start text-center sm:text-left gap-1.5">
-                    <div className="flex items-center gap-2">
-                      <span className="text-xl font-black text-white">{char.name}</span>
-                      {isSelected && (
-                        <span className="px-2.5 py-0.5 bg-cyan-400 text-slate-950 text-xs font-black rounded-full">
-                          選択中
-                        </span>
-                      )}
-                    </div>
-                    <p className="text-xs sm:text-sm text-purple-200/80 font-bold">{char.description}</p>
-                    <p className="text-[11px] text-cyan-300/75 font-bold mt-1">
-                      ※本番イラスト完成後は `public/assets/characters/` の画像を差し替えるだけで反映されます。
-                    </p>
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-          <button
-            onClick={() => setAppMode("menu")}
-            className="px-8 py-3 bg-neutral-800 hover:bg-neutral-700 border border-cyan-400/60 text-white rounded-full font-black transition-colors flex items-center gap-2 mt-2 cursor-pointer"
-          >
-            <Home size={20} />
-            戻る
-          </button>
         </div>
       )}
 

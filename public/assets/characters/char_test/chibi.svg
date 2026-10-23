@@ -1,0 +1,53 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" fill="none">
+  <rect width="200" height="200" rx="28" fill="#130d26"/>
+  <circle cx="100" cy="104" r="78" fill="#1e1338" stroke="#06b6d4" stroke-width="3"/>
+
+  <!-- サイドお団子（ちびキャラ用デフォルメ） -->
+  <circle cx="44" cy="68" r="24" fill="#3b1d70" stroke="#a855f7" stroke-width="3"/>
+  <circle cx="156" cy="68" r="24" fill="#3b1d70" stroke="#06b6d4" stroke-width="3"/>
+
+  <!-- 後ろ髪 -->
+  <path d="M46 78 C36 125 44 158 62 170 L138 170 C156 158 164 125 154 78 Z" fill="#311b52"/>
+
+  <!-- ちび着物ボディ -->
+  <path d="M62 146 L138 146 L150 192 L50 192 Z" fill="#2e165c" stroke="#06b6d4" stroke-width="3"/>
+  <path d="M78 146 L100 176 L122 146" stroke="#f472b6" stroke-width="5" stroke-linecap="round"/>
+
+  <!-- 顔輪郭（丸みのあるちびキャラ顔） -->
+  <rect x="52" y="54" width="96" height="94" rx="44" fill="#ffedd5" stroke="#f9a8d4" stroke-width="2.5"/>
+
+  <!-- 前髪 -->
+  <path d="M48 86 C50 42 150 42 152 86 C138 64 126 84 116 66 C106 88 94 88 84 66 C74 84 62 64 48 86 Z" fill="#4c1d95" stroke="#06b6d4" stroke-width="2.5"/>
+
+  <!-- 桜の髪飾り -->
+  <g transform="translate(144, 58)">
+    <circle cx="0" cy="-9" r="6.5" fill="#f472b6"/>
+    <circle cx="8.5" cy="-3" r="6.5" fill="#f472b6"/>
+    <circle cx="5.5" cy="7" r="6.5" fill="#f472b6"/>
+    <circle cx="-5.5" cy="7" r="6.5" fill="#f472b6"/>
+    <circle cx="-8.5" cy="-3" r="6.5" fill="#f472b6"/>
+    <circle cx="0" cy="0" r="4" fill="#fde047"/>
+  </g>
+
+  <!-- 大きな瞳（ちびキャラ風） -->
+  <ellipse cx="78" cy="106" rx="12" ry="14" fill="#1e1b4b"/>
+  <ellipse cx="78" cy="107" rx="9" ry="11" fill="#a855f7"/>
+  <circle cx="74" cy="101" r="4.5" fill="#ffffff"/>
+  <circle cx="82" cy="112" r="2.5" fill="#06b6d4"/>
+
+  <ellipse cx="122" cy="106" rx="12" ry="14" fill="#1e1b4b"/>
+  <ellipse cx="122" cy="107" rx="9" ry="11" fill="#a855f7"/>
+  <circle cx="118" cy="101" r="4.5" fill="#ffffff"/>
+  <circle cx="126" cy="112" r="2.5" fill="#06b6d4"/>
+
+  <!-- 眉 -->
+  <path d="M65 86 Q78 80 89 86" stroke="#311b52" stroke-width="3" stroke-linecap="round"/>
+  <path d="M111 86 Q122 80 135 86" stroke="#311b52" stroke-width="3" stroke-linecap="round"/>
+
+  <!-- チーク -->
+  <ellipse cx="62" cy="121" rx="8" ry="4.5" fill="#fb7185" fill-opacity="0.65"/>
+  <ellipse cx="138" cy="121" rx="8" ry="4.5" fill="#fb7185" fill-opacity="0.65"/>
+
+  <!-- にっこり口 -->
+  <path d="M90 126 Q100 136 110 126" stroke="#e11d48" stroke-width="3.5" stroke-linecap="round" fill="none"/>
+</svg>

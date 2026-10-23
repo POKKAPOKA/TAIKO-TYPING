@@ -708,3 +708,109 @@ select:focus,
 .demo-judgment-pop {
   animation: demo-judge-pop 0.15s cubic-bezier(0.22, 1, 0.36, 1) forwards;
 }
+
+/* =========================================================
+   キャラクター選択画面：立ち絵プレビュー状態別マイクロアニメーション
+   （フラットデザイン・光彩/ドロップシャドウなし）
+   ========================================================= */
+
+/* 1. 通常 (sing_1): ふわっとフェード＆軽いフロート（浮遊）アニメーション */
+@keyframes char-enter-sing1 {
+  0% {
+    opacity: 0.25;
+    transform: translateY(12px) scale(0.97);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes char-gentle-float {
+  0%, 100% {
+    transform: translateY(0) scale(1);
+  }
+  50% {
+    transform: translateY(-9px) scale(1.005);
+  }
+}
+
+.char-preview-sing-1 {
+  animation:
+    char-enter-sing1 0.32s cubic-bezier(0.22, 1, 0.36, 1) forwards,
+    char-gentle-float 3.2s ease-in-out 0.32s infinite;
+  will-change: transform, opacity;
+}
+
+/* 2. 熱唱 (sing_2): 下から元気よくポンッと跳ねるバウンスアニメーション */
+@keyframes char-enter-sing2 {
+  0% {
+    opacity: 0.4;
+    transform: translateY(28px) scale(0.92, 1.06);
+  }
+  45% {
+    opacity: 1;
+    transform: translateY(-16px) scale(1.04, 0.96);
+  }
+  75% {
+    opacity: 1;
+    transform: translateY(5px) scale(0.98, 1.02);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes char-rhythm-bounce {
+  0%, 100% {
+    transform: translateY(0) scale(1);
+  }
+  50% {
+    transform: translateY(-7px) scale(1.015);
+  }
+}
+
+.char-preview-sing-2 {
+  animation:
+    char-enter-sing2 0.42s cubic-bezier(0.22, 1, 0.36, 1) forwards,
+    char-rhythm-bounce 0.65s ease-in-out 0.42s infinite;
+  will-change: transform, opacity;
+}
+
+/* 3. ミス (miss): 左右にカタカタッと小刻みに震えるシェイクアニメーション */
+@keyframes char-enter-miss {
+  0% {
+    opacity: 0.6;
+    transform: translateX(0) translateY(3px);
+  }
+  15% {
+    opacity: 1;
+    transform: translateX(-11px) translateY(3px) rotate(-1.5deg);
+  }
+  30% {
+    transform: translateX(11px) translateY(3px) rotate(1.5deg);
+  }
+  45% {
+    transform: translateX(-8px) translateY(3px) rotate(-1deg);
+  }
+  60% {
+    transform: translateX(8px) translateY(3px) rotate(1deg);
+  }
+  75% {
+    transform: translateX(-5px) translateY(3px);
+  }
+  90% {
+    transform: translateX(5px) translateY(3px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateX(0) translateY(3px) rotate(0deg);
+  }
+}
+
+.char-preview-miss {
+  animation: char-enter-miss 0.42s ease-in-out forwards;
+  will-change: transform, opacity;
+}
+
