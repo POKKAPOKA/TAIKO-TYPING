@@ -1004,150 +1004,236 @@ function App() {
 
       {showHowToPlay && (
         <div
-          className="fixed inset-0 bg-black/80 z-[100] flex items-center justify-center p-4 sm:p-8 backdrop-blur-sm overflow-y-auto"
+          className="modal-overlay bg-black/85 z-[100] flex items-center justify-center p-2.5 sm:p-5 md:p-8 overflow-y-auto mech-scrollbar"
           onClick={(e) => {
             if (e.target === e.currentTarget) {
               setShowHowToPlay(false);
             }
           }}
         >
-          <div className="bg-neutral-800 w-full max-w-xl flex flex-col rounded-3xl border-4 border-neutral-700 overflow-hidden shadow-none my-auto">
-            <div className="bg-neutral-900 p-6 flex justify-between items-center border-b-4 border-neutral-700">
-              <div className="flex items-center gap-3">
-                <HelpCircle className="text-emerald-400" size={32} />
-                <h2 className="text-2xl sm:text-3xl font-black text-white tracking-widest">遊び方</h2>
-                <span className={`text-xs font-black px-2.5 py-1 rounded-full border ${
-                  isMobileMode
-                    ? 'bg-cyan-500/20 text-cyan-300 border-cyan-400/60'
-                    : 'bg-purple-500/20 text-purple-300 border-purple-400/60'
-                }`}>
-                  {isMobileMode ? 'スマホモード（フリック入力）' : 'PCモード（キーボード入力）'}
-                </span>
-              </div>
-              <button
-                type="button"
-                onClick={() => setShowHowToPlay(false)}
-                className="w-12 h-12 bg-neutral-700 hover:bg-neutral-600 text-white rounded-full font-black text-xl flex items-center justify-center transition-colors cursor-pointer shadow-none"
-              >
-                <X size={24} />
-              </button>
+          {/* 外枠：二重枠線（琥珀金×朱色）＋四隅L字ブラケット＋漆黒メカニカルグリッド */}
+          <div
+            className="mech-grid-bg w-full max-w-2xl max-h-[calc(100vh-1.25rem)] sm:max-h-[calc(100vh-2.5rem)] md:max-h-[calc(100vh-4rem)] flex flex-col rounded-2xl sm:rounded-3xl border-2 border-amber-500/80 p-1 sm:p-1.5 overflow-hidden shadow-none my-auto relative z-10"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* 四隅コーナーブラケット（外枠） */}
+            <div className="pointer-events-none absolute inset-1.5 z-20">
+              <div className="absolute top-0 left-0 w-3.5 h-3.5 border-t-2 border-l-2 rounded-tl-md border-amber-500" />
+              <div className="absolute top-0 right-0 w-3.5 h-3.5 border-t-2 border-r-2 rounded-tr-md border-amber-500" />
+              <div className="absolute bottom-0 left-0 w-3.5 h-3.5 border-b-2 border-l-2 rounded-bl-md border-amber-500" />
+              <div className="absolute bottom-0 right-0 w-3.5 h-3.5 border-b-2 border-r-2 rounded-br-md border-amber-500" />
             </div>
-            <div className="p-6 sm:p-8 flex flex-col gap-5 text-white">
-              {isMobileMode ? (
-                <>
-                  <div className="text-lg sm:text-xl font-black text-cyan-300">
-                    スマホモード（フリック入力）の重要ルール
+
+            {/* 内側フレーム（二重枠線の内枠） */}
+            <div className="flex flex-col flex-1 min-h-0 rounded-xl sm:rounded-2xl border-2 border-rose-600/45 bg-[#0b0912]/95 overflow-hidden">
+
+              {/* ヘッダーパネル：計器盤タイトル＆モード表示バッジ */}
+              <div className="bg-[#120e1f] px-4 py-3.5 sm:px-6 sm:py-4 flex justify-between items-center border-b-2 border-amber-500/50 shrink-0 relative z-20">
+                <div>
+                  <div className="flex flex-wrap items-center gap-2">
+                    <span className="text-[10px] sm:text-xs font-dotgothic font-bold tracking-widest text-amber-400 bg-amber-500/15 border border-amber-500/50 px-2 py-0.5 rounded">
+                      SYS-MANUAL // 壱式指南書
+                    </span>
+                    <span className={`text-[10px] sm:text-xs font-dotgothic font-bold px-2 py-0.5 rounded border ${
+                      isMobileMode
+                        ? 'bg-cyan-500/15 text-cyan-300 border-cyan-400/60'
+                        : 'bg-purple-500/15 text-purple-300 border-purple-400/60'
+                    }`}>
+                      {isMobileMode ? 'スマホモード（フリック入力）' : 'PCモード（キーボード入力）'}
+                    </span>
                   </div>
-                  <div className="flex flex-col gap-4">
+                  <h2 className="text-xl sm:text-2xl font-black text-white tracking-widest font-dotgothic mt-0.5">
+                    遊び方・操作指南
+                  </h2>
+                </div>
+
+                <button
+                  type="button"
+                  onClick={() => setShowHowToPlay(false)}
+                  className="w-10 h-10 sm:w-11 sm:h-11 bg-[#1c162e] hover:bg-rose-600 active:bg-rose-700 text-amber-300 hover:text-white rounded-xl border-2 border-amber-500/60 hover:border-rose-300 font-black text-xl flex items-center justify-center transition-colors cursor-pointer shrink-0 relative z-30 select-none shadow-none"
+                  title="閉じる"
+                  aria-label="遊び方を閉じる"
+                >
+                  <X size={22} />
+                </button>
+              </div>
+
+              {/* モード切替タブ（PCモード / スマホモードの指南をワンタップで確認可能） */}
+              <div className="grid grid-cols-2 bg-[#0e0b18] border-b-2 border-[#2a223e] p-1.5 gap-1.5 shrink-0">
+                <button
+                  type="button"
+                  onClick={() => setIsMobileMode(false)}
+                  className={`py-2.5 px-3 rounded-xl font-black tracking-widest transition-colors cursor-pointer flex items-center justify-center gap-2 border-2 font-dotgothic text-xs sm:text-sm ${
+                    !isMobileMode
+                      ? 'bg-[#19142b] text-cyan-300 border-cyan-400'
+                      : 'bg-[#110e1c] text-neutral-400 border-transparent hover:text-neutral-200 hover:border-[#2e2644]'
+                  }`}
+                >
+                  <Monitor size={16} />
+                  <span>PCモード解説</span>
+                  <span className="hidden sm:inline text-[10px] text-amber-400/80 font-normal">[KEYBOARD]</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setIsMobileMode(true)}
+                  className={`py-2.5 px-3 rounded-xl font-black tracking-widest transition-colors cursor-pointer flex items-center justify-center gap-2 border-2 font-dotgothic text-xs sm:text-sm ${
+                    isMobileMode
+                      ? 'bg-[#1f1324] text-amber-300 border-rose-500'
+                      : 'bg-[#110e1c] text-neutral-400 border-transparent hover:text-neutral-200 hover:border-[#2e2644]'
+                  }`}
+                >
+                  <Smartphone size={16} />
+                  <span>スマホモード解説</span>
+                  <span className="hidden sm:inline text-[10px] text-cyan-400/80 font-normal">[FLICK]</span>
+                </button>
+              </div>
+
+              {/* メインコンテンツ領域（機械風カスタムスクロールバー適用） */}
+              <div className="mech-scrollbar flex-1 overflow-y-auto p-4 sm:p-6 flex flex-col gap-5 text-white min-h-0">
+                {isMobileMode ? (
+                  <>
                     {/* ① 判定のタイミング（最重要） */}
-                    <div className="bg-neutral-900 p-5 rounded-2xl border-2 border-amber-400/60 flex flex-col gap-2 shadow-none">
-                      <div className="flex items-center gap-2">
-                        <span className="bg-amber-400 text-neutral-950 text-xs font-black px-2 py-0.5 rounded-md">
-                          最重要
-                        </span>
-                        <span className="text-amber-300 font-black text-base">
-                          ① 判定のタイミング
-                        </span>
+                    <div className="relative rounded-2xl border-2 border-amber-500/65 bg-[#100d1c] p-1 shadow-none">
+                      <div className="pointer-events-none absolute inset-1.5 z-20">
+                        <div className="absolute top-0 left-0 w-3 h-3 border-t-2 border-l-2 rounded-tl-md border-amber-400" />
+                        <div className="absolute top-0 right-0 w-3 h-3 border-t-2 border-r-2 rounded-tr-md border-amber-400" />
+                        <div className="absolute bottom-0 left-0 w-3 h-3 border-b-2 border-l-2 rounded-bl-md border-amber-400" />
+                        <div className="absolute bottom-0 right-0 w-3 h-3 border-b-2 border-r-2 rounded-br-md border-amber-400" />
                       </div>
-                      <p className="text-sm sm:text-base font-bold text-white leading-relaxed">
-                        キーを押した瞬間ではなく、
-                        <span className="inline-block bg-amber-400/25 text-amber-200 border border-amber-400/70 px-1.5 py-0.5 rounded-md font-black mx-0.5">
-                          【指を離した瞬間】
-                        </span>
-                        にタイミング判定されます！
-                      </p>
-                      <p className="text-xs sm:text-sm font-bold text-neutral-300 leading-relaxed bg-neutral-800 border border-neutral-700 rounded-xl p-3 mt-1">
-                        💡 <span className="text-cyan-300 font-black">コツ：</span>早めにキーをタッチしてフリック方向へ指を滑らせておき、
-                        <span className="text-amber-200 font-black">ノーツが判定枠に重なる瞬間に指を離す</span>とPERFECTが狙いやすくなります。
-                      </p>
+                      <div className="rounded-xl border border-rose-500/30 bg-[#0c0a16] p-4 sm:p-5 flex flex-col gap-2.5">
+                        <div className="flex items-center gap-2 border-b border-[#28203d] pb-2.5">
+                          <span className="bg-amber-400 text-[#09080f] text-[11px] font-dotgothic font-black px-2 py-0.5 rounded">
+                            RULE-01 // 最重要
+                          </span>
+                          <span className="text-amber-300 font-dotgothic font-black text-base sm:text-lg tracking-wider">
+                            ① 判定のタイミング
+                          </span>
+                        </div>
+                        <p className="text-sm sm:text-base font-bold text-white leading-relaxed">
+                          キーを押した瞬間ではなく、
+                          <span className="inline-block bg-amber-500/20 text-amber-200 border border-amber-400/70 px-2 py-0.5 rounded-md font-dotgothic font-black mx-1">
+                            【指を離した瞬間】
+                          </span>
+                          にタイミング判定されます！
+                        </p>
+                        <div className="text-xs sm:text-sm font-bold text-neutral-300 leading-relaxed bg-[#08060e] border-2 border-[#251e38] rounded-xl p-3.5 mt-0.5">
+                          💡 <span className="text-cyan-300 font-dotgothic font-black">攻略のコツ：</span>早めにキーをタッチしてフリック方向へ指を滑らせておき、
+                          <span className="text-amber-300 font-black">ノーツがシアンの判定縦棒に重なる瞬間に指を離す</span>と PERFECT が狙いやすくなります。
+                        </div>
+                      </div>
                     </div>
 
                     {/* ② テンキー（フリック）の入力方法 */}
-                    <div className="bg-neutral-900 p-5 rounded-2xl border-2 border-cyan-400/60 flex flex-col gap-2 shadow-none">
-                      <div className="flex items-center gap-2">
-                        <span className="bg-cyan-400 text-neutral-950 text-xs font-black px-2 py-0.5 rounded-md">
-                          入力ルール
-                        </span>
-                        <span className="text-cyan-300 font-black text-base">
-                          ② テンキー（フリック）の入力方法
-                        </span>
+                    <div className="relative rounded-2xl border-2 border-cyan-500/65 bg-[#100d1c] p-1 shadow-none">
+                      <div className="pointer-events-none absolute inset-1.5 z-20">
+                        <div className="absolute top-0 left-0 w-3 h-3 border-t-2 border-l-2 rounded-tl-md border-cyan-400" />
+                        <div className="absolute top-0 right-0 w-3 h-3 border-t-2 border-r-2 rounded-tr-md border-cyan-400" />
+                        <div className="absolute bottom-0 left-0 w-3 h-3 border-b-2 border-l-2 rounded-bl-md border-cyan-400" />
+                        <div className="absolute bottom-0 right-0 w-3 h-3 border-b-2 border-r-2 rounded-br-md border-cyan-400" />
                       </div>
-                      <p className="text-sm sm:text-base font-bold text-white leading-relaxed">
-                        画面下のテンキーをタップ・フリックして文字を入力します。
-                      </p>
-                      <p className="text-xs sm:text-sm font-bold text-neutral-300 leading-relaxed bg-neutral-800 border border-neutral-700 rounded-xl p-3 mt-1">
-                        濁点（゛）・半濁点（゜）・小文字（っ・ゃ・ゅ・ょ等）の
-                        <span className="inline-block bg-pink-500/25 text-pink-200 border border-pink-400/70 px-1.5 py-0.5 rounded-md font-black mx-0.5">
-                          変換は不要
-                        </span>
-                        です！すべて
-                        <span className="text-cyan-300 font-black">元の文字（清音）</span>
-                        で入力してください。
-                        <span className="block text-amber-200 font-black mt-1">
-                          （例：『だ』→『た』、『ぴ』→『ひ』、『っ』→『つ』）
-                        </span>
-                      </p>
+                      <div className="rounded-xl border border-amber-500/30 bg-[#0c0a16] p-4 sm:p-5 flex flex-col gap-2.5">
+                        <div className="flex items-center gap-2 border-b border-[#28203d] pb-2.5">
+                          <span className="bg-cyan-400 text-[#09080f] text-[11px] font-dotgothic font-black px-2 py-0.5 rounded">
+                            RULE-02 // 入力仕様
+                          </span>
+                          <span className="text-cyan-300 font-dotgothic font-black text-base sm:text-lg tracking-wider">
+                            ② テンキー（フリック）の入力方法
+                          </span>
+                        </div>
+                        <p className="text-sm sm:text-base font-bold text-white leading-relaxed">
+                          画面下部のフリックテンキーをタップ・フリックして文字を入力します。
+                        </p>
+                        <div className="text-xs sm:text-sm font-bold text-neutral-300 leading-relaxed bg-[#08060e] border-2 border-[#251e38] rounded-xl p-3.5 mt-0.5">
+                          濁点（゛）・半濁点（゜）・小文字（っ・ゃ・ゅ・ょ等）への
+                          <span className="inline-block bg-rose-500/20 text-rose-200 border border-rose-400/70 px-1.5 py-0.5 rounded-md font-dotgothic font-black mx-1">
+                            変換は不要
+                          </span>
+                          です！すべて
+                          <span className="text-cyan-300 font-black">元の文字（清音）</span>
+                          のまま入力してください。
+                          <span className="block text-amber-300 font-dotgothic font-black mt-1.5">
+                            （例：『だ』→『た』、『ぴ』→『ひ』、『っ』→『つ』）
+                          </span>
+                        </div>
+                      </div>
                     </div>
+                  </>
+                ) : (
+                  <>
+                    {/* PCモード ① 判定とタイピングの基本ルール */}
+                    <div className="relative rounded-2xl border-2 border-cyan-500/65 bg-[#100d1c] p-1 shadow-none">
+                      <div className="pointer-events-none absolute inset-1.5 z-20">
+                        <div className="absolute top-0 left-0 w-3 h-3 border-t-2 border-l-2 rounded-tl-md border-cyan-400" />
+                        <div className="absolute top-0 right-0 w-3 h-3 border-t-2 border-r-2 rounded-tr-md border-cyan-400" />
+                        <div className="absolute bottom-0 left-0 w-3 h-3 border-b-2 border-l-2 rounded-bl-md border-cyan-400" />
+                        <div className="absolute bottom-0 right-0 w-3 h-3 border-b-2 border-r-2 rounded-br-md border-cyan-400" />
+                      </div>
+                      <div className="rounded-xl border border-amber-500/30 bg-[#0c0a16] p-4 sm:p-5 flex flex-col gap-3">
+                        <div className="flex items-center gap-2 border-b border-[#28203d] pb-2.5">
+                          <span className="bg-cyan-400 text-[#09080f] text-[11px] font-dotgothic font-black px-2 py-0.5 rounded">
+                            RULE-01 // 基本操作
+                          </span>
+                          <span className="text-cyan-300 font-dotgothic font-black text-base sm:text-lg tracking-wider">
+                            ① 判定タイミングとローマ字入力
+                          </span>
+                        </div>
 
-                    {/* ③ クリア条件（目標スコア） */}
-                    <div className="bg-neutral-900 p-5 rounded-2xl border-2 border-emerald-400/60 flex flex-col gap-2 shadow-none">
-                      <div className="flex items-center gap-2">
-                        <span className="bg-emerald-400 text-neutral-950 text-xs font-black px-2 py-0.5 rounded-md">
-                          クリア条件
-                        </span>
-                        <span className="text-emerald-300 font-black text-base">
-                          ③ 目標スコア
-                        </span>
+                        <div className="flex flex-col gap-2.5 text-sm sm:text-base font-bold text-neutral-200 leading-relaxed">
+                          <div className="bg-[#08060e] border border-[#251e38] rounded-xl p-3 flex items-start gap-2.5">
+                            <span className="font-dotgothic text-amber-400 font-black shrink-0">STEP 1</span>
+                            <span>画面右から流れてくるノーツが、左側の<span className="text-cyan-300 font-black">シアン色の判定縦棒</span>に重なるタイミングを見極めよう！</span>
+                          </div>
+                          <div className="bg-[#08060e] border border-[#251e38] rounded-xl p-3 flex items-start gap-2.5">
+                            <span className="font-dotgothic text-amber-400 font-black shrink-0">STEP 2</span>
+                            <span><span className="text-amber-300 font-black">1文字目を叩くタイミング</span>でリズム判定（PERFECT / GOOD）が決まります。2文字目以降は次のノーツが来るまでに打ち切ればOK！</span>
+                          </div>
+                          <div className="bg-[#08060e] border border-[#251e38] rounded-xl p-3 flex items-start gap-2.5">
+                            <span className="font-dotgothic text-amber-400 font-black shrink-0">STEP 3</span>
+                            <span>「し (`shi`/`si`)」「つ (`tsu`/`tu`)」「ん (`n`/`nn`/`xn`)」など、複数通りのローマ字入力に自動対応しています。</span>
+                          </div>
+                        </div>
                       </div>
-                      <p className="text-sm sm:text-base font-bold text-white leading-relaxed">
-                        <span className="inline-block bg-emerald-500/25 text-emerald-200 border border-emerald-400/70 px-2 py-0.5 rounded-md font-black mr-1">
-                          スコア 700,000点（70万点）以上でクリア！
-                        </span>
-                        <span className="text-neutral-300 text-xs sm:text-sm font-black">
-                          （最大1,010,000点）
-                        </span>
-                      </p>
                     </div>
+                  </>
+                )}
+
+                {/* 共通：クリア条件（目標スコア 700,000点） */}
+                <div className="relative rounded-2xl border-2 border-emerald-500/65 bg-[#100d1c] p-1 shadow-none">
+                  <div className="pointer-events-none absolute inset-1.5 z-20">
+                    <div className="absolute top-0 left-0 w-3 h-3 border-t-2 border-l-2 rounded-tl-md border-emerald-400" />
+                    <div className="absolute top-0 right-0 w-3 h-3 border-t-2 border-r-2 rounded-tr-md border-emerald-400" />
+                    <div className="absolute bottom-0 left-0 w-3 h-3 border-b-2 border-l-2 rounded-bl-md border-emerald-400" />
+                    <div className="absolute bottom-0 right-0 w-3 h-3 border-b-2 border-r-2 rounded-br-md border-emerald-400" />
                   </div>
-                </>
-              ) : (
-                <>
-                  <div className="text-xl font-bold text-neutral-200">
-                    太鼓タイピングの基本ルール（PCモード）
-                  </div>
-                  <div className="flex flex-col gap-4 text-neutral-300 leading-relaxed font-bold bg-neutral-900 p-6 rounded-2xl border-2 border-neutral-700 shadow-none">
-                    <p>1. 画面右から流れてくるノーツが、左側の白い判定枠に重なるタイミングを見極めよう！</p>
-                    <p>2. ノーツが判定枠に重なったら、表示されている最初の文字から正確にローマ字タイピング！</p>
-                    <p>3. 正確なタイミングで入力すると「PERFECT」！連続コンボを繋げてハイスコアを目指そう！</p>
-                  </div>
-                  {/* クリア条件（目標スコア） */}
-                  <div className="bg-neutral-900 p-5 rounded-2xl border-2 border-emerald-400/60 flex flex-col gap-2 shadow-none">
-                    <div className="flex items-center gap-2">
-                      <span className="bg-emerald-400 text-neutral-950 text-xs font-black px-2 py-0.5 rounded-md">
-                        クリア条件
+                  <div className="rounded-xl border border-amber-500/30 bg-[#0c0a16] p-4 sm:p-5 flex flex-col gap-2.5">
+                    <div className="flex items-center gap-2 border-b border-[#28203d] pb-2.5">
+                      <span className="bg-emerald-400 text-[#09080f] text-[11px] font-dotgothic font-black px-2 py-0.5 rounded">
+                        TARGET // クリア条件
                       </span>
-                      <span className="text-emerald-300 font-black text-base">
-                        目標スコア
+                      <span className="text-emerald-300 font-dotgothic font-black text-base sm:text-lg tracking-wider">
+                        目標スコア・クリア基準
                       </span>
                     </div>
-                    <p className="text-base font-bold text-white leading-relaxed">
-                      <span className="inline-block bg-emerald-500/25 text-emerald-200 border border-emerald-400/70 px-2 py-0.5 rounded-md font-black mr-1">
+                    <div className="bg-[#08060e] border-2 border-[#251e38] rounded-xl p-3.5 flex flex-wrap items-center justify-between gap-2">
+                      <span className="inline-block bg-emerald-500/20 text-emerald-200 border border-emerald-400/70 px-3 py-1 rounded-lg font-dotgothic font-black text-sm sm:text-base">
                         スコア 700,000点（70万点）以上でクリア！
                       </span>
-                      <span className="text-neutral-300 text-sm font-black">
-                        （最大1,010,000点）
+                      <span className="text-amber-300 text-xs sm:text-sm font-dotgothic font-bold">
+                        理論値（最大）：1,010,000点
                       </span>
-                    </p>
+                    </div>
                   </div>
-                </>
-              )}
-              <button
-                type="button"
-                onClick={() => setShowHowToPlay(false)}
-                className="w-full py-4 bg-emerald-600 hover:bg-emerald-500 text-white rounded-full font-black text-xl transition-colors mt-2 cursor-pointer shadow-none"
-              >
-                閉じる
-              </button>
+                </div>
+
+                {/* 下部閉じるボタン（メカニカルスタイル） */}
+                <button
+                  type="button"
+                  onClick={() => setShowHowToPlay(false)}
+                  className="w-full py-3.5 bg-[#1b152e] hover:bg-[#271f42] active:bg-[#312752] text-amber-300 hover:text-amber-200 rounded-xl border-2 border-amber-500/70 font-dotgothic font-black text-lg tracking-widest transition-colors mt-1 cursor-pointer shadow-none"
+                >
+                  閉じる [CLOSE]
+                </button>
+              </div>
             </div>
           </div>
         </div>

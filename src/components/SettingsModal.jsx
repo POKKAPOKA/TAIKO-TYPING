@@ -31,30 +31,6 @@ function MechCornerBrackets({ color = 'amber' }) {
   );
 }
 
-// 機械仕掛けの歯車＆和紋風SVGアイコン
-function MechGearIcon({ className = 'text-amber-400', size = 28 }) {
-  return (
-    <svg
-      width={size}
-      height={size}
-      viewBox="0 0 32 32"
-      fill="none"
-      xmlns="http://www.w3.org/2000/svg"
-      className={`${className} shrink-0`}
-      aria-hidden="true"
-    >
-      <path
-        d="M14 2H18L19 5.2L22.1 6.5L25 4.6L27.4 7L25.5 9.9L26.8 13L30 14V18L26.8 19L25.5 22.1L27.4 25L25 27.4L22.1 25.5L19 26.8L18 30H14L13 26.8L9.9 25.5L7 27.4L4.6 25L6.5 22.1L5.2 19L2 18V14L5.2 13L6.5 9.9L4.6 7L7 4.6L9.9 6.5L13 5.2L14 2Z"
-        stroke="currentColor"
-        strokeWidth="2"
-        strokeLinejoin="round"
-      />
-      <circle cx="16" cy="16" r="6" stroke="#22d3ee" strokeWidth="2" />
-      <circle cx="16" cy="16" r="2" fill="#f43f5e" />
-    </svg>
-  );
-}
-
 // セグメントゲージ＋目盛り（ティックマーク）コンポーネント
 // スライダーのツマミ中心移動範囲（左端 13px 〜 右端 100%-13px）と完全一致させるため px-[11px] を適用
 function MechSegmentedBar({ ratio, segments = 28, activeColor = 'cyan', standardIndex = -1 }) {
@@ -381,23 +357,18 @@ export default function SettingsModal({ onClose }) {
 
           {/* ヘッダーパネル：計器盤タイトル＆ステータス装飾 */}
           <div className="bg-[#120e1f] px-4 py-3.5 sm:px-6 sm:py-4 flex justify-between items-center border-b-2 border-amber-500/50 shrink-0 relative z-20">
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 sm:w-11 sm:h-11 rounded-xl bg-[#1b152e] border-2 border-amber-500/70 flex items-center justify-center">
-                <MechGearIcon size={26} />
+            <div>
+              <div className="flex items-center gap-2">
+                <span className="text-[10px] sm:text-xs font-dotgothic font-bold tracking-widest text-amber-400 bg-amber-500/15 border border-amber-500/50 px-2 py-0.5 rounded">
+                  SYS-CFG // 弐式計器盤
+                </span>
+                <span className="hidden sm:inline-block text-[10px] font-dotgothic text-cyan-400/80 tracking-widest">
+                  MIYABI-MECH v1.0
+                </span>
               </div>
-              <div>
-                <div className="flex items-center gap-2">
-                  <span className="text-[10px] sm:text-xs font-dotgothic font-bold tracking-widest text-amber-400 bg-amber-500/15 border border-amber-500/50 px-2 py-0.5 rounded">
-                    SYS-CFG // 弐式計器盤
-                  </span>
-                  <span className="hidden sm:inline-block text-[10px] font-dotgothic text-cyan-400/80 tracking-widest">
-                    MIYABI-MECH v2.4
-                  </span>
-                </div>
-                <h2 className="text-xl sm:text-2xl font-black text-white tracking-widest font-dotgothic mt-0.5">
-                  環境設定・メンテナンス
-                </h2>
-              </div>
+              <h2 className="text-xl sm:text-2xl font-black text-white tracking-widest font-dotgothic mt-0.5">
+                環境設定・メンテナンス
+              </h2>
             </div>
 
             <button
