@@ -143,15 +143,15 @@
    曲選択画面：和風サイバーネオン・グラスモーフィズム UI
    ========================================================= */
 
-/* 1. 共通パネル（遊び方説明バー・絞り込み検索バー）の半透明ガラス化 */
+/* 1. 共通パネル（遊び方説明バー・絞り込み検索バー）の半透明ガラス化（フラット・影なし） */
 .info-banner,
 .filter-panel {
-  background: linear-gradient(135deg, rgba(24, 12, 58, 0.65) 0%, rgba(42, 16, 82, 0.55) 100%) !important;
+  background: linear-gradient(135deg, rgba(20, 10, 50, 0.78) 0%, rgba(36, 14, 72, 0.68) 100%) !important;
   backdrop-filter: blur(8px) !important;
   -webkit-backdrop-filter: blur(8px) !important;
-  border: 1px solid rgba(168, 85, 247, 0.55) !important;
-  box-shadow: 0 0 16px rgba(139, 92, 246, 0.25), inset 0 0 12px rgba(0, 245, 255, 0.12) !important;
-  border-radius: 14px !important;
+  border: 2px solid rgba(168, 85, 247, 0.6) !important;
+  box-shadow: none !important;
+  border-radius: 16px !important;
   color: #f3e8ff !important;
 }
 
@@ -187,25 +187,20 @@
   filter: brightness(1.12) drop-shadow(0 0 16px rgba(192, 132, 252, 0.45));
 }
 
-/* 3. ドロップダウン（難易度・譜面制作・並び替え）とソート順ボタン */
-select,
+/* 3. ソート順ボタン（フラット・角丸・影なし） */
 .sort-order-btn {
-  background: rgba(15, 10, 40, 0.75) !important;
-  border: 1px solid rgba(0, 240, 255, 0.5) !important;
-  box-shadow: 0 0 8px rgba(0, 240, 255, 0.2) !important;
-  color: #ffffff !important;
-  border-radius: 8px !important;
+  background: rgba(18, 10, 42, 0.85) !important;
+  border: 2px solid rgba(192, 132, 252, 0.55) !important;
+  box-shadow: none !important;
+  color: #f3e8ff !important;
+  border-radius: 12px !important;
 }
 
-select option {
-  background-color: #0f0a28;
-  color: #ffffff;
-}
-
-select:focus,
 .sort-order-btn:hover {
-  border-color: #00f5ff !important;
-  box-shadow: 0 0 12px rgba(0, 240, 255, 0.5) !important;
+  border-color: #22d3ee !important;
+  background: rgba(34, 211, 238, 0.16) !important;
+  color: #ffffff !important;
+  box-shadow: none !important;
   outline: none !important;
 }
 

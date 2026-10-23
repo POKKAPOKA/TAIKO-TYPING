@@ -1,8 +1,93 @@
-import { useState, useMemo, Suspense, use } from 'react';
+import { useState, useMemo, useRef, useCallback, Suspense, use } from 'react';
 import { useGameStore } from '../store/gameStore';
 import { gameEngine } from '../engine/GameEngine';
 import Leaderboard from './Leaderboard';
 import { fetchRankingsResult } from '../api/rankings';
+import { ChevronDown, Check } from 'lucide-react';
+
+const DIFFICULTY_TABS = [
+  { value: 'all', label: 'すべて' },
+  { value: '1-3', label: '☆1〜3' },
+  { value: '4-6', label: '☆4〜6' },
+  { value: '7-10', label: '☆7〜10' },
+];
+
+const SORT_OPTIONS = [
+  { value: 'difficulty', label: '難易度' },
+  { value: 'duration', label: '長さ' },
+  { value: 'notesCount', label: 'ノーツ数' },
+];
+
+// 和風サイバー・デジタル雅 カスタムドロップダウンコンポーネント（フラット・角丸・影なし）
+function CustomFilterDropdown({
+  id,
+  label,
+  value,
+  options,
+  isOpen,
+  onToggle,
+  onSelect,
+}) {
+  const selectedOption = options.find((opt) => opt.value === value) || options[0];
+
+  return (
+    <div className="flex flex-col gap-1.5 relative" data-dropdown-root={id}>
+      <span className="text-xs font-bold text-purple-200/90 tracking-wider px-0.5">
+        {label}
+      </span>
+      <div className="relative">
+        <button
+          type="button"
+          onClick={() => onToggle(id)}
+          aria-expanded={isOpen}
+          aria-haspopup="listbox"
+          className={`h-10 min-w-[132px] sm:min-w-[148px] px-3.5 py-2 rounded-xl bg-[#120a2a]/85 backdrop-blur-md border-2 font-bold text-xs sm:text-sm flex items-center justify-between gap-2.5 transition-colors cursor-pointer select-none shadow-none ${
+            isOpen
+              ? 'border-cyan-400 text-cyan-200 bg-[#1a0f3a]/95'
+              : 'border-purple-400/55 hover:border-cyan-400/80 text-white'
+          }`}
+        >
+          <span className="truncate">{selectedOption?.label}</span>
+          <ChevronDown
+            size={16}
+            className={`transition-transform duration-200 shrink-0 ${
+              isOpen ? 'rotate-180 text-cyan-300' : 'text-purple-300'
+            }`}
+          />
+        </button>
+
+        {isOpen && (
+          <div
+            role="listbox"
+            aria-label={label}
+            className="absolute left-0 top-full mt-1.5 min-w-full w-max max-w-[240px] max-h-60 overflow-y-auto mech-scrollbar rounded-xl bg-[#120a2a]/95 backdrop-blur-md border-2 border-cyan-400 p-1.5 z-50 flex flex-col gap-1 shadow-none"
+          >
+            {options.map((opt) => {
+              const isSelected = opt.value === value;
+              return (
+                <button
+                  key={opt.value}
+                  type="button"
+                  role="option"
+                  aria-selected={isSelected}
+                  onClick={() => onSelect(opt.value)}
+                  className={`w-full text-left px-3 py-2 rounded-lg text-xs sm:text-sm flex items-center justify-between gap-3 transition-colors cursor-pointer select-none border-l-4 ${
+                    isSelected
+                      ? 'bg-cyan-500/25 text-cyan-200 border-cyan-400 font-black'
+                      : 'text-purple-100 hover:bg-pink-500/25 hover:text-pink-100 border-transparent hover:border-pink-400 font-bold'
+                  }`}
+                >
+                  <span className="truncate">{opt.label}</span>
+                  {isSelected && <Check size={14} className="text-cyan-300 shrink-0" />}
+                </button>
+              );
+            })}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
 
 export default function SongSelect({ songsPromise, onBack, onStartGame }) {
   return (
@@ -53,6 +138,35 @@ function SongListContent({ songsPromise, onBack, onStartGame }) {
   const [sortOrder, setSortOrder] = useState('asc'); // 'asc', 'desc'
   const [filterCreator, setFilterCreator] = useState('all');
   const [filterDifficulty, setFilterDifficulty] = useState('all');
+  const [openDropdown, setOpenDropdown] = useState(null); // 'creator' | 'sort' | null
+
+  // ドロップダウン領域外のクリック・タップおよびEscapeキーでメニューを閉じる（useEffect不使用・コールバックrefで登録）
+  const docListenerRef = useRef(null);
+  const handleFilterPanelRef = useCallback((node) => {
+    if (node && !docListenerRef.current) {
+      const onPointerDown = (e) => {
+        if (!e.target.closest('[data-dropdown-root]')) {
+          setOpenDropdown(null);
+        }
+      };
+      const onKeyDown = (e) => {
+        if (e.key === 'Escape') {
+          setOpenDropdown(null);
+        }
+      };
+      document.addEventListener('pointerdown', onPointerDown);
+      document.addEventListener('keydown', onKeyDown);
+      docListenerRef.current = { onPointerDown, onKeyDown };
+    } else if (!node && docListenerRef.current) {
+      document.removeEventListener('pointerdown', docListenerRef.current.onPointerDown);
+      document.removeEventListener('keydown', docListenerRef.current.onKeyDown);
+      docListenerRef.current = null;
+    }
+  }, []);
+
+  const handleToggleDropdown = (id) => {
+    setOpenDropdown((prev) => (prev === id ? null : id));
+  };
 
   const setLoadedScore = useGameStore(state => state.setLoadedScore);
   const setAudioUrl = useGameStore(state => state.setAudioUrl);
@@ -98,6 +212,13 @@ function SongListContent({ songsPromise, onBack, onStartGame }) {
   const creators = useMemo(() => {
     return Array.from(new Set(songs.map(s => s.creator).filter(Boolean)));
   }, [songs]);
+
+  const creatorOptions = useMemo(() => {
+    return [
+      { value: 'all', label: 'すべて' },
+      ...creators.map((c) => ({ value: c, label: c })),
+    ];
+  }, [creators]);
 
   const filteredAndSortedSongs = useMemo(() => {
     let result = songs.filter(s => {
@@ -246,70 +367,88 @@ function SongListContent({ songsPromise, onBack, onStartGame }) {
           </div>
         )}
 
-        {/* フィルター＆ソート コントロールパネル（半透明ガラスUI） */}
+        {/* フィルター＆ソート コントロールパネル（和風サイバー・デジタル雅 ハイブリッドUI / フラット・角丸・影なし） */}
         {!error && songs.length > 0 && (
-          <div className="filter-panel w-full max-w-4xl p-4 mb-6 flex flex-col md:flex-row gap-4 justify-between items-start md:items-center">
-            <div className="flex flex-col sm:flex-row gap-4 w-full md:w-auto">
-              {/* 難易度フィルター */}
-              <div className="flex flex-col gap-1">
-                <label className="text-xs font-bold text-purple-200/80">難易度</label>
-                <select
-                  value={filterDifficulty}
-                  onChange={(e) => setFilterDifficulty(e.target.value)}
-                  className="font-bold px-4 py-2 cursor-pointer"
-                >
-                  <option value="all">すべて</option>
-                  <option value="1-3">☆1〜3 (簡単)</option>
-                  <option value="4-6">☆4〜6 (普通)</option>
-                  <option value="7-10">☆7〜10 (難しい)</option>
-                </select>
-              </div>
-
-              {/* 制作者フィルター */}
-              <div className="flex flex-col gap-1">
-                <label className="text-xs font-bold text-purple-200/80">譜面制作</label>
-                <select
-                  value={filterCreator}
-                  onChange={(e) => setFilterCreator(e.target.value)}
-                  className="font-bold px-4 py-2 cursor-pointer"
-                >
-                  <option value="all">すべて</option>
-                  {creators.map(c => (
-                    <option key={c} value={c}>{c}</option>
-                  ))}
-                </select>
+          <div
+            ref={handleFilterPanelRef}
+            className="filter-panel relative z-30 w-full max-w-4xl p-4 mb-6 flex flex-wrap gap-y-4 gap-x-6 justify-between items-start md:items-end"
+          >
+            {/* 左側：難易度フィルター（1クリック切り替え・横並びピル型タブ） */}
+            <div className="flex flex-col gap-1.5 w-full md:w-auto">
+              <span className="text-xs font-bold text-purple-200/90 tracking-wider px-0.5">
+                難易度
+              </span>
+              <div
+                role="tablist"
+                aria-label="難易度フィルター"
+                className="flex flex-wrap items-center gap-1.5 sm:gap-2"
+              >
+                {DIFFICULTY_TABS.map((tab) => {
+                  const isActive = filterDifficulty === tab.value;
+                  return (
+                    <button
+                      key={tab.value}
+                      type="button"
+                      role="tab"
+                      aria-selected={isActive}
+                      onClick={() => setFilterDifficulty(tab.value)}
+                      className={`h-10 px-3 sm:px-4 rounded-xl border-2 font-black text-xs sm:text-sm tracking-wide transition-colors cursor-pointer select-none shadow-none flex items-center justify-center ${
+                        isActive
+                          ? 'bg-cyan-500/25 backdrop-blur-md border-cyan-400 text-cyan-200'
+                          : 'bg-[#120a2a]/85 backdrop-blur-md border-purple-400/55 text-purple-100/90 hover:border-pink-400/80 hover:bg-pink-500/15 hover:text-white'
+                      }`}
+                    >
+                      {tab.label}
+                    </button>
+                  );
+                })}
               </div>
             </div>
 
-            <div className="flex flex-col sm:flex-row gap-4 w-full md:w-auto mt-2 md:mt-0 pt-2 md:pt-0 border-t border-purple-400/30 md:border-t-0">
-              {/* ソート項目 */}
-              <div className="flex flex-col gap-1">
-                <label className="text-xs font-bold text-purple-200/80">並び替え</label>
-                <div className="flex gap-2">
-                  <select
-                    value={sortType}
-                    onChange={(e) => setSortType(e.target.value)}
-                    className="font-bold px-4 py-2 cursor-pointer"
-                  >
-                    <option value="difficulty">難易度</option>
-                    <option value="duration">長さ</option>
-                    <option value="notesCount">ノーツ数</option>
-                  </select>
-                  <button
-                    type="button"
-                    onClick={() => setSortOrder(prev => prev === 'asc' ? 'desc' : 'asc')}
-                    className="sort-order-btn font-bold px-4 py-2 transition-all flex items-center gap-1 cursor-pointer"
-                  >
-                    {sortOrder === 'asc' ? '▲ 昇順' : '▼ 降順'}
-                  </button>
-                </div>
+            {/* 右側：譜面制作 ＆ 並び替え（カスタムドロップダウン ＋ 昇順/降順ボタン） */}
+            <div className="flex flex-wrap items-end gap-3 sm:gap-4 w-full md:w-auto pt-3 md:pt-0 border-t border-purple-400/30 md:border-t-0">
+              {/* 譜面制作カスタムドロップダウン */}
+              <CustomFilterDropdown
+                id="creator"
+                label="譜面制作"
+                value={filterCreator}
+                options={creatorOptions}
+                isOpen={openDropdown === 'creator'}
+                onToggle={handleToggleDropdown}
+                onSelect={(val) => {
+                  setFilterCreator(val);
+                  setOpenDropdown(null);
+                }}
+              />
+
+              {/* 並び替えカスタムドロップダウン ＋ 昇順/降順トグルボタン */}
+              <div className="flex items-end gap-2">
+                <CustomFilterDropdown
+                  id="sort"
+                  label="並び替え"
+                  value={sortType}
+                  options={SORT_OPTIONS}
+                  isOpen={openDropdown === 'sort'}
+                  onToggle={handleToggleDropdown}
+                  onSelect={(val) => {
+                    setSortType(val);
+                    setOpenDropdown(null);
+                  }}
+                />
+                <button
+                  type="button"
+                  onClick={() => setSortOrder((prev) => (prev === 'asc' ? 'desc' : 'asc'))}
+                  className="sort-order-btn h-10 font-bold text-xs sm:text-sm px-3.5 py-2 transition-colors flex items-center justify-center gap-1 cursor-pointer shrink-0 select-none"
+                >
+                  {sortOrder === 'asc' ? '▲ 昇順' : '▼ 降順'}
+                </button>
               </div>
             </div>
           </div>
         )}
 
         {/* 楽曲カード一覧 */}
-        <div className="w-full max-w-4xl flex flex-col gap-4">
+        <div className="w-full max-w-4xl flex flex-col gap-4 relative z-10">
           {error && <div className="text-xl text-red-400 text-center py-8">{error}</div>}
 
           {!error && filteredAndSortedSongs.length === 0 && (
