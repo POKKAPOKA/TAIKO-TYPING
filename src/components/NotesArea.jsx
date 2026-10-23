@@ -140,8 +140,11 @@ const NotesArea = React.memo(() => {
       const storeState = useGameStore.getState();
       const currentTime = gameEngine.getCurrentTime() - storeState.offsetMs;
 
+      const effectiveSpeed = gameEngine.getEffectiveSpeedMultiplier(storeState.speedMultiplier);
+      const noteSpeed = NOTE_SPEED * effectiveSpeed;
+
       const pastMargin = 1500;
-      const futureWindow = Math.max(BASE_WIDTH, window.innerWidth || 1920) / NOTE_SPEED + 1500;
+      const futureWindow = Math.max(BASE_WIDTH, window.innerWidth || 1920) / Math.max(0.1, noteSpeed) + 1500;
       const newStart = currentTime - pastMargin;
       const newEnd = currentTime + futureWindow;
       setVisibleRange(prev => {
@@ -163,7 +166,6 @@ const NotesArea = React.memo(() => {
         }
 
         const noteElements = container.children;
-        const noteSpeed = NOTE_SPEED * storeState.speedMultiplier;
 
         for (let i = 0; i < noteElements.length; i++) {
           const el = noteElements[i];

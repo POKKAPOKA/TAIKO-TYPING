@@ -197,7 +197,7 @@ export class GameEngine {
     this.audio = new Audio(audioUrl);
     this.audio.currentTime = 0;
     // ※倍速は音声の再生速度(playbackRate)では変えず、ノーツのスクロール速度のみに適用する
-    //   （NotesArea.jsx側で NOTE_SPEED * speedMultiplier を使用）
+    //   （設定値 4.00＝標準 1.0倍 となるよう getEffectiveSpeedMultiplier で speed / 4.0 に補正）
 
     if (this.leadInTime === 0) {
       this.audio.volume = 0.5;
@@ -615,6 +615,13 @@ export class GameEngine {
 
   getCurrentTime() {
     return this.currentTime;
+  }
+
+  // 設定画面のレーン速度（1.00〜10.00、標準基準値 4.00）を実効速度乗数（speed / 4.0）に変換する
+  // これにより従来の設定値 1.00 のノーツ速度と、新設定値 4.00 のノーツ速度が完全に一致する
+  getEffectiveSpeedMultiplier(speed = useGameStore.getState().speedMultiplier) {
+    const val = typeof speed === 'number' ? speed : 4.0;
+    return val / 4.0;
   }
 }
 

@@ -39,28 +39,34 @@ function loadInitialMobileMode() {
   return false;
 }
 
-// 保存された設定を読み込む（なければデフォルト値）
+// 保存された設定を読み込む（なければデフォルト値：レーン速度 4.00＝標準）
 function loadSettings() {
   try {
     const raw = localStorage.getItem(SETTINGS_STORAGE_KEY);
-    if (!raw) return { speedMultiplier: 1.0, wallAmount: 0, offsetMs: 0, showCustomModes: false };
+    if (!raw) return { speedMultiplier: 4.0, wallAmount: 0, offsetMs: 0, showCustomModes: false };
     const parsed = JSON.parse(raw);
+    // 旧スケール（speedScaleVersion !== 2）で初期値 1.0 のまま保存されていた場合は新基準値 4.0 に移行
+    const rawSpeed = parsed.speedScaleVersion === 2
+      ? parsed.speedMultiplier
+      : (typeof parsed.speedMultiplier === 'number' && parsed.speedMultiplier !== 1.0
+          ? parsed.speedMultiplier
+          : 4.0);
     return {
-      speedMultiplier: typeof parsed.speedMultiplier === 'number'
-        ? Math.min(10.0, Math.max(1.0, parseFloat(parsed.speedMultiplier.toFixed(2))))
-        : 1.0,
+      speedMultiplier: typeof rawSpeed === 'number'
+        ? Math.min(10.0, Math.max(1.0, parseFloat(rawSpeed.toFixed(2))))
+        : 4.0,
       wallAmount: typeof parsed.wallAmount === 'number' ? parsed.wallAmount : 0,
       offsetMs: typeof parsed.offsetMs === 'number' ? parsed.offsetMs : 0,
       showCustomModes: typeof parsed.showCustomModes === 'boolean' ? parsed.showCustomModes : false
     };
   } catch {
-    return { speedMultiplier: 1.0, wallAmount: 0, offsetMs: 0, showCustomModes: false };
+    return { speedMultiplier: 4.0, wallAmount: 0, offsetMs: 0, showCustomModes: false };
   }
 }
 
 function saveSettings(settings) {
   try {
-    localStorage.setItem(SETTINGS_STORAGE_KEY, JSON.stringify(settings));
+    localStorage.setItem(SETTINGS_STORAGE_KEY, JSON.stringify({ ...settings, speedScaleVersion: 2 }));
   } catch {
     // 保存失敗時は無視（プライベートモード等）
   }
@@ -214,7 +220,7 @@ export const useGameStore = create((set) => ({
   setSpeedMultiplier: (speedMultiplier) => set((state) => {
     const val = typeof speedMultiplier === 'number'
       ? Math.min(10.0, Math.max(1.0, parseFloat(speedMultiplier.toFixed(2))))
-      : 1.0;
+      : 4.0;
     const next = { speedMultiplier: val, wallAmount: state.wallAmount, offsetMs: state.offsetMs, showCustomModes: state.showCustomModes };
     saveSettings(next);
     return { speedMultiplier: val };
