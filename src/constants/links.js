@@ -11,7 +11,7 @@ export const SURVEY_FORM_URL =
 export const GAME_PUBLIC_URL =
   typeof window !== 'undefined' && window.location?.origin
     ? window.location.origin
-    : 'https://taiko-typing.example.com';
+    : 'https://taikotyping.example.com';
 
 // 指定したURLのQRコード画像URLを生成するヘルパー
 export function getQrCodeImageUrl(targetUrl, size = 200) {

@@ -17,7 +17,7 @@ export const CHARACTERS = [
   {
     id: 'shinpei',
     name: '朱音 ツキ (あかね つき)',
-    description: '編み笠と狐耳、背に大太刀を携えた和風ボーカリスト。桜紋の羽織をなびかせ、力強い歌声でステージを熱狂させる。',
+    description: '編み笠と狐耳、背に大太刀を携えた和風ボーカリスト。桜紋の羽織をなびかせ、力強い歌声でステージを熱狂させる。draw by ナオキ',
     chibi: './assets/characters/shinpei/chibi.png',
     sprites: {
       sing_1: './assets/characters/shinpei/sing_1.png',

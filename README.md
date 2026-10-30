@@ -1,4 +1,4 @@
-# 太鼓タイピング
+# TAiKOTYPiNG
 
 音楽に合わせて流れてくる言葉を、キーボード（またはスマホのフリック入力）でタイピングして遊ぶリズム×タイピングブラウザゲームです。
 インストール不要でブラウザだけで遊べて、自分で譜面（どの言葉をいつ出すかの設計図）を作ることもできます。
@@ -89,17 +89,17 @@ git config --global user.email "GitHubに登録したメールアドレス"
 
 ### STEP 2：プロジェクトを自分のパソコンに持ってくる（`git clone`）
 
-GitHubにある『太鼓タイピング』のプロジェクトを、自分のパソコンに丸ごとコピー（ダウンロード）します。**この作業は最初の1回だけでOKです。**
+GitHubにある『TAiKOTYPiNG』のプロジェクトを、自分のパソコンに丸ごとコピー（ダウンロード）します。**この作業は最初の1回だけでOKです。**
 
 1. Windowsのスタートメニューから **PowerShell** を開きます（またはプロジェクトを置きたいフォルダのアドレスバーに `powershell` と入力してEnterを押します）。
 2. 次のコマンドを1行ずつ入力してEnterキーを押します。
 
 ```powershell
 # ① GitHubからプロジェクトを丸ごとダウンロード（クローン）する
-git clone https://github.com/POKKAPOKA/TAIKO-TYPING.git
+git clone https://github.com/POKKAPOKA/TAiKOTYPiNG.git
 
-# ② ダウンロードされた「TAIKO-TYPING」フォルダの中に移動する
-cd TAIKO-TYPING
+# ② ダウンロードされた「TAiKOTYPiNG」フォルダの中に移動する
+cd TAiKOTYPiNG
 
 # ③ ゲームを動かすのに必要な部品をインストールする
 npm install
@@ -109,7 +109,7 @@ npm run dev
 ```
 
 > [!TIP]
-> 初回以降は、`git clone` をやり直す必要はありません。2回目からはエクスプローラーで作られた `TAIKO-TYPING` フォルダを開いて作業を始めます。
+> 初回以降は、`git clone` をやり直す必要はありません。2回目からはエクスプローラーで作られた `TAiKOTYPiNG` フォルダを開いて作業を始めます。
 
 ---
 
@@ -174,7 +174,7 @@ git push origin main
 > 初めて `git push` するときに、GitHubのログイン画面（ブラウザ認証ウィンドウ）が出ることがあります。画面の案内に従って「Authorize（承認）」を押せば完了です。
 
 #### ⑦（ブランチを作った場合）GitHubで合体をお願いする（Pull Request）
-1. ブラウザで [GitHubのリポジトリページ](https://github.com/POKKAPOKA/TAIKO-TYPING) を開きます。
+1. ブラウザで [GitHubのリポジトリページ](https://github.com/POKKAPOKA/TAiKOTYPiNG) を開きます。
 2. 画面上部に黄色い帯で **「Compare & pull request」** という緑色のボタンが表示されているのでクリックします。
 3. 変更内容を簡単に書いて **「Create pull request」** を押します。
 4. 自分またはサークルメンバーが確認して **「Merge pull request」** を押すと、本番（`main`）に合体されます！

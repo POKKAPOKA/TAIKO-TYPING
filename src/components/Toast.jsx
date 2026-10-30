@@ -93,7 +93,7 @@ const Toast = () => {
                     3
                   </span>
                   <Smartphone size={15} className="text-amber-300 shrink-0" />
-                  <span>ホーム画面の「太鼓タイピング」から起動するとバー無し全画面に！</span>
+                  <span>ホーム画面の「TAiKOTYPiNG」から起動するとバー無し全画面に！</span>
                 </div>
               </div>
 

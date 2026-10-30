@@ -1063,4 +1063,21 @@ textarea {
   border-color: #f472b6;
 }
 
+/* =========================================================
+   キャラクター選択画面：スマホ縦スワイプ＆ちびキャラ横スライド制御
+   ========================================================= */
+.char-select-root {
+  touch-action: pan-y;
+}
 
+.char-select-sheet-scroll {
+  touch-action: pan-y;
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior-y: contain;
+}
+
+.char-chibi-carousel-scroll {
+  touch-action: pan-x pan-y;
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior-x: contain;
+}

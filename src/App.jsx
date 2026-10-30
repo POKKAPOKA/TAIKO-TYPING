@@ -359,7 +359,7 @@ function App() {
       )}
 
       <div className={`flex flex-col items-center w-full h-full ${appMode === 'menu' || (appMode === 'game' && !isMobileMode) ? 'justify-center z-10' : 'z-10'} ${isMobileMode && appMode === 'game' ? 'min-h-0' : ''}`}>
-        <h1 className={`text-4xl font-black mb-8 text-orange-400 tracking-wider flex-shrink-0 ${appMode === 'menu' || appMode === 'game' ? 'hidden' : ''}`}>太鼓タイピング</h1>
+        <h1 className={`text-4xl font-black mb-8 text-orange-400 tracking-wider flex-shrink-0 ${appMode === 'menu' || appMode === 'game' ? 'hidden' : ''}`}>TAiKOTYPiNG</h1>
 
       {appMode === 'menu' && (
         <div className="w-full max-w-[340px] flex flex-col items-center justify-center gap-4 sm:gap-[18px] md:gap-5 my-auto px-4">
