@@ -1,6 +1,8 @@
 import React from "react";
+import { Heart } from "lucide-react";
 import { useGameStore } from "../store/gameStore";
 import { fetchRankingsResult } from "../api/rankings";
+import { useSystemSE } from "../hooks/useSystemSE";
 
 export default function ResultScreen({
   onRetry,
@@ -14,23 +16,47 @@ export default function ResultScreen({
   submitSuccessMessage,
   setLeaderboardData
 }) {
+  const { playDecide } = useSystemSE();
   const score = useGameStore(state => state.score);
   const maxCombo = useGameStore(state => state.maxCombo);
   const perfectCount = useGameStore(state => state.perfectCount);
   const goodCount = useGameStore(state => state.goodCount);
   const missCount = useGameStore(state => state.missCount);
+  const droppedCount = useGameStore(state => state.droppedCount);
+  const completedCount = useGameStore(state => state.completedCount);
   const maxKps = useGameStore(state => state.maxKps);
   const loadedScore = useGameStore(state => state.loadedScore);
+  const setShowSurveyModal = useGameStore(state => state.setShowSurveyModal);
+  const songLikesMap = useGameStore(state => state.songLikesMap);
+  const hasLikedCurrentResult = useGameStore(state => state.hasLikedCurrentResult);
+  const isLikingSong = useGameStore(state => state.isLikingSong);
+  const toggleCurrentSongLike = useGameStore(state => state.toggleCurrentSongLike);
   // エンジン内部に直接触れず、ストアに集計された statsData を参照する
   const statsData = useGameStore(state => state.statsData);
   const stats = statsData || { worstKeys: [], mistakeLog: [] };
   const typosByChar = statsData ? Object.fromEntries(statsData.worstKeys.map(w => [w.char, w.count])) : {};
+
+  const currentSongId = scoreFileName
+    ? scoreFileName.replace(/\.json$/i, "")
+    : loadedScore?.id || "";
+  const currentLikeCount = currentSongId ? (songLikesMap?.[currentSongId] || 0) : 0;
+
+  const handleLikeClick = () => {
+    playDecide();
+    toggleCurrentSongLike();
+  };
 
   const worstTypos = Object.entries(typosByChar)
     .sort((a, b) => b[1] - a[1])
     .slice(0, 3);
 
   const isCleared = score >= 700000;
+  const totalNotes = statsData?.stats?.totalNotes ?? 0;
+  // 打ち残し（dropped）が1つでもある場合、または未完了ノーツがある場合は FULL COMBO / ALL PERFECT 対象外とする
+  const hasDroppedNotes =
+    droppedCount > 0 ||
+    (totalNotes > 0 && completedCount < totalNotes) ||
+    stats.mistakeLog.some(log => log.type === "dropped");
 
   const getClearRank = () => {
     if (!isCleared) {
@@ -43,7 +69,7 @@ export default function ResultScreen({
         rankBadgeClass: "bg-neutral-800 text-rose-300 border-2 border-rose-500/50"
       };
     }
-    if (missCount === 0 && goodCount === 0 && perfectCount > 0) {
+    if (!hasDroppedNotes && missCount === 0 && goodCount === 0 && perfectCount > 0) {
       return {
         statusLabel: "CLEAR",
         rank: "ALL PERFECT!!",
@@ -53,7 +79,7 @@ export default function ResultScreen({
         rankBadgeClass: "bg-yellow-400 text-neutral-950 border-2 border-yellow-200"
       };
     }
-    if (missCount === 0 && perfectCount > 0) {
+    if (!hasDroppedNotes && missCount === 0 && perfectCount > 0) {
       return {
         statusLabel: "CLEAR",
         rank: "FULL COMBO!",
@@ -103,10 +129,13 @@ export default function ResultScreen({
       : 1
   );
 
-  // resizeイベントの登録はコールバックrefで行う（初回レンダリング時に1度だけ）
+  // resizeイベントの登録＆リザルト画面到達時のプレイログ自動保存はコールバックrefで行う（useEffectは使わない）
   const resizeHandlerRef = React.useRef(null);
   const setResizeListenerRef = React.useCallback((node) => {
     if (node && !resizeHandlerRef.current) {
+      // まだ未記録の場合はリザルト画面到達タイミングでプレイ記録を自動保存
+      useGameStore.getState().recordCurrentPlayLog();
+      useGameStore.getState().refreshSongLikes();
       const handler = () => {
         setScale(Math.min(1, (window.innerWidth - 32) / 1280, (window.innerHeight - 32) / 720));
       };
@@ -215,29 +244,29 @@ export default function ResultScreen({
         </div>
       </div>
 
-      {/* ランキング登録 & アクションボタン */}
-      <div className="absolute flex flex-col gap-4" style={{ top: "140px", left: "930px", width: "300px", transform: "none" }}>
+      {/* ランキング登録 & いいね & アクションボタン */}
+      <div className="absolute flex flex-col gap-2.5" style={{ top: "105px", left: "930px", width: "300px", transform: "none" }}>
         {!isLocalPlay && scoreFileName ? (
-          <div className="flex flex-col gap-3 w-full bg-neutral-800/80 p-5 rounded-2xl border-2 border-neutral-700">
-            <h3 className="text-center font-black text-sm text-neutral-500 tracking-widest">ランキング登録</h3>
+          <div className="flex flex-col gap-2 w-full bg-neutral-800/80 p-3.5 rounded-2xl border-2 border-neutral-700">
+            <h3 className="text-center font-black text-sm text-neutral-400 tracking-widest">ランキング登録</h3>
             <div className="flex flex-col gap-2">
               <input
                 type="text"
                 placeholder="Guest"
                 value={playerName}
                 onChange={handleNameChange}
-                className="w-full bg-neutral-900 border-2 border-neutral-700 text-white px-4 py-3 rounded-xl font-bold outline-none focus:border-cyan-500 transition-colors text-center"
+                className="w-full bg-neutral-900 border-2 border-neutral-700 text-white px-4 py-2 rounded-xl font-bold outline-none focus:border-cyan-500 transition-colors text-center"
               />
               <button
                 onClick={handleScoreSubmit}
                 disabled={isSubmitting}
-                className="w-full py-3 bg-cyan-600 hover:bg-cyan-500 disabled:bg-neutral-700 text-white font-black rounded-xl transition-colors"
+                className="w-full py-2 bg-cyan-600 hover:bg-cyan-500 disabled:bg-neutral-700 text-white font-black rounded-xl transition-colors cursor-pointer"
               >
                 {isSubmitting ? "送信中..." : "登録する"}
               </button>
             </div>
             {submitSuccessMessage && (
-              <div className="text-center text-sm font-bold text-cyan-400 mt-1">
+              <div className="text-center text-xs font-bold text-cyan-400 mt-0.5 leading-snug">
                 {submitSuccessMessage}
               </div>
             )}
@@ -248,9 +277,50 @@ export default function ResultScreen({
           </div>
         ) : null}
 
+        {/* いいね！ボタン（フラット・角丸・影なし） */}
+        {!isLocalPlay && currentSongId && (
+          <button
+            type="button"
+            disabled={isLikingSong}
+            onClick={handleLikeClick}
+            aria-pressed={hasLikedCurrentResult}
+            className={`w-full py-3 px-4 rounded-2xl border-2 font-black text-base tracking-wide transition-colors cursor-pointer shadow-none flex items-center justify-between ${
+              hasLikedCurrentResult
+                ? "bg-rose-500 hover:bg-rose-400 border-rose-200 text-white"
+                : "bg-rose-500/20 hover:bg-rose-500/35 border-rose-400 text-rose-100 hover:text-white"
+            }`}
+          >
+            <span className="flex items-center gap-2">
+              <Heart
+                size={20}
+                className={hasLikedCurrentResult ? "fill-white text-white shrink-0" : "text-rose-300 shrink-0"}
+              />
+              <span>{hasLikedCurrentResult ? "いいね！済み" : "この曲にいいね！"}</span>
+            </span>
+            <span
+              className={`px-3 py-0.5 rounded-full font-dotgothic text-sm font-black tabular-nums ${
+                hasLikedCurrentResult
+                  ? "bg-rose-900/65 text-rose-100 border border-rose-200/70"
+                  : "bg-neutral-900/85 text-rose-300 border border-rose-400/60"
+              }`}
+            >
+              ♥ {currentLikeCount}
+            </span>
+          </button>
+        )}
+
+        {/* 学祭展示用：アンケート＆スマホ版プレイ案内ボタン（フラット・角丸・影なし） */}
+        <button
+          type="button"
+          onClick={() => setShowSurveyModal(true)}
+          className="w-full py-3 px-4 bg-pink-500/20 hover:bg-pink-500/35 border-2 border-pink-400 text-pink-100 hover:text-white rounded-2xl font-black text-base tracking-wide transition-colors cursor-pointer shadow-none flex items-center justify-center gap-1.5"
+        >
+          <span>📝 アンケートに答える（30秒）</span>
+        </button>
+
         <button
           onClick={onRetry}
-          className="w-full py-4 bg-orange-500 hover:bg-orange-400 text-neutral-900 rounded-full font-black text-xl transition-colors"
+          className="w-full py-3 bg-orange-500 hover:bg-orange-400 text-neutral-900 rounded-full font-black text-xl transition-colors cursor-pointer"
         >
           リトライ
         </button>
@@ -263,14 +333,14 @@ export default function ResultScreen({
                 promise: fetchRankingsResult(songId)
               });
             }}
-            className="w-full py-4 bg-yellow-600 hover:bg-yellow-500 text-white rounded-full font-black text-xl transition-colors"
+            className="w-full py-3 bg-yellow-600 hover:bg-yellow-500 text-white rounded-full font-black text-xl transition-colors cursor-pointer"
           >
             ランキング
           </button>
         )}
         <button
           onClick={onBack}
-          className="w-full py-4 bg-neutral-700 hover:bg-neutral-600 text-white rounded-full font-black text-xl transition-colors"
+          className="w-full py-3 bg-neutral-700 hover:bg-neutral-600 text-white rounded-full font-black text-xl transition-colors cursor-pointer"
         >
           戻る
         </button>

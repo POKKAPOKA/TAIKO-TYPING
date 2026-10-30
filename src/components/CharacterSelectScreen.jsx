@@ -289,7 +289,7 @@ export default function CharacterSelectScreen({ onBack }) {
             className="w-full py-3 sm:py-3.5 bg-[#1b152e] hover:bg-[#271f42] active:bg-[#322854] text-amber-300 hover:text-amber-200 border-2 border-amber-500/80 rounded-2xl font-dotgothic font-black text-base sm:text-lg tracking-widest transition-colors flex items-center justify-center gap-2 cursor-pointer select-none shadow-none"
           >
             <Home size={20} />
-            <span>ホーム画面に戻る</span>
+            <span>メニューに戻る</span>
           </button>
         </div>
       </div>

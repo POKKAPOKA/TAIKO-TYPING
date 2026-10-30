@@ -14,6 +14,17 @@ export const CHARACTERS = [
       miss: './assets/characters/char_test/miss.svg',
     },
   },
+  {
+    id: 'shinpei',
+    name: '朱音 ツキ (あかね つき)',
+    description: '編み笠と狐耳、背に大太刀を携えた和風ボーカリスト。桜紋の羽織をなびかせ、力強い歌声でステージを熱狂させる。',
+    chibi: './assets/characters/shinpei/chibi.png',
+    sprites: {
+      sing_1: './assets/characters/shinpei/sing_1.png',
+      sing_2: './assets/characters/shinpei/sing_2.png',
+      miss: './assets/characters/shinpei/miss.png',
+    },
+  },
 ];
 
 export const DEFAULT_CHARACTER_ID = 'char_test';

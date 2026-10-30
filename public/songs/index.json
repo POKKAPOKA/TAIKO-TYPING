@@ -109,5 +109,16 @@
     "audioPath": "./songs/donguri/donguri.mp3",
     "notesCount": 206,
     "durationMs": 38454.545454545456
+  },
+  {
+    "id": "taipatime",
+    "title": "タイパタイムタイコタイム",
+    "creator": "渚鳥",
+    "provider": "222",
+    "difficulty": 10,
+    "scorePath": "./songs/taipatime/taipatime.json",
+    "audioPath": "./songs/taipatime/taipatime.mp3",
+    "notesCount": 219,
+    "durationMs": 89386.66666666666
   }
 ]

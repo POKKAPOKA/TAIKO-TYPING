@@ -1,4 +1,6 @@
 import { create } from 'zustand';
+import { getLocalPlayLogs, savePlayLogToLocal, fetchMergedPlayLogs, clearPlayLogs } from '../utils/csvExport';
+import { getLocalSongLikesMap, fetchGlobalSongLikes, updateSongLikeCount, normalizeSongId } from '../api/likes';
 
 // トースト自動消去用タイマー（UI側のuseEffectを使わずストア側で管理する）
 let toastTimer = null;
@@ -93,12 +95,26 @@ const initialPlayState = {
   lastJudgment: null,
   wordQueue: [],
   statsData: null,
+  lastRecordedPlayId: null,
   vocalState: 'sing_1',
   isSubmittingScore: false,
-  submitSuccessMessage: null
+  submitSuccessMessage: null,
+  hasLikedCurrentResult: false,
+  isLikingSong: false
 };
 
-export const useGameStore = create((set) => ({
+// PWAスタンドアロン起動（「ホーム画面に追加」から起動）かどうかを判定する
+export function isStandaloneMode() {
+  if (typeof window === 'undefined') return false;
+  const isDisplayStandalone =
+    typeof window.matchMedia === 'function' &&
+    (window.matchMedia('(display-mode: standalone)').matches ||
+      window.matchMedia('(display-mode: fullscreen)').matches);
+  const isIosStandalone = window.navigator?.standalone === true;
+  return Boolean(isDisplayStandalone || isIosStandalone);
+}
+
+export const useGameStore = create((set, get) => ({
   score: 0,
   combo: 0,
   maxCombo: 0,
@@ -116,6 +132,8 @@ export const useGameStore = create((set) => ({
   isFullscreen: false,
   isMobileMode: loadInitialMobileMode(),
   showSettings: false,
+  showPwaGuideModal: false,
+  showSurveyModal: false,
   showGuide: false, // プレイ開始直後に数秒間だけ表示する操作ガイド
 
   // ボーカリスト演出用ステート ('sing_1' | 'sing_2' | 'miss')
@@ -128,10 +146,18 @@ export const useGameStore = create((set) => ({
 
   // リザルト画面用の集計データ（プレイ終了時にGameEngineがセットする）
   statsData: null,
+  lastRecordedPlayId: null,
+  playLogsCount: getLocalPlayLogs().length,
+  isExportingCsv: false,
 
   // ランキング送信状態（曲終了時の自動登録とリザルト画面の手動登録で共用）
   isSubmittingScore: false,
   submitSuccessMessage: null,
+
+  // 楽曲ごとのいいね数マップ＆今のリザルト画面でいいね済みかの状態
+  songLikesMap: getLocalSongLikesMap(),
+  hasLikedCurrentResult: false,
+  isLikingSong: false,
 
   // 読み込んだデータ
   loadedScore: null,
@@ -215,7 +241,52 @@ export const useGameStore = create((set) => ({
     set({ isMobileMode });
   },
   setShowSettings: (showSettings) => set({ showSettings }),
+  setShowPwaGuideModal: (showPwaGuideModal) => set({ showPwaGuideModal }),
+  setShowSurveyModal: (showSurveyModal) => set({ showSurveyModal }),
   setShowGuide: (showGuide) => set({ showGuide }),
+  toggleFullscreen: () => {
+    if (typeof document === 'undefined') return;
+    const docEl = document.documentElement;
+    const fsElement = document.fullscreenElement || document.webkitFullscreenElement;
+    const requestFs = docEl.requestFullscreen || docEl.webkitRequestFullscreen;
+    const exitFs = document.exitFullscreen || document.webkitExitFullscreen;
+
+    if (!fsElement) {
+      // iOS Safari 等で Fullscreen API が未対応の場合（かつスタンドアロン起動ではない状態）
+      if (typeof requestFs !== 'function') {
+        if (isStandaloneMode()) {
+          get().showToast('すでにホーム画面アプリとして全画面表示中です');
+        } else {
+          set({ showPwaGuideModal: true });
+          get().showToast('スマホで全画面プレイするには、ブラウザの共有メニューから「ホーム画面に追加」して起動してください');
+        }
+        return;
+      }
+
+      try {
+        const res = requestFs.call(docEl);
+        if (res && typeof res.catch === 'function') {
+          res.catch(() => {
+            if (!isStandaloneMode() && get().isMobileMode) {
+              set({ showPwaGuideModal: true });
+              get().showToast('スマホで全画面プレイするには、ブラウザの共有メニューから「ホーム画面に追加」して起動してください');
+            } else {
+              get().showToast('全画面表示に失敗しました');
+            }
+          });
+        }
+      } catch {
+        if (!isStandaloneMode()) {
+          set({ showPwaGuideModal: true });
+          get().showToast('スマホで全画面プレイするには、ブラウザの共有メニューから「ホーム画面に追加」して起動してください');
+        } else {
+          get().showToast('全画面表示に失敗しました');
+        }
+      }
+    } else if (typeof exitFs === 'function') {
+      exitFs.call(document);
+    }
+  },
   // 設定変更時はlocalStorageにも保存する
   setSpeedMultiplier: (speedMultiplier) => set((state) => {
     const val = typeof speedMultiplier === 'number'
@@ -240,15 +311,116 @@ export const useGameStore = create((set) => ({
     saveSettings(next);
     return { showCustomModes };
   }),
-  toggleShowCustomModes: () => set((state) => {
-    const showCustomModes = !state.showCustomModes;
+  toggleShowCustomModes: () => {
+    const showCustomModes = !get().showCustomModes;
+    const state = get();
     const next = { speedMultiplier: state.speedMultiplier, wallAmount: state.wallAmount, offsetMs: state.offsetMs, showCustomModes };
     saveSettings(next);
-    return { showCustomModes };
-  }),
+    set({ showCustomModes });
+    if (showCustomModes) {
+      get().refreshPlayLogsCount();
+    }
+  },
   setStatsData: (statsData) => set({ statsData }),
+  setIsExportingCsv: (isExportingCsv) => set({ isExportingCsv }),
+  refreshPlayLogsCount: async () => {
+    try {
+      const { logs } = await fetchMergedPlayLogs();
+      set({ playLogsCount: logs.length });
+    } catch {
+      set({ playLogsCount: getLocalPlayLogs().length });
+    }
+  },
+  clearAllPlayLogs: () => {
+    clearPlayLogs();
+    set({ playLogsCount: 0 });
+  },
+  recordCurrentPlayLog: () => {
+    const state = get();
+    if (state.lastRecordedPlayId) {
+      return null;
+    }
+    const songId = state.scoreFileName
+      ? state.scoreFileName.replace(/\.json$/i, '')
+      : state.loadedScore?.id || 'custom_song';
+    const songTitle = state.loadedScore?.title || songId;
+    const creator =
+      state.loadedScore?.creator ||
+      (state.isLocalPlay ? 'カスタム譜面' : '公式譜面');
+    const definedLevel = Number(state.loadedScore?.difficulty) || 1;
+    const totalNotes =
+      Number(state.statsData?.stats?.totalNotes) ||
+      Number(state.loadedScore?.notesCount) ||
+      Number(state.loadedScore?.notes?.length) ||
+      state.perfectCount + state.goodCount + state.missCount ||
+      1;
+
+    const entry = savePlayLogToLocal({
+      songId,
+      songTitle,
+      creator,
+      definedLevel,
+      totalNotes,
+      isMobileMode: state.isMobileMode,
+      score: state.score,
+      perfectCount: state.perfectCount,
+      goodCount: state.goodCount,
+      missCount: state.missCount,
+      maxCombo: state.maxCombo,
+      peakKps: state.maxKps,
+      worstKeys: state.statsData?.worstKeys || [],
+      mistakeLog: state.statsData?.mistakeLog || [],
+    });
+
+    set((prev) => ({
+      lastRecordedPlayId: entry.id,
+      playLogsCount: Math.max(prev.playLogsCount + 1, getLocalPlayLogs().length),
+    }));
+    // Supabase側の件数も含めて最新件数を非同期で同期
+    get().refreshPlayLogsCount();
+    return entry;
+  },
   setIsSubmittingScore: (isSubmittingScore) => set({ isSubmittingScore }),
   setSubmitSuccessMessage: (submitSuccessMessage) => set({ submitSuccessMessage }),
+
+  refreshSongLikes: async () => {
+    try {
+      const updatedMap = await fetchGlobalSongLikes();
+      set({ songLikesMap: { ...updatedMap } });
+    } catch {
+      set({ songLikesMap: getLocalSongLikesMap() });
+    }
+  },
+  toggleCurrentSongLike: async () => {
+    const state = get();
+    if (state.isLikingSong) return;
+    const rawSongId = state.scoreFileName
+      ? state.scoreFileName
+      : state.loadedScore?.id || '';
+    const songId = normalizeSongId(rawSongId);
+    if (!songId) return;
+
+    const nextLiked = !state.hasLikedCurrentResult;
+    const delta = nextLiked ? 1 : -1;
+    const prevCount = Math.max(0, Number(state.songLikesMap?.[songId]) || 0);
+    const optimisticCount = Math.max(0, prevCount + delta);
+
+    set({
+      hasLikedCurrentResult: nextLiked,
+      isLikingSong: true,
+      songLikesMap: {
+        ...state.songLikesMap,
+        [songId]: optimisticCount,
+      },
+    });
+
+    try {
+      const syncedMap = await updateSongLikeCount(songId, nextLiked);
+      set({ songLikesMap: { ...syncedMap } });
+    } finally {
+      set({ isLikingSong: false });
+    }
+  },
 
   setLoadedScore: (score, fileName) => set({ loadedScore: score, scoreFileName: fileName || null }),
   setAudioUrl: (url, fileName) => set((state) => {
@@ -278,7 +450,7 @@ export const useGameStore = create((set) => ({
   showToast: (msg) => {
     // 3秒後に自動で消す
     if (toastTimer) clearTimeout(toastTimer);
-    toastTimer = setTimeout(() => set({ toastMessage: null }), 3000);
+    toastTimer = setTimeout(() => set({ toastMessage: null }), 3500);
     set((state) => ({ toastMessage: msg, toastId: state.toastId + 1 }));
   },
 
@@ -309,7 +481,11 @@ export const useGameStore = create((set) => ({
 
 // Fullscreen listener
 if (typeof document !== 'undefined') {
-  document.addEventListener('fullscreenchange', () => {
-    useGameStore.getState().setIsFullscreen(!!document.fullscreenElement);
-  });
+  const updateFullscreenState = () => {
+    useGameStore.getState().setIsFullscreen(
+      Boolean(document.fullscreenElement || document.webkitFullscreenElement)
+    );
+  };
+  document.addEventListener('fullscreenchange', updateFullscreenState);
+  document.addEventListener('webkitfullscreenchange', updateFullscreenState);
 }

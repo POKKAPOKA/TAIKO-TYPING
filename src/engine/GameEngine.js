@@ -289,6 +289,8 @@ export class GameEngine {
     });
 
     store.setStatus('result');
+    // リザルト画面到達時にプレイ記録（Play Logs）を自動保存
+    store.recordCurrentPlayLog();
   }
 
   update() {
@@ -336,8 +338,9 @@ export class GameEngine {
   //   ノーツが判定ラインを通過して MISS 判定幅（+150ms）を過ぎた瞬間に即 MISS 確定とする。
   //   （次のノーツが判定ライン手前に来たタイミングで遅れて MISS が出たり、最後のノーツ通過後に謎の遅れ判定が出るのを防ぐ）
   // ・1打目入力済み(this.currentTargetJudged)の場合：
-  //   残りの文字を打ち切る猶予を endTime または次ノーツの判定開始枠まで持たせる。
-  _getTimeLimit(store) {
+  //   ノーツの入力可能終了時刻（endTime）が来る前に途中で入力不能にならないよう、
+  //   最低でも endTime（さらに次ノーツまでに余裕がある場合は最大 endTime + 150ms）まで入力可能とする。
+  _getTimeLimit() {
     if (!this.currentTarget) return Infinity;
 
     if (!this.currentTargetJudged) {
@@ -345,13 +348,10 @@ export class GameEngine {
     }
 
     const nextWordTime = this.queue.length > 0 ? this.queue[0].time : Infinity;
-    const maxTypingEnd = Math.min(
-      this.currentTarget.endTime,
-      this.currentTarget.time + Math.max(500, this._getNoteKeystrokes(this.currentTarget, store.isMobileMode) * 300)
-    );
     return Math.max(
       this.currentTarget.time + JUDGE_WINDOW.MISS,
-      Math.min(maxTypingEnd, nextWordTime - JUDGE_WINDOW.MISS)
+      this.currentTarget.endTime,
+      Math.min(this.currentTarget.endTime + JUDGE_WINDOW.MISS, nextWordTime - JUDGE_WINDOW.MISS)
     );
   }
 

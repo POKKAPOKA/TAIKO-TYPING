@@ -12,6 +12,7 @@ import SongSelect from './components/SongSelect';
 import CharacterSelectScreen from './components/CharacterSelectScreen';
 import Leaderboard from './components/Leaderboard';
 import SettingsModal from './components/SettingsModal';
+import SurveyModal from './components/SurveyModal';
 import FlickKeyboard from './components/FlickKeyboard';
 import ResultScreen from './components/ResultScreen';
 import { fetchRankingsResult, submitScore } from './api/rankings';
@@ -47,13 +48,17 @@ if (typeof window !== 'undefined') {
       './assets/button_6_exit_fullscreen.png',
       './assets/btn_play_v4_perfect.png',
       './assets/btn_ranking.png',
-      './assets/btn_random.png',
+      './assets/btn_random.png?v=2',
       './assets/btn_back_menu.png',
       './assets/song_card_frame.png',
       './assets/characters/char_test/chibi.svg',
       './assets/characters/char_test/sing_1.svg',
       './assets/characters/char_test/sing_2.svg',
-      './assets/characters/char_test/miss.svg'
+      './assets/characters/char_test/miss.svg',
+      './assets/characters/shinpei/chibi.png',
+      './assets/characters/shinpei/sing_1.png',
+      './assets/characters/shinpei/sing_2.png',
+      './assets/characters/shinpei/miss.png'
     ];
     const runPreload = () => {
       preloadAssets.forEach((src) => {
@@ -109,23 +114,14 @@ function App() {
   const isFullscreen = useGameStore(state => state.isFullscreen);
   const isMobileMode = useGameStore(state => state.isMobileMode);
   const showSettings = useGameStore(state => state.showSettings);
+  const showSurveyModal = useGameStore(state => state.showSurveyModal);
   const setIsMobileMode = useGameStore(state => state.setIsMobileMode);
   const setShowSettings = useGameStore(state => state.setShowSettings);
+  const setShowSurveyModal = useGameStore(state => state.setShowSurveyModal);
   const showCustomModes = useGameStore(state => state.showCustomModes);
+  const toggleFullscreen = useGameStore(state => state.toggleFullscreen);
 
   const [showHowToPlay, setShowHowToPlay] = useState(false);
-
-  const toggleFullscreen = () => {
-    if (!document.fullscreenElement) {
-      document.documentElement.requestFullscreen().catch(() => {
-        showToast("全画面表示に失敗しました");
-      });
-    } else {
-      if (document.exitFullscreen) {
-        document.exitFullscreen();
-      }
-    }
-  };
 
 
   // ランキング登録用のプレイヤー名（localStorageに保存して次回起動時も使う）
@@ -278,14 +274,14 @@ function App() {
     <>
       <Toast />
       <div
-        className={`w-screen bg-neutral-900 text-white flex flex-col items-center font-sans select-none overflow-hidden box-border relative ${
+        className={`w-screen h-[100dvh] bg-neutral-900 text-white flex flex-col items-center font-sans select-none overflow-hidden box-border relative ${
           appMode === 'game' && status !== 'result'
             ? isMobileMode
-              ? 'h-[100dvh] p-1.5 sm:p-2 bg-cover bg-center bg-no-repeat'
-              : 'h-screen p-2 sm:p-4 md:p-6 bg-cover bg-center bg-no-repeat'
+              ? 'p-1.5 sm:p-2 bg-cover bg-center bg-no-repeat'
+              : 'p-2 sm:p-4 md:p-6 bg-cover bg-center bg-no-repeat'
             : appMode === 'menu'
-            ? 'h-screen p-0 bg-cover bg-center bg-no-repeat'
-            : 'h-screen p-4 sm:p-8'
+            ? 'p-0 bg-cover bg-center bg-no-repeat'
+            : 'p-4 sm:p-8'
         }`}
         style={
           appMode === 'menu' || (appMode === 'game' && status !== 'result')
@@ -476,23 +472,43 @@ function App() {
             />
           </button>
 
-          {/* 創作譜面モード（設定でONにした場合のみ表示） */}
-          {showCustomModes && (
-            <div className="flex gap-3 w-full mt-1 justify-center">
-              <button
-                onClick={() => setAppMode('setup')}
-                className="px-5 py-2 bg-neutral-950/70 hover:bg-cyan-950/70 border border-cyan-500/50 text-cyan-300 rounded-full font-bold text-xs backdrop-blur-sm transition-all"
-              >
-                創作譜面を遊ぶ
-              </button>
-              <button
-                onClick={() => setAppMode('editor')}
-                className="px-5 py-2 bg-neutral-950/70 hover:bg-neutral-800/70 border border-neutral-600 text-neutral-300 rounded-full font-bold text-xs backdrop-blur-sm transition-all"
-              >
-                創作譜面を作る
-              </button>
-            </div>
-          )}
+          {/* サブボタンエリア：アンケート＆スマホ版プレイ案内 ／ 創作譜面モード */}
+          <div className="flex flex-wrap gap-2.5 w-full mt-1 justify-center items-center">
+            <button
+              type="button"
+              onClick={() => setShowSurveyModal(true)}
+              className="px-6 py-2.5 bg-[#160c2e]/90 hover:bg-pink-500/30 border-2 border-pink-400 text-pink-100 hover:text-white rounded-xl font-black text-xs sm:text-sm tracking-wider backdrop-blur-md transition-colors cursor-pointer shadow-none flex items-center gap-1.5"
+            >
+              <span>📝 アンケート</span>
+            </button>
+
+            {showCustomModes && (
+              <>
+                <button
+                  type="button"
+                  onClick={() => setAppMode('setup')}
+                  className="px-4 py-2.5 bg-[#100d1f]/85 hover:bg-cyan-950/80 border-2 border-cyan-500/60 text-cyan-300 rounded-xl font-bold text-xs backdrop-blur-sm transition-colors cursor-pointer shadow-none"
+                >
+                  創作譜面を遊ぶ
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setAppMode('editor')}
+                  className="px-4 py-2.5 bg-[#100d1f]/85 hover:bg-neutral-800/80 border-2 border-neutral-600 text-neutral-300 rounded-xl font-bold text-xs backdrop-blur-sm transition-colors cursor-pointer shadow-none"
+                >
+                  創作譜面を作る
+                </button>
+              </>
+            )}
+          </div>
+
+          {/* フッター：サークル名「SRB」クレジット表記 */}
+          <div
+            className="fixed left-1/2 -translate-x-1/2 z-20 pointer-events-none text-[11px] sm:text-xs font-dotgothic font-bold tracking-widest text-purple-200/80 bg-[#0b0718]/75 border border-purple-400/35 px-3.5 py-1 rounded-full"
+            style={{ bottom: 'calc(0.6rem + env(safe-area-inset-bottom, 0px))' }}
+          >
+            © SRB
+          </div>
         </div>
       )}
 
@@ -609,7 +625,16 @@ function App() {
                   </div>
                   <div className="text-[11px] leading-none tracking-tight">
                     {Array.from({ length: 10 }, (_, idx) => (
-                      <span key={idx} className={idx < currentDifficulty ? 'star-lit' : 'star-unlit'}>
+                      <span
+                        key={idx}
+                        className={
+                          idx < currentDifficulty
+                            ? currentDifficulty >= 10
+                              ? 'star-lit-max'
+                              : 'star-lit'
+                            : 'star-unlit'
+                        }
+                      >
                         {idx < currentDifficulty ? '★' : '☆'}
                       </span>
                     ))}
@@ -665,9 +690,9 @@ function App() {
 
             {/* 2. 【中央〜下部】ボーカリストステージ ＆ 下部サイバーノーツレーン ＋ ローマ字表示 */}
             <div className="flex-1 w-full flex flex-col justify-between items-center min-h-0 relative z-10 px-1 pt-1">
-              {/* 中央ボーカリストキャラクター立ち絵（3表情をプリマウント切替で0ms即応） */}
-              <div className="flex-1 w-full flex items-center justify-center min-h-0 relative overflow-hidden">
-                <div className={`relative h-full max-h-[220px] aspect-[420/520] flex items-center justify-center ${isMissState ? 'vocalist-miss' : 'vocalist-sing'}`}>
+              {/* 中央ボーカリストキャラクター立ち絵（3表情をプリマウント切替で0ms即応・4倍面積表示） */}
+              <div className="flex-1 w-full flex items-start justify-center min-h-0 relative overflow-hidden">
+                <div className={`relative h-[195%] max-h-[480px] aspect-[420/520] -mt-1 flex items-center justify-center shrink-0 ${isMissState ? 'vocalist-miss' : 'vocalist-sing'}`}>
                   <img
                     src={activeCharacter.sprites.sing_1}
                     alt={`${activeCharacter.name} sing_1`}
@@ -690,12 +715,12 @@ function App() {
               </div>
 
               {/* 下部ノーツレーン（縦棒判定ライン＆上外側リアルタイム判定） */}
-              <div className="w-full flex-shrink-0">
+              <div className="w-full flex-shrink-0 relative z-20">
                 <NotesArea />
               </div>
 
               {/* タイピング文字表示（大きな白文字＋シアンネオンアンダーライン） */}
-              <div className="w-full py-1.5 flex items-center justify-center flex-shrink-0 min-h-[48px]">
+              <div className="w-full py-1.5 flex items-center justify-center flex-shrink-0 min-h-[48px] relative z-20">
                 <ActiveWordDisplay />
               </div>
             </div>
@@ -744,9 +769,9 @@ function App() {
             </div>
 
             {/* 1. 【上部】左上パネル（楽曲情報＆クリアゲージ） ＆ 右上パネル（SCORE / MAX KPS / ポーズ） */}
-            <div className="w-full flex flex-wrap justify-between items-start gap-3 relative z-20">
+            <div className="w-full flex flex-wrap justify-between items-start gap-3 relative z-20 pointer-events-none">
               {/* 左上パネル：曲名・難易度（★）・横型クリアゲージ */}
-              <div className="cyber-glass-panel px-5 py-3.5 min-w-[260px] sm:min-w-[320px] flex flex-col gap-1.5">
+              <div className="cyber-glass-panel px-5 py-3.5 min-w-[260px] sm:min-w-[320px] flex flex-col gap-1.5 pointer-events-auto">
                 <div
                   className="text-xl sm:text-2xl md:text-3xl font-black text-white tracking-wider truncate"
                   style={{ textShadow: '0 0 12px rgba(0, 245, 255, 0.65)' }}
@@ -755,7 +780,16 @@ function App() {
                 </div>
                 <div className="text-sm sm:text-base tracking-wider leading-none">
                   {Array.from({ length: 10 }, (_, idx) => (
-                    <span key={idx} className={idx < currentDifficulty ? 'star-lit' : 'star-unlit'}>
+                    <span
+                      key={idx}
+                      className={
+                        idx < currentDifficulty
+                          ? currentDifficulty >= 10
+                            ? 'star-lit-max'
+                            : 'star-lit'
+                          : 'star-unlit'
+                      }
+                    >
                       {idx < currentDifficulty ? '★' : '☆'}
                     </span>
                   ))}
@@ -788,7 +822,7 @@ function App() {
               </div>
 
               {/* 右上パネル：OrbitronデジタルSCORE ＆ MAX KPS ＆ ポーズボタン */}
-              <div className="flex flex-col items-end gap-2">
+              <div className="flex flex-col items-end gap-2 pointer-events-auto">
                 <div className="cyber-glass-panel px-5 py-3 flex flex-col items-end gap-1">
                   <div className="flex items-baseline gap-3">
                     <span
@@ -829,11 +863,11 @@ function App() {
               </div>
             </div>
 
-            {/* 2. 【中央ステージ】ボーカリストキャラクター立ち絵（中央配置） ＆ 左下判定内訳カウンター */}
-            <div className="flex-1 w-full relative flex items-center justify-center min-h-0 z-10 my-1">
+            {/* 2. 【中央ステージ】ボーカリストキャラクター立ち絵（中央配置・4倍サイズ表示） ＆ 左下判定内訳カウンター */}
+            <div className="flex-1 w-full relative flex items-start justify-center min-h-0 z-10 my-1 pointer-events-none">
               {/* 左下パネル：リアルタイム判定内訳記録（PC版 769px 以上のみ表示） */}
               <div
-                className="pc-only-hud cyber-glass-panel absolute left-0 bottom-2 px-4 py-3 flex flex-col gap-1 min-w-[165px] z-20"
+                className="pc-only-hud cyber-glass-panel absolute left-0 bottom-2 px-4 py-3 flex flex-col gap-1 min-w-[165px] z-20 pointer-events-auto"
                 style={{ fontFamily: "'Orbitron', monospace", fontVariantNumeric: 'tabular-nums' }}
               >
                 <div className="flex justify-between items-center text-xs font-black">
@@ -850,8 +884,8 @@ function App() {
                 </div>
               </div>
 
-              {/* 中央ボーカリストキャラクター（sing_1 / sing_2 / miss 即時切替） */}
-              <div className={`relative h-full max-h-[340px] aspect-[420/520] flex items-center justify-center ${isMissState ? 'vocalist-miss' : 'vocalist-sing'}`}>
+              {/* 中央ボーカリストキャラクター（sing_1 / sing_2 / miss 即時切替・縦横2倍＝面積4倍でステージ中央に大きく配置） */}
+              <div className={`relative h-[200%] max-h-[720px] aspect-[420/520] -mt-20 sm:-mt-24 md:-mt-28 flex items-center justify-center shrink-0 ${isMissState ? 'vocalist-miss' : 'vocalist-sing'}`}>
                 <img
                   src={activeCharacter.sprites.sing_1}
                   alt={`${activeCharacter.name} sing_1`}
@@ -953,6 +987,10 @@ function App() {
         />
       )}
 
+      {showSurveyModal && (
+        <SurveyModal onClose={() => setShowSurveyModal(false)} />
+      )}
+
       {showHowToPlay && (
         <div
           className="modal-overlay bg-black/85 z-[100] flex items-center justify-center p-2.5 sm:p-5 md:p-8 overflow-y-auto mech-scrollbar"
@@ -982,19 +1020,9 @@ function App() {
               <div className="bg-[#120e1f] px-4 py-3.5 sm:px-6 sm:py-4 flex justify-between items-center border-b-2 border-amber-500/50 shrink-0 relative z-20">
                 <div>
                   <div className="flex flex-wrap items-center gap-2">
-                    <span className="text-[10px] sm:text-xs font-dotgothic font-bold tracking-widest text-amber-400 bg-amber-500/15 border border-amber-500/50 px-2 py-0.5 rounded">
-                      SYS-MANUAL // 壱式指南書
-                    </span>
-                    <span className={`text-[10px] sm:text-xs font-dotgothic font-bold px-2 py-0.5 rounded border ${
-                      isMobileMode
-                        ? 'bg-cyan-500/15 text-cyan-300 border-cyan-400/60'
-                        : 'bg-purple-500/15 text-purple-300 border-purple-400/60'
-                    }`}>
-                      {isMobileMode ? 'スマホモード（フリック入力）' : 'PCモード（キーボード入力）'}
-                    </span>
                   </div>
                   <h2 className="text-xl sm:text-2xl font-black text-white tracking-widest font-dotgothic mt-0.5">
-                    遊び方・操作指南
+                    遊び方説明
                   </h2>
                 </div>
 
@@ -1021,7 +1049,7 @@ function App() {
                   }`}
                 >
                   <Monitor size={16} />
-                  <span>PCモード解説</span>
+                  <span>PCモード</span>
                   <span className="hidden sm:inline text-[10px] text-amber-400/80 font-normal">[KEYBOARD]</span>
                 </button>
                 <button
@@ -1034,7 +1062,7 @@ function App() {
                   }`}
                 >
                   <Smartphone size={16} />
-                  <span>スマホモード解説</span>
+                  <span>スマホモード</span>
                   <span className="hidden sm:inline text-[10px] text-cyan-400/80 font-normal">[FLICK]</span>
                 </button>
               </div>
@@ -1054,7 +1082,7 @@ function App() {
                       <div className="rounded-xl border border-rose-500/30 bg-[#0c0a16] p-4 sm:p-5 flex flex-col gap-2.5">
                         <div className="flex items-center gap-2 border-b border-[#28203d] pb-2.5">
                           <span className="bg-amber-400 text-[#09080f] text-[11px] font-dotgothic font-black px-2 py-0.5 rounded">
-                            RULE-01 // 最重要
+                            判定仕様
                           </span>
                           <span className="text-amber-300 font-dotgothic font-black text-base sm:text-lg tracking-wider">
                             ① 判定のタイミング
@@ -1065,11 +1093,11 @@ function App() {
                           <span className="inline-block bg-amber-500/20 text-amber-200 border border-amber-400/70 px-2 py-0.5 rounded-md font-dotgothic font-black mx-1">
                             【指を離した瞬間】
                           </span>
-                          にタイミング判定されます！
+                          に判定されます！
                         </p>
                         <div className="text-xs sm:text-sm font-bold text-neutral-300 leading-relaxed bg-[#08060e] border-2 border-[#251e38] rounded-xl p-3.5 mt-0.5">
-                          💡 <span className="text-cyan-300 font-dotgothic font-black">攻略のコツ：</span>早めにキーをタッチしてフリック方向へ指を滑らせておき、
-                          <span className="text-amber-300 font-black">ノーツがシアンの判定縦棒に重なる瞬間に指を離す</span>と PERFECT が狙いやすくなります。
+                          💡 <span className="text-cyan-300 font-dotgothic font-black">tips：</span>早めにキーをタッチしてフリックしておき、
+                          <span className="text-amber-300 font-black">ノーツが縦棒に重なる瞬間に指を離す</span>と PERFECT が狙いやすくなります。
                         </div>
                       </div>
                     </div>
@@ -1085,22 +1113,22 @@ function App() {
                       <div className="rounded-xl border border-amber-500/30 bg-[#0c0a16] p-4 sm:p-5 flex flex-col gap-2.5">
                         <div className="flex items-center gap-2 border-b border-[#28203d] pb-2.5">
                           <span className="bg-cyan-400 text-[#09080f] text-[11px] font-dotgothic font-black px-2 py-0.5 rounded">
-                            RULE-02 // 入力仕様
+                            入力仕様
                           </span>
                           <span className="text-cyan-300 font-dotgothic font-black text-base sm:text-lg tracking-wider">
-                            ② テンキー（フリック）の入力方法
+                            ② テンキーの入力方法
                           </span>
                         </div>
                         <p className="text-sm sm:text-base font-bold text-white leading-relaxed">
-                          画面下部のフリックテンキーをタップ・フリックして文字を入力します。
+                          画面下部のテンキーをタップ・フリックして文字を入力します。
                         </p>
                         <div className="text-xs sm:text-sm font-bold text-neutral-300 leading-relaxed bg-[#08060e] border-2 border-[#251e38] rounded-xl p-3.5 mt-0.5">
-                          濁点（゛）・半濁点（゜）・小文字（っ・ゃ・ゅ・ょ等）への
+                          濁点（゛）・半濁点（゜）・小文字への
                           <span className="inline-block bg-rose-500/20 text-rose-200 border border-rose-400/70 px-1.5 py-0.5 rounded-md font-dotgothic font-black mx-1">
                             変換は不要
                           </span>
-                          です！すべて
-                          <span className="text-cyan-300 font-black">元の文字（清音）</span>
+                          です！<br></br>すべて
+                          <span className="text-cyan-300 font-black">元の文字</span>
                           のまま入力してください。
                           <span className="block text-amber-300 font-dotgothic font-black mt-1.5">
                             （例：『だ』→『た』、『ぴ』→『ひ』、『っ』→『つ』）
@@ -1122,7 +1150,7 @@ function App() {
                       <div className="rounded-xl border border-amber-500/30 bg-[#0c0a16] p-4 sm:p-5 flex flex-col gap-3">
                         <div className="flex items-center gap-2 border-b border-[#28203d] pb-2.5">
                           <span className="bg-cyan-400 text-[#09080f] text-[11px] font-dotgothic font-black px-2 py-0.5 rounded">
-                            RULE-01 // 基本操作
+                            操作方法
                           </span>
                           <span className="text-cyan-300 font-dotgothic font-black text-base sm:text-lg tracking-wider">
                             ① 判定タイミングとローマ字入力
@@ -1132,15 +1160,15 @@ function App() {
                         <div className="flex flex-col gap-2.5 text-sm sm:text-base font-bold text-neutral-200 leading-relaxed">
                           <div className="bg-[#08060e] border border-[#251e38] rounded-xl p-3 flex items-start gap-2.5">
                             <span className="font-dotgothic text-amber-400 font-black shrink-0">STEP 1</span>
-                            <span>画面右から流れてくるノーツが、左側の<span className="text-cyan-300 font-black">シアン色の判定縦棒</span>に重なるタイミングを見極めよう！</span>
+                            <span>画面右から流れてくるノーツが、左側の<span className="text-cyan-300 font-black">シアン色の判定縦棒</span>に重なるタイミングを見極めよう！リズムに乗ると叩きやすいよ！</span>
                           </div>
                           <div className="bg-[#08060e] border border-[#251e38] rounded-xl p-3 flex items-start gap-2.5">
                             <span className="font-dotgothic text-amber-400 font-black shrink-0">STEP 2</span>
-                            <span><span className="text-amber-300 font-black">1文字目を叩くタイミング</span>でリズム判定（PERFECT / GOOD）が決まります。2文字目以降は次のノーツが来るまでに打ち切ればOK！</span>
+                            <span><span className="text-amber-300 font-black">1文字目を叩くタイミング</span>で判定が決まります。2文字目以降は次のノーツが来るまでに打ち切ればOK！</span>
                           </div>
                           <div className="bg-[#08060e] border border-[#251e38] rounded-xl p-3 flex items-start gap-2.5">
                             <span className="font-dotgothic text-amber-400 font-black shrink-0">STEP 3</span>
-                            <span>「し (`shi`/`si`)」「つ (`tsu`/`tu`)」「ん (`n`/`nn`/`xn`)」など、複数通りのローマ字入力に自動対応しています。</span>
+                            <span>「し (`shi`/`si`)」「つ (`tsu`/`tu`)」「ん (`n`/`nn`/`xn`)」など、複数のローマ字入力に対応しています。</span>
                           </div>
                         </div>
                       </div>
@@ -1159,18 +1187,18 @@ function App() {
                   <div className="rounded-xl border border-amber-500/30 bg-[#0c0a16] p-4 sm:p-5 flex flex-col gap-2.5">
                     <div className="flex items-center gap-2 border-b border-[#28203d] pb-2.5">
                       <span className="bg-emerald-400 text-[#09080f] text-[11px] font-dotgothic font-black px-2 py-0.5 rounded">
-                        TARGET // クリア条件
+                        クリア条件
                       </span>
                       <span className="text-emerald-300 font-dotgothic font-black text-base sm:text-lg tracking-wider">
-                        目標スコア・クリア基準
+                        目標スコア：ゲージ約7割！
                       </span>
                     </div>
                     <div className="bg-[#08060e] border-2 border-[#251e38] rounded-xl p-3.5 flex flex-wrap items-center justify-between gap-2">
                       <span className="inline-block bg-emerald-500/20 text-emerald-200 border border-emerald-400/70 px-3 py-1 rounded-lg font-dotgothic font-black text-sm sm:text-base">
-                        スコア 700,000点（70万点）以上でクリア！
+                        スコアが70万点以上でクリア！
                       </span>
                       <span className="text-amber-300 text-xs sm:text-sm font-dotgothic font-bold">
-                        理論値（最大）：1,010,000点
+                        tips: 最高得点は1,010,000点だよ
                       </span>
                     </div>
                   </div>
@@ -1182,7 +1210,7 @@ function App() {
                   onClick={() => setShowHowToPlay(false)}
                   className="w-full py-3.5 bg-[#1b152e] hover:bg-[#271f42] active:bg-[#312752] text-amber-300 hover:text-amber-200 rounded-xl border-2 border-amber-500/70 font-dotgothic font-black text-lg tracking-widest transition-colors mt-1 cursor-pointer shadow-none"
                 >
-                  閉じる [CLOSE]
+                  メニューに戻る
                 </button>
               </div>
             </div>

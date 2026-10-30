@@ -1,0 +1,1758 @@
+{
+  "bpm": 180,
+  "offset": -30,
+  "notes": [
+    {
+      "id": "3419f75e-98c3-4d50-86d6-da4ea3e738ae",
+      "word": "aoe",
+      "reading": "aoe",
+      "time": 11970,
+      "endTime": 12220,
+      "type": "normal"
+    },
+    {
+      "id": "a5cfde06-c3a7-45b2-b499-228e268dd458",
+      "word": "a",
+      "reading": "a",
+      "time": 12303.333333333332,
+      "endTime": 12386.666666666666,
+      "type": "normal"
+    },
+    {
+      "id": "0a53d6e1-67c0-47c9-8972-31d9124c298b",
+      "word": "iua",
+      "reading": "iua",
+      "time": 12470,
+      "endTime": 12720,
+      "type": "normal"
+    },
+    {
+      "id": "637247ad-baf6-431b-ad70-4addc623306b",
+      "word": "oeaiou",
+      "reading": "oeaiou",
+      "time": 12803.333333333332,
+      "endTime": 13303.333333333332,
+      "type": "normal"
+    },
+    {
+      "id": 1792500014033,
+      "word": "aoe",
+      "reading": "aoe",
+      "time": 13303.333333333332,
+      "endTime": 13553.333333333332,
+      "type": "normal"
+    },
+    {
+      "id": 1792500014034,
+      "word": "a",
+      "reading": "a",
+      "time": 13636.666666666666,
+      "endTime": 13720,
+      "type": "normal"
+    },
+    {
+      "id": 1792500014035,
+      "word": "iua",
+      "reading": "iua",
+      "time": 13803.333333333332,
+      "endTime": 14053.333333333332,
+      "type": "normal"
+    },
+    {
+      "id": 1792500014036,
+      "word": "oeaiau",
+      "reading": "oeaiau",
+      "time": 14136.666666666666,
+      "endTime": 14636.666666666666,
+      "type": "normal"
+    },
+    {
+      "id": "4bfd8242-c9f3-4e34-a2c4-e1361eeb0140",
+      "word": "aeioaei",
+      "reading": "aeioaei",
+      "time": 14636.666666666666,
+      "endTime": 15220,
+      "type": "normal"
+    },
+    {
+      "id": "b655aa2d-9689-4074-82b6-65c25fc511c2",
+      "word": "aoeeauee",
+      "reading": "aoeeauee",
+      "time": 15303.333333333332,
+      "endTime": 15969.999999999998,
+      "type": "normal"
+    },
+    {
+      "id": "93f071a0-1b24-4c9d-b365-75ae058a2a43",
+      "word": "ai",
+      "reading": "ai",
+      "time": 15970,
+      "endTime": 16136.666666666666,
+      "type": "normal"
+    },
+    {
+      "id": "72384bd0-756f-4566-937c-eb1659946ab1",
+      "word": "iai",
+      "reading": "iai",
+      "time": 16219.999999999998,
+      "endTime": 16470,
+      "type": "normal"
+    },
+    {
+      "id": "094b75b5-f9e2-4022-b309-9f2aebed2025",
+      "word": "iaoaoaoae",
+      "reading": "iaoaoaoae",
+      "time": 16553.333333333332,
+      "endTime": 17303.333333333332,
+      "type": "normal"
+    },
+    {
+      "id": 1792498974421,
+      "word": "aoe",
+      "reading": "aoe",
+      "time": 17303.333333333332,
+      "endTime": 17553.333333333332,
+      "type": "normal"
+    },
+    {
+      "id": 1792498974422,
+      "word": "a",
+      "reading": "a",
+      "time": 17636.666666666664,
+      "endTime": 17719.999999999996,
+      "type": "normal"
+    },
+    {
+      "id": 1792498974424,
+      "word": "iua",
+      "reading": "iua",
+      "time": 17803.333333333332,
+      "endTime": 18053.333333333332,
+      "type": "normal"
+    },
+    {
+      "id": 1792498974425,
+      "word": "oeaiou",
+      "reading": "oeaiou",
+      "time": 18136.666666666664,
+      "endTime": 18636.666666666664,
+      "type": "normal"
+    },
+    {
+      "id": 1792498974426,
+      "word": "aoe",
+      "reading": "aoe",
+      "time": 18636.666666666664,
+      "endTime": 18886.666666666664,
+      "type": "normal"
+    },
+    {
+      "id": 1792498974427,
+      "word": "a",
+      "reading": "a",
+      "time": 18970,
+      "endTime": 19053.333333333332,
+      "type": "normal"
+    },
+    {
+      "id": 1792498974429,
+      "word": "iua",
+      "reading": "iua",
+      "time": 19136.666666666664,
+      "endTime": 19386.666666666664,
+      "type": "normal"
+    },
+    {
+      "id": 1792498974430,
+      "word": "oeaiau",
+      "reading": "oeaiau",
+      "time": 19470,
+      "endTime": 19970,
+      "type": "normal"
+    },
+    {
+      "id": "0f63184d-6ecf-458b-9b1a-008ccfd38cd5",
+      "word": "aeioaei",
+      "reading": "aeioaei",
+      "time": 19970,
+      "endTime": 20553.333333333332,
+      "type": "normal"
+    },
+    {
+      "id": "a0f3360f-689c-4c8a-888e-69c5173ecac6",
+      "word": "aoeeauee",
+      "reading": "aoeeauee",
+      "time": 20636.666666666664,
+      "endTime": 21303.333333333332,
+      "type": "normal"
+    },
+    {
+      "id": "55fa8532-d00a-4da4-8dde-26d141e3946e",
+      "word": "ai",
+      "reading": "ai",
+      "time": 21303.333333333332,
+      "endTime": 21470,
+      "type": "normal"
+    },
+    {
+      "id": "e5962772-3110-4f1d-973a-f9af949124e1",
+      "word": "iai",
+      "reading": "iai",
+      "time": 21553.333333333332,
+      "endTime": 21803.333333333332,
+      "type": "normal"
+    },
+    {
+      "id": "e49de07c-bd52-4829-aaff-359f008fd08a",
+      "word": "ia",
+      "reading": "ia",
+      "time": 21886.666666666664,
+      "endTime": 22053.333333333332,
+      "type": "normal"
+    },
+    {
+      "id": "9c482b1b-3685-4c55-bde7-77270122f3e7",
+      "word": "a",
+      "reading": "a",
+      "time": 22136.666666666664,
+      "endTime": 22219.999999999996,
+      "type": "normal"
+    },
+    {
+      "id": "b6db66ee-1c69-4f12-b2d0-282852cbcadf",
+      "word": "a",
+      "reading": "a",
+      "time": 22303.333333333332,
+      "endTime": 22386.666666666664,
+      "type": "normal"
+    },
+    {
+      "id": "2a2040be-adf3-438d-867d-bfe8409f3c8c",
+      "word": "a",
+      "reading": "a",
+      "time": 22386.666666666664,
+      "endTime": 22469.999999999996,
+      "type": "normal"
+    },
+    {
+      "id": "974496c5-4745-4243-87f7-da2ba49f7561",
+      "word": "a",
+      "reading": "a",
+      "time": 22470,
+      "endTime": 22553.333333333332,
+      "type": "normal"
+    },
+    {
+      "id": "29ca2cff-1ae2-4f05-86f6-72a1451d0283",
+      "word": "a",
+      "reading": "a",
+      "time": 22553.333333333332,
+      "endTime": 22636.666666666664,
+      "type": "normal"
+    },
+    {
+      "id": "5f53270c-b5a1-4e1a-9caf-8de2a0019094",
+      "word": "旅立ち",
+      "reading": "たびだち",
+      "time": 22636.666666666664,
+      "endTime": 22969.999999999996,
+      "type": "normal"
+    },
+    {
+      "id": 1792496309226,
+      "word": "始まり",
+      "reading": "はじまり",
+      "time": 22970,
+      "endTime": 23303.333333333332,
+      "type": "normal"
+    },
+    {
+      "id": 1792496302394,
+      "word": "幸先",
+      "reading": "さいさき",
+      "time": 23303.333333333332,
+      "endTime": 23636.666666666664,
+      "type": "normal"
+    },
+    {
+      "id": 1792496303356,
+      "word": "外界",
+      "reading": "がいかい",
+      "time": 23636.666666666664,
+      "endTime": 23969.999999999996,
+      "type": "normal"
+    },
+    {
+      "id": "921f9853-f677-4b1d-887b-be23869a9ebf",
+      "word": "旅先",
+      "reading": "たびさき",
+      "time": 23970,
+      "endTime": 24303.333333333332,
+      "type": "normal"
+    },
+    {
+      "id": 1792496400715,
+      "word": "大体",
+      "reading": "だいたい",
+      "time": 24303.333333333332,
+      "endTime": 24636.666666666664,
+      "type": "normal"
+    },
+    {
+      "id": 1792496401286,
+      "word": "災害",
+      "reading": "さいがい",
+      "time": 24636.666666666664,
+      "endTime": 24969.999999999996,
+      "type": "normal"
+    },
+    {
+      "id": 1792496401839,
+      "word": "張り紙",
+      "reading": "はりがみ",
+      "time": 24970,
+      "endTime": 25303.333333333332,
+      "type": "normal"
+    },
+    {
+      "id": 1792496444300,
+      "word": "最大",
+      "reading": "さいだい",
+      "time": 25303.333333333332,
+      "endTime": 25636.666666666664,
+      "type": "normal"
+    },
+    {
+      "id": 1792496449289,
+      "word": "雷",
+      "reading": "かみなり",
+      "time": 25636.666666666664,
+      "endTime": 25969.999999999996,
+      "type": "normal"
+    },
+    {
+      "id": 1792496449996,
+      "word": "街並み",
+      "reading": "まちなみ",
+      "time": 25970,
+      "endTime": 26303.333333333332,
+      "type": "normal"
+    },
+    {
+      "id": 1792496450591,
+      "word": "台無し",
+      "reading": "だいなし",
+      "time": 26303.333333333332,
+      "endTime": 26636.666666666664,
+      "type": "normal"
+    },
+    {
+      "id": 1792496514381,
+      "word": "海外",
+      "reading": "かいがい",
+      "time": 26636.666666666664,
+      "endTime": 26969.999999999996,
+      "type": "normal"
+    },
+    {
+      "id": 1792496514969,
+      "word": "大会",
+      "reading": "たいかい",
+      "time": 26970,
+      "endTime": 27303.333333333332,
+      "type": "normal"
+    },
+    {
+      "id": 1792496515496,
+      "word": "生業",
+      "reading": "なりわい",
+      "time": 27303.333333333332,
+      "endTime": 27636.666666666664,
+      "type": "normal"
+    },
+    {
+      "id": 1792496515984,
+      "word": "場違い",
+      "reading": "ばちがい",
+      "time": 27636.666666666664,
+      "endTime": 27969.999999999996,
+      "type": "normal"
+    },
+    {
+      "id": 1792496569173,
+      "word": "高速",
+      "reading": "こうそく",
+      "time": 27970,
+      "endTime": 28303.333333333332,
+      "type": "normal"
+    },
+    {
+      "id": 1792496569958,
+      "word": "情報",
+      "reading": "じょうほう",
+      "time": 28303.333333333332,
+      "endTime": 28636.666666666664,
+      "type": "normal"
+    },
+    {
+      "id": 1792496570532,
+      "word": "目標",
+      "reading": "もくひょう",
+      "time": 28636.666666666664,
+      "endTime": 28969.999999999996,
+      "type": "normal"
+    },
+    {
+      "id": 1792496571147,
+      "word": "頂上",
+      "reading": "ちょうじょう",
+      "time": 28970,
+      "endTime": 29303.333333333332,
+      "type": "normal"
+    },
+    {
+      "id": 1792496613149,
+      "word": "極上",
+      "reading": "ごくじょう",
+      "time": 29303.333333333332,
+      "endTime": 29636.666666666664,
+      "type": "normal"
+    },
+    {
+      "id": 1792496613753,
+      "word": "宝物",
+      "reading": "ほうもつ",
+      "time": 29636.666666666664,
+      "endTime": 29969.999999999996,
+      "type": "normal"
+    },
+    {
+      "id": 1792496614319,
+      "word": "欲望",
+      "reading": "よくぼう",
+      "time": 29970,
+      "endTime": 30303.333333333332,
+      "type": "normal"
+    },
+    {
+      "id": 1792496616885,
+      "word": "盲目",
+      "reading": "もうもく",
+      "time": 30303.333333333332,
+      "endTime": 30636.666666666664,
+      "type": "normal"
+    },
+    {
+      "id": 1792496654679,
+      "word": "表情",
+      "reading": "ひょうじょう",
+      "time": 30636.666666666664,
+      "endTime": 30969.999999999996,
+      "type": "normal"
+    },
+    {
+      "id": 1792496655328,
+      "word": "臆病",
+      "reading": "おくびょう",
+      "time": 30970,
+      "endTime": 31303.333333333332,
+      "type": "normal"
+    },
+    {
+      "id": 1792496655879,
+      "word": "暴力",
+      "reading": "ぼうりょく",
+      "time": 31303.333333333332,
+      "endTime": 31636.666666666664,
+      "type": "normal"
+    },
+    {
+      "id": 1792496658141,
+      "word": "上等",
+      "reading": "じょうとう",
+      "time": 31636.666666666664,
+      "endTime": 31969.999999999996,
+      "type": "normal"
+    },
+    {
+      "id": 1792496694985,
+      "word": "能力",
+      "reading": "のうりょく",
+      "time": 31970,
+      "endTime": 32303.333333333332,
+      "type": "normal"
+    },
+    {
+      "id": 1792496695499,
+      "word": "症状",
+      "reading": "しょうじょう",
+      "time": 32303.333333333332,
+      "endTime": 32636.666666666664,
+      "type": "normal"
+    },
+    {
+      "id": 1792496695968,
+      "word": "両方",
+      "reading": "りょうほう",
+      "time": 32636.666666666664,
+      "endTime": 32970,
+      "type": "normal"
+    },
+    {
+      "id": 1792496698275,
+      "word": "王道",
+      "reading": "おうどう",
+      "time": 32970,
+      "endTime": 33303.333333333336,
+      "type": "normal"
+    },
+    {
+      "id": 1792499228385,
+      "word": "aoe",
+      "reading": "aoe",
+      "time": 38636.666666666664,
+      "endTime": 38886.666666666664,
+      "type": "normal"
+    },
+    {
+      "id": 1792499228386,
+      "word": "a",
+      "reading": "a",
+      "time": 38970,
+      "endTime": 39053.333333333336,
+      "type": "normal"
+    },
+    {
+      "id": 1792499228388,
+      "word": "iua",
+      "reading": "iua",
+      "time": 39136.666666666664,
+      "endTime": 39386.666666666664,
+      "type": "normal"
+    },
+    {
+      "id": 1792499228389,
+      "word": "oeaiou",
+      "reading": "oeaiou",
+      "time": 39470,
+      "endTime": 39970,
+      "type": "normal"
+    },
+    {
+      "id": 1792499228390,
+      "word": "aoe",
+      "reading": "aoe",
+      "time": 39970,
+      "endTime": 40220,
+      "type": "normal"
+    },
+    {
+      "id": 1792499228391,
+      "word": "a",
+      "reading": "a",
+      "time": 40303.33333333333,
+      "endTime": 40386.666666666664,
+      "type": "normal"
+    },
+    {
+      "id": 1792499228393,
+      "word": "iua",
+      "reading": "iua",
+      "time": 40470,
+      "endTime": 40720,
+      "type": "normal"
+    },
+    {
+      "id": 1792499228394,
+      "word": "oeaiau",
+      "reading": "oeaiau",
+      "time": 40803.33333333333,
+      "endTime": 41303.33333333333,
+      "type": "normal"
+    },
+    {
+      "id": 1792499228395,
+      "word": "aeioaei",
+      "reading": "aeioaei",
+      "time": 41303.33333333333,
+      "endTime": 41886.666666666664,
+      "type": "normal"
+    },
+    {
+      "id": 1792499228396,
+      "word": "aoeeauee",
+      "reading": "aoeeauee",
+      "time": 41970,
+      "endTime": 42636.666666666664,
+      "type": "normal"
+    },
+    {
+      "id": 1792499228397,
+      "word": "ai",
+      "reading": "ai",
+      "time": 42636.666666666664,
+      "endTime": 42803.33333333333,
+      "type": "normal"
+    },
+    {
+      "id": 1792499228398,
+      "word": "iai",
+      "reading": "iai",
+      "time": 42886.666666666664,
+      "endTime": 43136.666666666664,
+      "type": "normal"
+    },
+    {
+      "id": 1792499228399,
+      "word": "ia",
+      "reading": "ia",
+      "time": 43220,
+      "endTime": 43386.666666666664,
+      "type": "normal"
+    },
+    {
+      "id": 1792499228400,
+      "word": "a",
+      "reading": "a",
+      "time": 43470,
+      "endTime": 43553.333333333336,
+      "type": "normal"
+    },
+    {
+      "id": 1792499228401,
+      "word": "a",
+      "reading": "a",
+      "time": 43636.666666666664,
+      "endTime": 43720,
+      "type": "normal"
+    },
+    {
+      "id": 1792499228402,
+      "word": "a",
+      "reading": "a",
+      "time": 43720,
+      "endTime": 43803.333333333336,
+      "type": "normal"
+    },
+    {
+      "id": 1792499228404,
+      "word": "a",
+      "reading": "a",
+      "time": 43803.33333333333,
+      "endTime": 43886.666666666664,
+      "type": "normal"
+    },
+    {
+      "id": 1792499228403,
+      "word": "a",
+      "reading": "a",
+      "time": 43886.666666666664,
+      "endTime": 43970,
+      "type": "normal"
+    },
+    {
+      "id": "9e0b8a53-f701-4500-bd05-b1c1d4dfa52a",
+      "word": "タイパ",
+      "reading": "たいぱ",
+      "time": 43970,
+      "endTime": 44303.333333333336,
+      "type": "normal"
+    },
+    {
+      "id": 1792505463228,
+      "word": "タイム",
+      "reading": "たいむ",
+      "time": 44303.33333333333,
+      "endTime": 44636.666666666664,
+      "type": "normal"
+    },
+    {
+      "id": 1792505464088,
+      "word": "タイポ",
+      "reading": "たいぽ",
+      "time": 44636.666666666664,
+      "endTime": 44970,
+      "type": "normal"
+    },
+    {
+      "id": 1792505464957,
+      "word": "タイプ",
+      "reading": "たいぷ",
+      "time": 44970,
+      "endTime": 45303.333333333336,
+      "type": "normal"
+    },
+    {
+      "id": 1792505514255,
+      "word": "タイパ",
+      "reading": "たいぱ",
+      "time": 45303.33333333333,
+      "endTime": 45636.666666666664,
+      "type": "normal"
+    },
+    {
+      "id": 1792505514256,
+      "word": "タイム",
+      "reading": "たいむ",
+      "time": 45636.666666666664,
+      "endTime": 45970,
+      "type": "normal"
+    },
+    {
+      "id": 1792505514257,
+      "word": "タイポ",
+      "reading": "たいぽ",
+      "time": 45970,
+      "endTime": 46303.333333333336,
+      "type": "normal"
+    },
+    {
+      "id": 1792505514258,
+      "word": "タイプ",
+      "reading": "たいぷ",
+      "time": 46303.33333333333,
+      "endTime": 46636.666666666664,
+      "type": "normal"
+    },
+    {
+      "id": 1792505515717,
+      "word": "タイパ",
+      "reading": "たいぱ",
+      "time": 46636.666666666664,
+      "endTime": 46970,
+      "type": "normal"
+    },
+    {
+      "id": 1792505515718,
+      "word": "タイム",
+      "reading": "たいむ",
+      "time": 46970,
+      "endTime": 47303.333333333336,
+      "type": "normal"
+    },
+    {
+      "id": 1792505515719,
+      "word": "タイポ",
+      "reading": "たいぽ",
+      "time": 47303.33333333333,
+      "endTime": 47636.666666666664,
+      "type": "normal"
+    },
+    {
+      "id": 1792505515720,
+      "word": "タイプ",
+      "reading": "たいぷ",
+      "time": 47636.666666666664,
+      "endTime": 47970,
+      "type": "normal"
+    },
+    {
+      "id": 1792505516787,
+      "word": "タイパ",
+      "reading": "たいぱ",
+      "time": 47970,
+      "endTime": 48303.333333333336,
+      "type": "normal"
+    },
+    {
+      "id": 1792505516788,
+      "word": "タイム",
+      "reading": "たいむ",
+      "time": 48303.33333333333,
+      "endTime": 48636.666666666664,
+      "type": "normal"
+    },
+    {
+      "id": 1792505516789,
+      "word": "タイポ",
+      "reading": "たいぽ",
+      "time": 48636.666666666664,
+      "endTime": 48970,
+      "type": "normal"
+    },
+    {
+      "id": 1792505516790,
+      "word": "タイプ",
+      "reading": "たいぷ",
+      "time": 48970,
+      "endTime": 49303.333333333336,
+      "type": "normal"
+    },
+    {
+      "id": 1792505519692,
+      "word": "タイパ",
+      "reading": "たいぱ",
+      "time": 49303.33333333333,
+      "endTime": 49636.666666666664,
+      "type": "normal"
+    },
+    {
+      "id": 1792505519693,
+      "word": "タイム",
+      "reading": "たいむ",
+      "time": 49636.666666666664,
+      "endTime": 49970,
+      "type": "normal"
+    },
+    {
+      "id": 1792505519694,
+      "word": "タイポ",
+      "reading": "たいぽ",
+      "time": 49970,
+      "endTime": 50303.333333333336,
+      "type": "normal"
+    },
+    {
+      "id": 1792505519695,
+      "word": "タイプ",
+      "reading": "たいぷ",
+      "time": 50303.33333333333,
+      "endTime": 50636.666666666664,
+      "type": "normal"
+    },
+    {
+      "id": 1792505520896,
+      "word": "タイパ",
+      "reading": "たいぱ",
+      "time": 50636.666666666664,
+      "endTime": 50970,
+      "type": "normal"
+    },
+    {
+      "id": 1792505520897,
+      "word": "タイム",
+      "reading": "たいむ",
+      "time": 50970,
+      "endTime": 51303.333333333336,
+      "type": "normal"
+    },
+    {
+      "id": 1792505520898,
+      "word": "タイポ",
+      "reading": "たいぽ",
+      "time": 51303.33333333333,
+      "endTime": 51636.666666666664,
+      "type": "normal"
+    },
+    {
+      "id": 1792505520899,
+      "word": "タイプ",
+      "reading": "たいぷ",
+      "time": 51636.666666666664,
+      "endTime": 51970,
+      "type": "normal"
+    },
+    {
+      "id": 1792505523413,
+      "word": "タイパ",
+      "reading": "たいぱ",
+      "time": 51970,
+      "endTime": 52303.333333333336,
+      "type": "normal"
+    },
+    {
+      "id": 1792505523414,
+      "word": "タイム",
+      "reading": "たいむ",
+      "time": 52303.33333333333,
+      "endTime": 52636.666666666664,
+      "type": "normal"
+    },
+    {
+      "id": 1792505523415,
+      "word": "タイポ",
+      "reading": "たいぽ",
+      "time": 52636.666666666664,
+      "endTime": 52970,
+      "type": "normal"
+    },
+    {
+      "id": 1792505523416,
+      "word": "タイプ",
+      "reading": "たいぷ",
+      "time": 52970,
+      "endTime": 53303.333333333336,
+      "type": "normal"
+    },
+    {
+      "id": 1792505527808,
+      "word": "タイパ",
+      "reading": "たいぱ",
+      "time": 53303.33333333333,
+      "endTime": 53636.666666666664,
+      "type": "normal"
+    },
+    {
+      "id": 1792505527809,
+      "word": "タイム",
+      "reading": "たいむ",
+      "time": 53636.666666666664,
+      "endTime": 53970,
+      "type": "normal"
+    },
+    {
+      "id": 1792505527810,
+      "word": "タイポ",
+      "reading": "たいぽ",
+      "time": 53970,
+      "endTime": 54303.333333333336,
+      "type": "normal"
+    },
+    {
+      "id": 1792505527811,
+      "word": "タイプ",
+      "reading": "たいぷ",
+      "time": 54303.33333333333,
+      "endTime": 54636.666666666664,
+      "type": "normal"
+    },
+    {
+      "id": "f84d0c9b-d72c-4db5-83b6-757191745751",
+      "word": "だ",
+      "reading": "だ",
+      "time": 54636.666666666664,
+      "endTime": 54720,
+      "type": "normal"
+    },
+    {
+      "id": "6096b651-1606-4960-aa59-e515bf2435dd",
+      "word": "だ",
+      "reading": "だ",
+      "time": 54720,
+      "endTime": 54803.333333333336,
+      "type": "normal"
+    },
+    {
+      "id": "97b0f60d-53ce-4b1a-9b94-96ffb424908d",
+      "word": "だ",
+      "reading": "だ",
+      "time": 54803.33333333333,
+      "endTime": 54886.666666666664,
+      "type": "normal"
+    },
+    {
+      "id": "d42300bc-85c2-4fc3-927b-5bc7deada3ee",
+      "word": "だ",
+      "reading": "だ",
+      "time": 54886.666666666664,
+      "endTime": 54970,
+      "type": "normal"
+    },
+    {
+      "id": "bcf42af9-d61f-4ebc-8d48-e80df264ced5",
+      "word": "打ち込む",
+      "reading": "うちこむ",
+      "time": 54970,
+      "endTime": 55303.333333333336,
+      "type": "normal"
+    },
+    {
+      "id": "35d4c679-d7ef-4b15-aba2-eb80b8bc6e47",
+      "word": "何千文字でも",
+      "reading": "なんぜんもじでも",
+      "time": 55303.33333333333,
+      "endTime": 55969.99999999999,
+      "type": "normal"
+    },
+    {
+      "id": "004a4443-1dfd-4c1f-8f19-a6de16aacc70",
+      "word": "ド",
+      "reading": "ど",
+      "time": 55970,
+      "endTime": 56053.333333333336,
+      "type": "normal"
+    },
+    {
+      "id": "fe9909d2-c2db-47bf-96a9-faa1269337b3",
+      "word": "ド",
+      "reading": "ど",
+      "time": 56053.33333333333,
+      "endTime": 56136.666666666664,
+      "type": "normal"
+    },
+    {
+      "id": "472ebb8d-09b6-4e26-bf99-2b21a5eec1ff",
+      "word": "ド",
+      "reading": "ど",
+      "time": 56136.666666666664,
+      "endTime": 56220,
+      "type": "normal"
+    },
+    {
+      "id": "1a5a7bbb-36d3-4b1c-8ddc-3e522d6966df",
+      "word": "ド",
+      "reading": "ど",
+      "time": 56220,
+      "endTime": 56303.333333333336,
+      "type": "normal"
+    },
+    {
+      "id": "35f798ed-9c44-4990-962c-df4b19e644f2",
+      "word": "どうしようもない",
+      "reading": "どうしようもない",
+      "time": 56303.33333333333,
+      "endTime": 56969.99999999999,
+      "type": "normal"
+    },
+    {
+      "id": "567d1530-9c11-4108-bdf0-3179288c4833",
+      "word": "速さも",
+      "reading": "はやさも",
+      "time": 56970,
+      "endTime": 57303.333333333336,
+      "type": "normal"
+    },
+    {
+      "id": "828b15f5-f83e-4661-9be3-2c5f3a60cc3e",
+      "word": "そ",
+      "reading": "そ",
+      "time": 57303.33333333333,
+      "endTime": 57386.666666666664,
+      "type": "normal"
+    },
+    {
+      "id": "40ba9ee2-5d40-462d-9d25-6c65d422a799",
+      "word": "れ",
+      "reading": "れ",
+      "time": 57386.666666666664,
+      "endTime": 57470,
+      "type": "normal"
+    },
+    {
+      "id": "e6ff44ee-1c95-425e-8d66-436a152bde37",
+      "word": "で",
+      "reading": "で",
+      "time": 57470,
+      "endTime": 57553.333333333336,
+      "type": "normal"
+    },
+    {
+      "id": "49856d3a-56b4-4a8f-a1ee-e2b18a3e1afc",
+      "word": "も",
+      "reading": "も",
+      "time": 57553.33333333333,
+      "endTime": 57636.666666666664,
+      "type": "normal"
+    },
+    {
+      "id": "b2f3df81-9977-4aab-a428-0ea53f49eb83",
+      "word": "いつか間に合うと",
+      "reading": "いつかまにあうと",
+      "time": 57636.666666666664,
+      "endTime": 58303.33333333333,
+      "type": "normal"
+    },
+    {
+      "id": "38137285-892c-40f3-8df1-1b8f392df995",
+      "word": "信じて",
+      "reading": "しんじて",
+      "time": 58303.33333333333,
+      "endTime": 58636.666666666664,
+      "type": "normal"
+    },
+    {
+      "id": "6c2bc069-a53d-44bc-a838-962c8e8e167b",
+      "word": "た",
+      "reading": "た",
+      "time": 58636.666666666664,
+      "endTime": 58720,
+      "type": "normal"
+    },
+    {
+      "id": "4f079a9f-5584-4599-a364-ad6ff54bdd02",
+      "word": "だ",
+      "reading": "だ",
+      "time": 58720,
+      "endTime": 58970,
+      "type": "normal"
+    },
+    {
+      "id": "579e6823-8927-4787-a709-bfabd624055e",
+      "word": "ひたすらに",
+      "reading": "ひたすらに",
+      "time": 58970,
+      "endTime": 59303.333333333336,
+      "type": "normal"
+    },
+    {
+      "id": "1e4e8ac2-e312-46a2-891f-fc9341641528",
+      "word": "打ち込むんだ",
+      "reading": "うちこんだ",
+      "time": 59303.33333333333,
+      "endTime": 59969.99999999999,
+      "type": "normal"
+    },
+    {
+      "id": "457e8e0f-65fd-4ac6-93ee-2448e694df31",
+      "word": "し",
+      "reading": "し",
+      "time": 59970,
+      "endTime": 60053.333333333336,
+      "type": "normal"
+    },
+    {
+      "id": "f19622f0-2fe0-4968-9dab-78dd2d802541",
+      "word": "ぶ",
+      "reading": "ぶ",
+      "time": 60053.33333333333,
+      "endTime": 60136.666666666664,
+      "type": "normal"
+    },
+    {
+      "id": "fe2f952c-d432-40fc-a241-c65346af05a1",
+      "word": "し",
+      "reading": "し",
+      "time": 60136.666666666664,
+      "endTime": 60220,
+      "type": "normal"
+    },
+    {
+      "id": "91b6e729-a749-4fcb-9006-6d0b551e0244",
+      "word": "ぶ",
+      "reading": "ぶ",
+      "time": 60220,
+      "endTime": 60303.333333333336,
+      "type": "normal"
+    },
+    {
+      "id": "e5bdb06d-273e-4972-b736-54fa303141b7",
+      "word": "続けた",
+      "reading": "つづけた",
+      "time": 60303.33333333333,
+      "endTime": 60636.666666666664,
+      "type": "normal"
+    },
+    {
+      "id": "4dcf7730-c9cf-42b2-a3cf-6d76d21561b1",
+      "word": "何千年でも",
+      "reading": "なんぜんねんでも",
+      "time": 60636.666666666664,
+      "endTime": 61303.33333333333,
+      "type": "normal"
+    },
+    {
+      "id": "e2a2297d-bcde-4b31-976b-b6c4df03916b",
+      "word": "ダ",
+      "reading": "だ",
+      "time": 61303.33333333333,
+      "endTime": 61386.666666666664,
+      "type": "normal"
+    },
+    {
+      "id": "2f45aff2-6b5c-4edc-891d-f4179333e784",
+      "word": "ダ",
+      "reading": "だ",
+      "time": 61386.666666666664,
+      "endTime": 61470,
+      "type": "normal"
+    },
+    {
+      "id": "06ec1d25-ddd4-41c5-8eca-a4123c4b222a",
+      "word": "ダ",
+      "reading": "だ",
+      "time": 61470,
+      "endTime": 61553.333333333336,
+      "type": "normal"
+    },
+    {
+      "id": "c5e53bf0-e56e-43f8-ac19-d75a96eb34e2",
+      "word": "ダ",
+      "reading": "だ",
+      "time": 61553.33333333333,
+      "endTime": 61636.666666666664,
+      "type": "normal"
+    },
+    {
+      "id": "744ad70d-f7ce-46a7-9bab-651bf87c36a1",
+      "word": "大丈夫と",
+      "reading": "たいじょうぶと",
+      "time": 61636.666666666664,
+      "endTime": 62136.666666666664,
+      "type": "normal"
+    },
+    {
+      "id": "4cdb64eb-72f7-4f04-811a-e09ebbda2fea",
+      "word": "言い聞かせて",
+      "reading": "いいきかせて",
+      "time": 62136.666666666664,
+      "endTime": 62636.666666666664,
+      "type": "normal"
+    },
+    {
+      "id": "9aaf98b2-1b7a-45e5-b617-268edee95a36",
+      "word": "日",
+      "reading": "ひ",
+      "time": 62636.666666666664,
+      "endTime": 62720,
+      "type": "normal"
+    },
+    {
+      "id": "7f31e256-30a9-45e8-9760-d8727624b410",
+      "word": "々",
+      "reading": "び",
+      "time": 62720,
+      "endTime": 62803.333333333336,
+      "type": "normal"
+    },
+    {
+      "id": "3244b52f-036c-4332-a05a-54d75daf797d",
+      "word": "日",
+      "reading": "ひ",
+      "time": 62803.33333333333,
+      "endTime": 62886.666666666664,
+      "type": "normal"
+    },
+    {
+      "id": "f173e169-887f-45d1-b1f0-c07e49de2a5e",
+      "word": "々",
+      "reading": "び",
+      "time": 62886.666666666664,
+      "endTime": 62970,
+      "type": "normal"
+    },
+    {
+      "id": "78895e09-bb62-40d2-97a0-628e924c88a4",
+      "word": "ベストを尽くし",
+      "reading": "べすとをつくし",
+      "time": 62970,
+      "endTime": 63636.666666666664,
+      "type": "normal"
+    },
+    {
+      "id": "d3268278-9613-492b-9061-580da7c0291e",
+      "word": "極めたら",
+      "reading": "きわめたら",
+      "time": 63636.666666666664,
+      "endTime": 63970,
+      "type": "normal"
+    },
+    {
+      "id": "e78c135e-f2fc-4b10-b415-1e4f83dba1e0",
+      "word": "いつの間にか",
+      "reading": "いつのまにか",
+      "time": 63970,
+      "endTime": 64636.666666666664,
+      "type": "normal"
+    },
+    {
+      "id": "718de5a5-17eb-4a6f-b84f-0accff215e22",
+      "word": "追い越してたんだ",
+      "reading": "おいこしてたんだ",
+      "time": 64636.666666666664,
+      "endTime": 65636.66666666666,
+      "type": "normal"
+    },
+    {
+      "id": "8d0dbfee-700f-46e4-aec5-1c20bb1ba1e8",
+      "word": "o",
+      "reading": "o",
+      "time": 66303.33333333333,
+      "endTime": 66386.66666666666,
+      "type": "normal"
+    },
+    {
+      "id": "44b98373-9ff1-4c93-862f-8e246efaaba1",
+      "word": "o",
+      "reading": "o",
+      "time": 66386.66666666666,
+      "endTime": 66469.99999999999,
+      "type": "normal"
+    },
+    {
+      "id": "437087c3-8408-40e8-9604-764f573a2044",
+      "word": "o",
+      "reading": "o",
+      "time": 66470,
+      "endTime": 66553.33333333333,
+      "type": "normal"
+    },
+    {
+      "id": "b43fbc2b-d29e-435b-9f79-312af9a3941f",
+      "word": "o",
+      "reading": "o",
+      "time": 66553.33333333333,
+      "endTime": 66636.66666666666,
+      "type": "normal"
+    },
+    {
+      "id": "3243aabe-d107-4033-acff-1554badb6c36",
+      "word": "ooooiaeuiaeui",
+      "reading": "ooooiaeuiaeui",
+      "time": 66636.66666666666,
+      "endTime": 67386.66666666666,
+      "type": "normal"
+    },
+    {
+      "id": "e653d829-5321-45d6-b26f-bdaad57b138d",
+      "word": "a",
+      "reading": "a",
+      "time": 67386.66666666666,
+      "endTime": 67469.99999999999,
+      "type": "normal"
+    },
+    {
+      "id": "d2aca037-7fe7-4724-963d-12a0bd2fd366",
+      "word": "a",
+      "reading": "a",
+      "time": 67553.33333333333,
+      "endTime": 67636.66666666666,
+      "type": "normal"
+    },
+    {
+      "id": "65bfa663-b17e-4b5c-9eb4-ab7327a5c689",
+      "word": "a",
+      "reading": "a",
+      "time": 67720,
+      "endTime": 67803.33333333333,
+      "type": "normal"
+    },
+    {
+      "id": "17139500-2bb5-4487-a353-c9cb6f3a950c",
+      "word": "a",
+      "reading": "a",
+      "time": 67886.66666666666,
+      "endTime": 67969.99999999999,
+      "type": "normal"
+    },
+    {
+      "id": "e09d74d7-75cc-463b-ab95-0d98a324b757",
+      "word": "aieaioaieaioaea",
+      "reading": "aieaioaieaioaea",
+      "time": 67970,
+      "endTime": 69220,
+      "type": "normal"
+    },
+    {
+      "id": "8adbff8a-01d9-46c3-b199-fd4939734d81",
+      "word": "ieoieaieoiea",
+      "reading": "ieoieaieoiea",
+      "time": 69303.33333333333,
+      "endTime": 70303.33333333333,
+      "type": "normal"
+    },
+    {
+      "id": "6e7bb9ab-8695-4354-9268-f6bc1b4c48c8",
+      "word": "してたんだ",
+      "reading": "してたんだ",
+      "time": 70303.33333333333,
+      "endTime": 70970,
+      "type": "normal"
+    },
+    {
+      "id": 1792499464465,
+      "word": "o",
+      "reading": "o",
+      "time": 71636.66666666666,
+      "endTime": 71719.99999999999,
+      "type": "normal"
+    },
+    {
+      "id": 1792499464464,
+      "word": "o",
+      "reading": "o",
+      "time": 71720,
+      "endTime": 71803.33333333333,
+      "type": "normal"
+    },
+    {
+      "id": 1792499464466,
+      "word": "o",
+      "reading": "o",
+      "time": 71803.33333333333,
+      "endTime": 71886.66666666666,
+      "type": "normal"
+    },
+    {
+      "id": 1792499464467,
+      "word": "o",
+      "reading": "o",
+      "time": 71886.66666666666,
+      "endTime": 71969.99999999999,
+      "type": "normal"
+    },
+    {
+      "id": 1792499464468,
+      "word": "ooooiaeuiaeui",
+      "reading": "ooooiaeuiaeui",
+      "time": 71970,
+      "endTime": 72720,
+      "type": "normal"
+    },
+    {
+      "id": 1792499464472,
+      "word": "a",
+      "reading": "a",
+      "time": 72720,
+      "endTime": 72803.33333333333,
+      "type": "normal"
+    },
+    {
+      "id": 1792499464471,
+      "word": "a",
+      "reading": "a",
+      "time": 72886.66666666666,
+      "endTime": 72969.99999999999,
+      "type": "normal"
+    },
+    {
+      "id": 1792499464470,
+      "word": "a",
+      "reading": "a",
+      "time": 73053.33333333333,
+      "endTime": 73136.66666666666,
+      "type": "normal"
+    },
+    {
+      "id": 1792499464469,
+      "word": "a",
+      "reading": "a",
+      "time": 73220,
+      "endTime": 73303.33333333333,
+      "type": "normal"
+    },
+    {
+      "id": 1792499464473,
+      "word": "aieaioaieaioaea",
+      "reading": "aieaioaieaioaea",
+      "time": 73303.33333333333,
+      "endTime": 74553.33333333333,
+      "type": "normal"
+    },
+    {
+      "id": 1792499464474,
+      "word": "ieoieaieoiea",
+      "reading": "ieoieaieoiea",
+      "time": 74636.66666666666,
+      "endTime": 75636.66666666666,
+      "type": "normal"
+    },
+    {
+      "id": 1792505540195,
+      "word": "タイパ",
+      "reading": "たいぱ",
+      "time": 75970,
+      "endTime": 76303.33333333333,
+      "type": "normal"
+    },
+    {
+      "id": 1792505540196,
+      "word": "タイム",
+      "reading": "たいむ",
+      "time": 76303.33333333333,
+      "endTime": 76636.66666666666,
+      "type": "normal"
+    },
+    {
+      "id": 1792505540197,
+      "word": "タイポ",
+      "reading": "たいぽ",
+      "time": 76636.66666666666,
+      "endTime": 76969.99999999999,
+      "type": "normal"
+    },
+    {
+      "id": 1792505540198,
+      "word": "タイプ",
+      "reading": "たいぷ",
+      "time": 76970,
+      "endTime": 77303.33333333333,
+      "type": "normal"
+    },
+    {
+      "id": 1792505544912,
+      "word": "タイパ",
+      "reading": "たいぱ",
+      "time": 77303.33333333333,
+      "endTime": 77636.66666666666,
+      "type": "normal"
+    },
+    {
+      "id": 1792505544913,
+      "word": "タイム",
+      "reading": "たいむ",
+      "time": 77636.66666666666,
+      "endTime": 77969.99999999999,
+      "type": "normal"
+    },
+    {
+      "id": 1792505544914,
+      "word": "タイポ",
+      "reading": "たいぽ",
+      "time": 77970,
+      "endTime": 78303.33333333333,
+      "type": "normal"
+    },
+    {
+      "id": 1792505544915,
+      "word": "タイプ",
+      "reading": "たいぷ",
+      "time": 78303.33333333333,
+      "endTime": 78636.66666666666,
+      "type": "normal"
+    },
+    {
+      "id": 1792505546901,
+      "word": "タイパ",
+      "reading": "たいぱ",
+      "time": 78636.66666666666,
+      "endTime": 78969.99999999999,
+      "type": "normal"
+    },
+    {
+      "id": 1792505546902,
+      "word": "タイム",
+      "reading": "たいむ",
+      "time": 78970,
+      "endTime": 79303.33333333333,
+      "type": "normal"
+    },
+    {
+      "id": 1792505546903,
+      "word": "タイポ",
+      "reading": "たいぽ",
+      "time": 79303.33333333333,
+      "endTime": 79636.66666666666,
+      "type": "normal"
+    },
+    {
+      "id": 1792505546904,
+      "word": "タイプ",
+      "reading": "たいぷ",
+      "time": 79636.66666666666,
+      "endTime": 79969.99999999999,
+      "type": "normal"
+    },
+    {
+      "id": 1792505548766,
+      "word": "タイパ",
+      "reading": "たいぱ",
+      "time": 79970,
+      "endTime": 80303.33333333333,
+      "type": "normal"
+    },
+    {
+      "id": 1792505548767,
+      "word": "タイム",
+      "reading": "たいむ",
+      "time": 80303.33333333333,
+      "endTime": 80636.66666666666,
+      "type": "normal"
+    },
+    {
+      "id": 1792505548768,
+      "word": "タイポ",
+      "reading": "たいぽ",
+      "time": 80636.66666666666,
+      "endTime": 80969.99999999999,
+      "type": "normal"
+    },
+    {
+      "id": 1792505548769,
+      "word": "タイプ",
+      "reading": "たいぷ",
+      "time": 80970,
+      "endTime": 81303.33333333333,
+      "type": "normal"
+    },
+    {
+      "id": 1792505549867,
+      "word": "タイパ",
+      "reading": "たいぱ",
+      "time": 81303.33333333333,
+      "endTime": 81636.66666666666,
+      "type": "normal"
+    },
+    {
+      "id": 1792505549868,
+      "word": "タイム",
+      "reading": "たいむ",
+      "time": 81636.66666666666,
+      "endTime": 81969.99999999999,
+      "type": "normal"
+    },
+    {
+      "id": 1792505549869,
+      "word": "タイポ",
+      "reading": "たいぽ",
+      "time": 81970,
+      "endTime": 82303.33333333333,
+      "type": "normal"
+    },
+    {
+      "id": 1792505549870,
+      "word": "タイプ",
+      "reading": "たいぷ",
+      "time": 82303.33333333333,
+      "endTime": 82636.66666666666,
+      "type": "normal"
+    },
+    {
+      "id": 1792505554461,
+      "word": "タイパ",
+      "reading": "たいぱ",
+      "time": 82636.66666666666,
+      "endTime": 82969.99999999999,
+      "type": "normal"
+    },
+    {
+      "id": 1792505554462,
+      "word": "タイム",
+      "reading": "たいむ",
+      "time": 82970,
+      "endTime": 83303.33333333333,
+      "type": "normal"
+    },
+    {
+      "id": 1792505554463,
+      "word": "タイポ",
+      "reading": "たいぽ",
+      "time": 83303.33333333333,
+      "endTime": 83636.66666666666,
+      "type": "normal"
+    },
+    {
+      "id": 1792505554464,
+      "word": "タイプ",
+      "reading": "たいぷ",
+      "time": 83636.66666666666,
+      "endTime": 83969.99999999999,
+      "type": "normal"
+    },
+    {
+      "id": 1792505555521,
+      "word": "タイパ",
+      "reading": "たいぱ",
+      "time": 83970,
+      "endTime": 84303.33333333333,
+      "type": "normal"
+    },
+    {
+      "id": 1792505555522,
+      "word": "タイム",
+      "reading": "たいむ",
+      "time": 84303.33333333333,
+      "endTime": 84636.66666666666,
+      "type": "normal"
+    },
+    {
+      "id": 1792505555523,
+      "word": "タイポ",
+      "reading": "たいぽ",
+      "time": 84636.66666666666,
+      "endTime": 84969.99999999999,
+      "type": "normal"
+    },
+    {
+      "id": 1792505555524,
+      "word": "タイプ",
+      "reading": "たいぷ",
+      "time": 84970,
+      "endTime": 85303.33333333333,
+      "type": "normal"
+    },
+    {
+      "id": 1792505558184,
+      "word": "タイパ",
+      "reading": "たいぱ",
+      "time": 85303.33333333333,
+      "endTime": 85636.66666666666,
+      "type": "normal"
+    },
+    {
+      "id": 1792505558185,
+      "word": "タイム",
+      "reading": "たいむ",
+      "time": 85636.66666666666,
+      "endTime": 85969.99999999999,
+      "type": "normal"
+    },
+    {
+      "id": 1792505558186,
+      "word": "タイポ",
+      "reading": "たいぽ",
+      "time": 85970,
+      "endTime": 86303.33333333333,
+      "type": "normal"
+    },
+    {
+      "id": 1792505558187,
+      "word": "タイプ",
+      "reading": "たいぷ",
+      "time": 86303.33333333333,
+      "endTime": 86636.66666666666,
+      "type": "normal"
+    },
+    {
+      "id": "f32c34fa-1ca6-4c03-877f-82e48d286029",
+      "word": "i",
+      "reading": "i",
+      "time": 86636.66666666666,
+      "endTime": 86719.99999999999,
+      "type": "normal"
+    },
+    {
+      "id": "536c3943-d238-4ceb-89d4-e3fda53d6b3e",
+      "word": "i",
+      "reading": "i",
+      "time": 86720,
+      "endTime": 86803.33333333333,
+      "type": "normal"
+    },
+    {
+      "id": "89202bbb-817e-4e89-9718-05650cf96c37",
+      "word": "i",
+      "reading": "i",
+      "time": 86970,
+      "endTime": 87053.33333333333,
+      "type": "normal"
+    },
+    {
+      "id": "f23326c2-efdf-46c5-8f62-8d60a7fd4742",
+      "word": "i",
+      "reading": "i",
+      "time": 87220,
+      "endTime": 87303.33333333333,
+      "type": "normal"
+    },
+    {
+      "id": "c90d3915-fa63-46b1-833e-409508f2a962",
+      "word": "i",
+      "reading": "i",
+      "time": 87470,
+      "endTime": 87553.33333333333,
+      "type": "normal"
+    },
+    {
+      "id": "718e8d61-3a08-425a-ad62-2cb21b56d8ca",
+      "word": "i",
+      "reading": "i",
+      "time": 87803.33333333333,
+      "endTime": 87886.66666666666,
+      "type": "normal"
+    },
+    {
+      "id": "3fbf6b75-c4ef-405a-bfc0-c305c184f412",
+      "word": "i",
+      "reading": "i",
+      "time": 88220,
+      "endTime": 88303.33333333333,
+      "type": "normal"
+    },
+    {
+      "id": "e0716bcd-e9b7-4dc4-93ce-5ac9ab40c3a1",
+      "word": "i",
+      "reading": "i",
+      "time": 88636.66666666666,
+      "endTime": 88719.99999999999,
+      "type": "normal"
+    },
+    {
+      "id": "ce8d2c2a-2e7f-4273-a736-80875137f54e",
+      "word": "i",
+      "reading": "i",
+      "time": 89303.33333333333,
+      "endTime": 89386.66666666666,
+      "type": "normal"
+    }
+  ]
+}

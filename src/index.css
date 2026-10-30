@@ -6,6 +6,37 @@
   --font-orbitron: "Orbitron", sans-serif;
 }
 
+/* =========================================================
+   PWA・スマホゲーム向けタッチ挙動＆セーフエリア制御
+   ========================================================= */
+html,
+body,
+#root {
+  width: 100%;
+  height: 100%;
+  margin: 0;
+  padding: 0;
+  background-color: #0d091a;
+  overscroll-behavior: none;
+  overflow: hidden;
+  touch-action: manipulation;
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-touch-callout: none;
+  -webkit-tap-highlight-color: transparent;
+}
+
+input,
+textarea {
+  user-select: text;
+  -webkit-user-select: text;
+}
+
+/* iPhone下部ホームバー領域（セーフエリア）との干渉を防ぐフリックテンキー下部パディング */
+.flick-keyboard-safe-bottom {
+  padding-bottom: calc(1.5rem + env(safe-area-inset-bottom, 0px));
+}
+
 /* 和風サイバーネオンボタンスタイル */
 @keyframes neon-pulse {
   0%, 100% {
@@ -187,6 +218,194 @@
   filter: brightness(1.12) drop-shadow(0 0 16px rgba(192, 132, 252, 0.45));
 }
 
+/* 最高難易度（☆10）専用：薄い赤色背景＆特別感演出 */
+.song-card.song-card-max-diff {
+  position: relative;
+  background-color: rgba(244, 63, 94, 0.22) !important;
+  background-image: linear-gradient(
+    135deg,
+    rgba(251, 113, 133, 0.34) 0%,
+    rgba(225, 29, 72, 0.26) 50%,
+    rgba(190, 18, 60, 0.34) 100%
+  ) !important;
+  box-shadow: 0 0 22px rgba(244, 63, 94, 0.42), inset 0 0 24px rgba(251, 113, 133, 0.25) !important;
+}
+
+.song-card.song-card-max-diff::before {
+  content: "";
+  position: absolute;
+  inset: 4px;
+  border-radius: inherit;
+  background: linear-gradient(
+    90deg,
+    rgba(251, 113, 133, 0.24) 0%,
+    rgba(244, 63, 94, 0.16) 50%,
+    rgba(251, 113, 133, 0.26) 100%
+  );
+  pointer-events: none;
+  z-index: 0;
+}
+
+.song-card.song-card-max-diff > * {
+  position: relative;
+  z-index: 1;
+}
+
+.song-card.song-card-max-diff:hover {
+  transform: translateY(-3px) scale(1.01);
+  filter: brightness(1.12) drop-shadow(0 0 18px rgba(244, 63, 94, 0.55));
+}
+
+/* ☆10 封印状態＆氷結破砕（ヒビ割れ＋ぼかしフェードアウト）演出 */
+.song-card-sealed-content {
+  filter: blur(10px) brightness(0.55) saturate(0.5);
+  transition: filter 0.3s ease;
+  pointer-events: none;
+  user-select: none;
+}
+
+.song-card-shattering-content {
+  animation: iceContentUnblur 2.5s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+  pointer-events: none;
+}
+
+.song-card.song-card-shattering-shake {
+  animation: iceCardImpactShake 0.48s cubic-bezier(0.36, 0.07, 0.19, 0.97) both;
+}
+
+.song-card.song-card-max-diff > .ice-seal-overlay {
+  position: absolute !important;
+  inset: 4px !important;
+  border-radius: 16px;
+  z-index: 25 !important;
+  overflow: hidden;
+  background: linear-gradient(
+    135deg,
+    rgba(12, 19, 44, 0.78) 0%,
+    rgba(22, 78, 99, 0.52) 48%,
+    rgba(76, 15, 46, 0.72) 100%
+  );
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.song-card.song-card-max-diff > .ice-seal-overlay.is-shattering {
+  pointer-events: none !important;
+  animation: iceOverlayShatterFade 2.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+.ice-seal-overlay.is-shattering .ice-crack-main {
+  animation: iceCrackFlash 2.6s ease-out forwards;
+}
+
+.ice-seal-overlay.is-shattering .ice-seal-badge {
+  animation: iceBadgeBreak 0.55s ease-out forwards;
+}
+
+@keyframes iceContentUnblur {
+  0% {
+    filter: blur(11px) brightness(1.45) saturate(0.6);
+  }
+  18% {
+    filter: blur(8px) brightness(1.25) saturate(0.85);
+  }
+  65% {
+    filter: blur(2px) brightness(1.06) saturate(0.98);
+  }
+  100% {
+    filter: blur(0px) brightness(1) saturate(1);
+  }
+}
+
+@keyframes iceOverlayShatterFade {
+  0% {
+    opacity: 1;
+    transform: scale(1);
+    filter: brightness(1);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+  }
+  10% {
+    opacity: 1;
+    transform: scale(1.015);
+    filter: brightness(2.1) contrast(1.25);
+    backdrop-filter: blur(14px);
+    -webkit-backdrop-filter: blur(14px);
+  }
+  32% {
+    opacity: 0.85;
+    transform: scale(1.03);
+    filter: brightness(1.35);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+  }
+  100% {
+    opacity: 0;
+    transform: scale(1.08);
+    filter: brightness(1);
+    backdrop-filter: blur(0px);
+    -webkit-backdrop-filter: blur(0px);
+  }
+}
+
+@keyframes iceCrackFlash {
+  0% {
+    stroke-width: 2.2px;
+    opacity: 0.85;
+  }
+  12% {
+    stroke-width: 3.8px;
+    opacity: 1;
+  }
+  50% {
+    stroke-width: 2.6px;
+    opacity: 0.75;
+  }
+  100% {
+    stroke-width: 1px;
+    opacity: 0;
+  }
+}
+
+@keyframes iceBadgeBreak {
+  0% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  25% {
+    opacity: 1;
+    transform: scale(1.12);
+  }
+  100% {
+    opacity: 0;
+    transform: scale(1.28);
+  }
+}
+
+@keyframes iceCardImpactShake {
+  0%, 100% {
+    transform: translate3d(0, 0, 0);
+  }
+  15% {
+    transform: translate3d(-6px, 3px, 0) scale(1.01);
+  }
+  30% {
+    transform: translate3d(6px, -3px, 0) scale(1.01);
+  }
+  45% {
+    transform: translate3d(-4px, -2px, 0);
+  }
+  60% {
+    transform: translate3d(4px, 2px, 0);
+  }
+  75% {
+    transform: translate3d(-2px, 1px, 0);
+  }
+}
+
 /* 3. ソート順ボタン（フラット・角丸・影なし） */
 .sort-order-btn {
   background: rgba(18, 10, 42, 0.85) !important;
@@ -212,10 +431,15 @@
   color: #f3e8ff !important;
 }
 
-/* 難易度の星（点灯星のゴールドネオングロー） */
+/* 難易度の星（点灯星のゴールドネオングロー／☆10専用の紫色グロー） */
 .star-lit {
   color: #fbbf24;
   text-shadow: 0 0 8px rgba(251, 191, 36, 0.8);
+}
+
+.star-lit-max {
+  color: #c084fc !important;
+  text-shadow: 0 0 8px rgba(192, 132, 252, 0.95), 0 0 14px rgba(168, 85, 247, 0.75) !important;
 }
 
 .star-unlit {
@@ -808,4 +1032,35 @@
   animation: char-enter-miss 0.42s ease-in-out forwards;
   will-change: transform, opacity;
 }
+
+/* =========================================================
+   ランキング画面：デジタル雅（紫紺×シアン）カスタムスクロールバー
+   ========================================================= */
+.ranking-miyabi-scrollbar {
+  scrollbar-width: thin;
+  scrollbar-color: #22d3ee #0b0618;
+}
+
+.ranking-miyabi-scrollbar::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+.ranking-miyabi-scrollbar::-webkit-scrollbar-track {
+  background: #0b0618;
+  border-left: 1px solid rgba(168, 85, 247, 0.35);
+  border-radius: 9999px;
+}
+
+.ranking-miyabi-scrollbar::-webkit-scrollbar-thumb {
+  background: #231542;
+  border: 1.5px solid rgba(34, 211, 238, 0.75);
+  border-radius: 9999px;
+}
+
+.ranking-miyabi-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: #311d5c;
+  border-color: #f472b6;
+}
+
 

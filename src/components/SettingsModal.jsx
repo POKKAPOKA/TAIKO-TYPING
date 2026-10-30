@@ -3,6 +3,7 @@ import { createPortal } from 'react-dom';
 import { useGameStore } from '../store/gameStore';
 import { gameEngine } from '../engine/GameEngine';
 import { playPerfect, playGood, playMiss } from '../hooks/useSystemSE';
+import { exportPlayLogsCsv, exportLevelValidationSummaryCsv } from '../utils/csvExport';
 import { X, Plus, Minus, RotateCcw, Keyboard } from 'lucide-react';
 
 const JUDGE_WINDOW = {
@@ -72,18 +73,71 @@ function MechSegmentedBar({ ratio, segments = 28, activeColor = 'cyan', standard
 
 export default function SettingsModal({ onClose }) {
   const [activeTab, setActiveTab] = useState('general');
-  const [calibrationSound, setCalibrationSound] = useState('perfect'); // 'perfect' | 'good' | 'miss'
   const [demoJudgment, setDemoJudgment] = useState(null); // { judgment, diffMs, timingType, count }
+  const [confirmClearLogs, setConfirmClearLogs] = useState(false);
 
   const speedMultiplier = useGameStore(state => state.speedMultiplier);
   const wallAmount = useGameStore(state => state.wallAmount);
   const offsetMs = useGameStore(state => state.offsetMs);
   const showCustomModes = useGameStore(state => state.showCustomModes);
+  const playLogsCount = useGameStore(state => state.playLogsCount);
+  const isExportingCsv = useGameStore(state => state.isExportingCsv);
 
   const setSpeedMultiplier = useGameStore(state => state.setSpeedMultiplier);
   const setWallAmount = useGameStore(state => state.setWallAmount);
   const setOffsetMs = useGameStore(state => state.setOffsetMs);
   const toggleShowCustomModes = useGameStore(state => state.toggleShowCustomModes);
+  const setIsExportingCsv = useGameStore(state => state.setIsExportingCsv);
+  const refreshPlayLogsCount = useGameStore(state => state.refreshPlayLogsCount);
+  const clearAllPlayLogs = useGameStore(state => state.clearAllPlayLogs);
+  const showToast = useGameStore(state => state.showToast);
+
+  const creatorPanelSyncedRef = useRef(false);
+  const handleCreatorPanelRef = useCallback((node) => {
+    if (node && !creatorPanelSyncedRef.current) {
+      creatorPanelSyncedRef.current = true;
+      useGameStore.getState().refreshPlayLogsCount();
+    } else if (!node) {
+      creatorPanelSyncedRef.current = false;
+    }
+  }, []);
+
+  const handleExportRawCsv = async () => {
+    if (isExportingCsv) return;
+    setIsExportingCsv(true);
+    try {
+      const { count, filename } = await exportPlayLogsCsv();
+      await refreshPlayLogsCount();
+      showToast(`全プレイ履歴CSV（${count}件）を出力しました: ${filename}`);
+    } catch (err) {
+      console.error(err);
+      showToast('CSV出力に失敗しました');
+    } finally {
+      setIsExportingCsv(false);
+    }
+  };
+
+  const handleExportSummaryCsv = async () => {
+    if (isExportingCsv) return;
+    setIsExportingCsv(true);
+    try {
+      const { count, excludedCount, filename } = await exportLevelValidationSummaryCsv();
+      await refreshPlayLogsCount();
+      const excludeNote = excludedCount > 0 ? `・外れ値${excludedCount}件除外` : '';
+      showToast(`レベル検証サマリーCSV（有効${count}件集計${excludeNote}）を出力しました: ${filename}`);
+    } catch (err) {
+      console.error(err);
+      showToast('CSV出力に失敗しました');
+    } finally {
+      setIsExportingCsv(false);
+    }
+  };
+
+  const handleClearLogs = () => {
+    clearAllPlayLogs();
+    setConfirmClearLogs(false);
+    showToast('これまでのプレイ記録ログをすべてクリアしました');
+  };
 
   const handleSpeedSliderChange = (e) => {
     setSpeedMultiplier(parseFloat(parseFloat(e.target.value).toFixed(2)));
@@ -114,24 +168,12 @@ export default function SettingsModal({ onClose }) {
     lastTick: -1,
     lastHitBeat: -999,
     lastHitTime: -9999,
-    calibrationSound: 'perfect',
     activeTab: 'general',
     onHit: null
   });
   demoStateRef.current.offsetMs = offsetMs;
   demoStateRef.current.speedMultiplier = speedMultiplier;
-  demoStateRef.current.calibrationSound = calibrationSound;
   demoStateRef.current.activeTab = activeTab;
-
-  const playTick = useCallback(() => {
-    if (calibrationSound === 'good') {
-      playGood();
-    } else if (calibrationSound === 'miss') {
-      playMiss();
-    } else {
-      playPerfect();
-    }
-  }, [calibrationSound]);
 
   // デモ画面での打鍵・タップ判定処理（オフセット値とリズム周期からズレを算出し、判定表示＆SE再生）
   const handleDemoHit = useCallback(() => {
@@ -210,15 +252,9 @@ export default function SettingsModal({ onClose }) {
 
       if (currentBeat > demoStateRef.current.lastTick && currentBeat >= 0) {
         demoStateRef.current.lastTick = currentBeat;
-        // ユーザーが直前にその拍を叩いたばかりでないときだけメトロノームガイド音を鳴らす
+        // ユーザーが直前にその拍を叩いたばかりでないときだけメトロノームガイド音（PERFECT音で固定）を鳴らす
         if (lastHitBeat !== currentBeat && time - lastHitTime > 90) {
-          if (demoStateRef.current.calibrationSound === 'good') {
-            playGood();
-          } else if (demoStateRef.current.calibrationSound === 'miss') {
-            playMiss();
-          } else {
-            playPerfect();
-          }
+          playPerfect();
         }
       }
 
@@ -358,16 +394,8 @@ export default function SettingsModal({ onClose }) {
           {/* ヘッダーパネル：計器盤タイトル＆ステータス装飾 */}
           <div className="bg-[#120e1f] px-4 py-3.5 sm:px-6 sm:py-4 flex justify-between items-center border-b-2 border-amber-500/50 shrink-0 relative z-20">
             <div>
-              <div className="flex items-center gap-2">
-                <span className="text-[10px] sm:text-xs font-dotgothic font-bold tracking-widest text-amber-400 bg-amber-500/15 border border-amber-500/50 px-2 py-0.5 rounded">
-                  SYS-CFG // 弐式計器盤
-                </span>
-                <span className="hidden sm:inline-block text-[10px] font-dotgothic text-cyan-400/80 tracking-widest">
-                  MIYABI-MECH v1.0
-                </span>
-              </div>
               <h2 className="text-xl sm:text-2xl font-black text-white tracking-widest font-dotgothic mt-0.5">
-                環境設定・メンテナンス
+                基本設定と判定
               </h2>
             </div>
 
@@ -411,11 +439,11 @@ export default function SettingsModal({ onClose }) {
               }`}
               onClick={() => {
                 setActiveTab('sound');
-                playTick();
+                playPerfect();
               }}
             >
               <span className={`w-2.5 h-2.5 rounded-xs ${activeTab === 'sound' ? 'bg-rose-500' : 'bg-neutral-600'}`} />
-              <span>サウンド＆判定</span>
+              <span>判定調整</span>
               <span className="hidden sm:inline text-[10px] text-cyan-400/80 font-normal">[SYNC-02]</span>
             </button>
           </div>
@@ -433,43 +461,20 @@ export default function SettingsModal({ onClose }) {
                       <div>
                         <div className="flex items-center gap-2">
                           <span className="text-[11px] font-dotgothic px-2 py-0.5 rounded bg-cyan-500/15 border border-cyan-400/50 text-cyan-300 font-bold">
-                            GAUGE-01 // SPEED
+                            SPEED
                           </span>
                           <span className="text-lg sm:text-xl font-black text-cyan-300 tracking-widest font-dotgothic">
-                            レーン速度（ノーツスピード）
+                            レーン速度
                           </span>
                         </div>
                         <p className="text-xs sm:text-sm text-neutral-300 font-bold mt-1">
-                          ノーツが流れる速さを調整します（基準 <span className="text-amber-300 font-dotgothic">4.00</span> ＝ 標準速度）。音楽のテンポや判定幅は変わりません。
+                          ノーツが流れる速さを調整します（<span className="text-amber-300 font-dotgothic">4.00</span> がおすすめ）。
                         </p>
                       </div>
-
-                      <button
-                        type="button"
-                        onClick={() => setSpeedMultiplier(4.0)}
-                        className="px-3 py-1.5 rounded-lg bg-[#1b162e] hover:bg-[#272042] text-amber-300 border border-amber-500/60 font-dotgothic text-xs font-bold flex items-center gap-1.5 cursor-pointer transition-colors"
-                        title="標準速度 (4.00) に戻す"
-                      >
-                        <RotateCcw size={13} />
-                        <span>標準 (4.00) に戻す</span>
-                      </button>
                     </div>
 
                     {/* デジタル計器表示部 ＆ 0.01 / 0.10 微調整ステッパー */}
                     <div className="bg-[#08060e] rounded-xl border-2 border-[#251e38] p-3.5 sm:p-4 flex flex-col gap-3">
-                      <div className="flex flex-wrap items-center justify-between gap-2">
-                        <div className="flex items-center gap-2">
-                          <span className="text-[11px] font-dotgothic text-amber-400/90 tracking-widest">
-                            CURRENT VELOCITY
-                          </span>
-                          <span className="text-xs font-dotgothic font-bold text-cyan-200 px-2 py-0.5 rounded bg-cyan-500/10 border border-cyan-500/40">
-                            {getSpeedCategoryLabel(speedMultiplier)}
-                          </span>
-                        </div>
-                        <span className="text-xs font-dotgothic text-neutral-400">
-                          実効倍率: <strong className="text-amber-300">{(speedMultiplier / 4.0).toFixed(2)}x</strong>
-                        </span>
-                      </div>
 
                       {/* 0.01 / 0.10 微調整ボタン＋デジタル速度表示 */}
                       <div className="flex items-center justify-center gap-1.5 sm:gap-3">
@@ -600,14 +605,14 @@ export default function SettingsModal({ onClose }) {
                       <div>
                         <div className="flex items-center gap-2">
                           <span className="text-[11px] font-dotgothic px-2 py-0.5 rounded bg-purple-500/15 border border-purple-400/50 text-purple-300 font-bold">
-                            GAUGE-02 // SHUTTER WALL
+                            WALL
                           </span>
                           <span className="text-lg sm:text-xl font-black text-purple-300 tracking-widest font-dotgothic">
-                            ウォール（レーン隠し装甲）
+                            ウォール
                           </span>
                         </div>
                         <p className="text-xs sm:text-sm text-neutral-300 font-bold mt-1">
-                          画面右側のノーツ出現位置から指定した割合をシャッターで隠します。(0＝開放, 1000＝完全遮蔽)
+                          画面右側のノーツ出現位置から指定した割合を隠します
                         </p>
                       </div>
 
@@ -639,48 +644,121 @@ export default function SettingsModal({ onClose }) {
                       />
 
                       <div className="flex justify-between items-center text-xs font-bold text-neutral-400 px-1 font-dotgothic">
-                        <span>0 (なし)</span>
-                        <span>500 (50%遮蔽)</span>
-                        <span>1000 (完全遮蔽)</span>
+                        <span>0</span>
+                        <span>500</span>
+                        <span>1000</span>
                       </div>
                     </div>
                   </div>
                 </div>
 
-                {/* 3. 創作・エディター機能トグルパネル */}
+                {/* 3. 創作・エディター機能トグルパネル ＆ プレイ記録・レベル妥当性検証CSV出力 */}
                 <div className="relative rounded-2xl border-2 border-amber-500/60 bg-[#100d1c] p-1">
                   <MechCornerBrackets color="amber" />
-                  <div className="rounded-xl border border-cyan-500/30 bg-[#0c0a16] p-4 sm:p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-                    <div>
-                      <div className="flex items-center gap-2">
-                        <span className="text-[11px] font-dotgothic px-2 py-0.5 rounded bg-amber-500/15 border border-amber-400/50 text-amber-300 font-bold">
-                          SWITCH-03 // CREATOR MODULE
-                        </span>
-                        <span className="text-lg sm:text-xl font-black text-amber-300 tracking-widest font-dotgothic">
-                          創作・エディター機能の表示
-                        </span>
+                  <div className="rounded-xl border border-cyan-500/30 bg-[#0c0a16] p-4 sm:p-5 flex flex-col gap-4">
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                      <div>
+                        <div className="flex items-center gap-2">
+                          <span className="text-[11px] font-dotgothic px-2 py-0.5 rounded bg-amber-500/15 border border-amber-400/50 text-amber-300 font-bold">
+                            CREATOR MODULE
+                          </span>
+                          <span className="text-lg sm:text-xl font-black text-amber-300 tracking-widest font-dotgothic">
+                            創作・エディター機能の表示
+                          </span>
+                        </div>
+                        <p className="text-xs sm:text-sm text-neutral-300 font-bold mt-1">
+                          ホーム画面下部に「創作譜面を遊ぶ」「創作譜面を作る」および難易度（☆1〜10）検証用CSV出力を表示します。
+                        </p>
                       </div>
-                      <p className="text-xs sm:text-sm text-neutral-300 font-bold mt-1">
-                        ホーム画面下部に「創作譜面を遊ぶ」「創作譜面を作る」モジュールを表示します。
-                      </p>
+
+                      <button
+                        type="button"
+                        onClick={toggleShowCustomModes}
+                        className={`px-5 py-3 rounded-xl font-dotgothic font-black text-sm sm:text-base transition-colors border-2 cursor-pointer shrink-0 flex items-center gap-2.5 ${
+                          showCustomModes
+                            ? 'bg-emerald-500 hover:bg-emerald-400 text-[#09080f] border-amber-300'
+                            : 'bg-[#1a152b] hover:bg-[#261f3d] text-neutral-300 border-[#3a3058]'
+                        }`}
+                      >
+                        <span
+                          className={`w-3 h-3 rounded-xs border ${
+                            showCustomModes ? 'bg-[#09080f] border-[#09080f]' : 'bg-neutral-700 border-neutral-500'
+                          }`}
+                        />
+                        <span>{showCustomModes ? '表示中' : '非表示'}</span>
+                      </button>
                     </div>
 
-                    <button
-                      type="button"
-                      onClick={toggleShowCustomModes}
-                      className={`px-5 py-3 rounded-xl font-dotgothic font-black text-sm sm:text-base transition-colors border-2 cursor-pointer shrink-0 flex items-center gap-2.5 ${
-                        showCustomModes
-                          ? 'bg-emerald-500 hover:bg-emerald-400 text-[#09080f] border-amber-300'
-                          : 'bg-[#1a152b] hover:bg-[#261f3d] text-neutral-300 border-[#3a3058]'
-                      }`}
-                    >
-                      <span
-                        className={`w-3 h-3 rounded-xs border ${
-                          showCustomModes ? 'bg-[#09080f] border-[#09080f]' : 'bg-neutral-700 border-neutral-500'
-                        }`}
-                      />
-                      <span>{showCustomModes ? 'ON // 表示中' : 'OFF // 非表示'}</span>
-                    </button>
+                    {/* 創作・エディター表示ON時のみ：プレイ記録＆レベル妥当性検証CSV出力エリア */}
+                    {showCustomModes && (
+                      <div
+                        ref={handleCreatorPanelRef}
+                        className="border-t-2 border-[#28203d] pt-4 flex flex-col gap-3"
+                      >
+                        <div className="flex flex-wrap items-center justify-between gap-2 bg-[#08060e] border-2 border-[#251e38] rounded-xl px-3.5 py-2.5">
+                          <div className="flex items-center gap-2">
+                            <span className="text-[11px] font-dotgothic font-black px-2 py-0.5 rounded bg-cyan-500/15 border border-cyan-400/60 text-cyan-300">
+                              譜面難易度検証
+                            </span>
+                            <span className="text-xs sm:text-sm font-dotgothic font-bold text-neutral-200">
+                              ローカル履歴＋Supabaseランキング統合集計
+                            </span>
+                          </div>
+                          <div className="flex flex-wrap items-center gap-2">
+                            <span className="px-3 py-1 rounded-lg bg-amber-500/15 border border-amber-400/70 text-amber-300 font-dotgothic font-black text-xs sm:text-sm">
+                              記録データ: {playLogsCount}件
+                            </span>
+                            {!confirmClearLogs ? (
+                              <button
+                                type="button"
+                                disabled={isExportingCsv || playLogsCount === 0}
+                                onClick={() => setConfirmClearLogs(true)}
+                                className="px-2.5 py-1 rounded-lg bg-[#1c1026] hover:bg-rose-500/20 disabled:opacity-40 disabled:cursor-not-allowed border border-rose-400/70 text-rose-300 hover:text-rose-100 font-dotgothic font-bold text-xs transition-colors cursor-pointer shadow-none"
+                              >
+                                🗑️ ログをクリア
+                              </button>
+                            ) : (
+                              <div className="flex items-center gap-1.5">
+                                <button
+                                  type="button"
+                                  onClick={handleClearLogs}
+                                  className="px-2.5 py-1 rounded-lg bg-rose-600/35 hover:bg-rose-500/50 border border-rose-400 text-white font-dotgothic font-black text-xs transition-colors cursor-pointer shadow-none"
+                                >
+                                  ⚠️ 本当にクリアする
+                                </button>
+                                <button
+                                  type="button"
+                                  onClick={() => setConfirmClearLogs(false)}
+                                  className="px-2 py-1 rounded-lg bg-[#1a152b] hover:bg-[#261f3d] border border-neutral-500 text-neutral-300 font-dotgothic font-bold text-xs transition-colors cursor-pointer shadow-none"
+                                >
+                                  キャンセル
+                                </button>
+                              </div>
+                            )}
+                          </div>
+                        </div>
+
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                          <button
+                            type="button"
+                            disabled={isExportingCsv}
+                            onClick={handleExportRawCsv}
+                            className="py-3 px-4 rounded-xl bg-[#151026] hover:bg-cyan-500/20 disabled:opacity-50 border-2 border-cyan-400 text-cyan-200 hover:text-white font-dotgothic font-black text-xs sm:text-sm tracking-wide transition-colors cursor-pointer shadow-none flex items-center justify-center gap-1.5"
+                          >
+                            <span>📊 プレイ記録CSV出力</span>
+                          </button>
+
+                          <button
+                            type="button"
+                            disabled={isExportingCsv}
+                            onClick={handleExportSummaryCsv}
+                            className="py-3 px-4 rounded-xl bg-[#151026] hover:bg-emerald-500/20 disabled:opacity-50 border-2 border-emerald-400 text-emerald-200 hover:text-white font-dotgothic font-black text-xs sm:text-sm tracking-wide transition-colors cursor-pointer shadow-none flex items-center justify-center gap-1.5"
+                          >
+                            <span>📈 レベル検証サマリーCSV出力</span>
+                          </button>
+                        </div>
+                      </div>
+                    )}
                   </div>
                 </div>
               </>
@@ -696,71 +774,15 @@ export default function SettingsModal({ onClose }) {
                     <div className="border-b border-[#28203d] pb-3">
                       <div className="flex items-center gap-2">
                         <span className="text-[11px] font-dotgothic px-2 py-0.5 rounded bg-rose-500/15 border border-rose-400/50 text-rose-300 font-bold">
-                          SYNC-MONITOR // TIMING OFFSET
+                          OFFSET
                         </span>
                         <span className="text-lg sm:text-xl font-black text-amber-300 tracking-widest font-dotgothic">
-                          判定オフセット・打鍵校正モニター
+                          判定調整
                         </span>
                       </div>
                       <p className="text-xs sm:text-sm text-neutral-300 font-bold mt-1">
-                        リズム音に合わせて<span className="text-cyan-300">スペースキー・任意の文字キー</span>を押すか、<span className="text-amber-300">デモ画面をタップ</span>して判定のズレ（FAST / LATE）を確認・調整できます。
+                        リズム音に合わせて<span className="text-cyan-300">スペースキー・任意の文字キー</span>を押すか、<span className="text-amber-300">タップ</span>する
                       </p>
-                    </div>
-
-                    {/* 判定音テスト（メトロノーム音切替） */}
-                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-[#090710] p-3.5 rounded-xl border-2 border-[#261e3a]">
-                      <div>
-                        <div className="text-xs sm:text-sm font-bold text-white font-dotgothic">
-                          基準リズム音（メトロノーム音）切替
-                        </div>
-                        <div className="text-[11px] text-neutral-400">
-                          周期ごとに鳴るガイド音を選択できます（打鍵時は判定結果に応じたSEが鳴ります）
-                        </div>
-                      </div>
-                      <div className="flex gap-2 shrink-0">
-                        <button
-                          type="button"
-                          onClick={() => {
-                            setCalibrationSound('perfect');
-                            playPerfect();
-                          }}
-                          className={`px-3.5 py-2 rounded-lg font-dotgothic font-black text-xs transition-colors border cursor-pointer ${
-                            calibrationSound === 'perfect'
-                              ? 'bg-amber-400 text-[#09080f] border-amber-200'
-                              : 'bg-[#1a152a] hover:bg-[#251e3b] text-neutral-300 border-[#362c52]'
-                          }`}
-                        >
-                          PERFECT音
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => {
-                            setCalibrationSound('good');
-                            playGood();
-                          }}
-                          className={`px-3.5 py-2 rounded-lg font-dotgothic font-black text-xs transition-colors border cursor-pointer ${
-                            calibrationSound === 'good'
-                              ? 'bg-emerald-400 text-[#09080f] border-emerald-200'
-                              : 'bg-[#1a152a] hover:bg-[#251e3b] text-neutral-300 border-[#362c52]'
-                          }`}
-                        >
-                          GOOD音
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => {
-                            setCalibrationSound('miss');
-                            playMiss();
-                          }}
-                          className={`px-3.5 py-2 rounded-lg font-dotgothic font-black text-xs transition-colors border cursor-pointer ${
-                            calibrationSound === 'miss'
-                              ? 'bg-rose-500 text-white border-rose-300'
-                              : 'bg-[#1a152a] hover:bg-[#251e3b] text-neutral-300 border-[#362c52]'
-                          }`}
-                        >
-                          MISS音
-                        </button>
-                      </div>
                     </div>
 
                     {/* インタラクティブ・オシロスコープ判定デモ画面 */}
@@ -768,9 +790,8 @@ export default function SettingsModal({ onClose }) {
                       <div className="flex items-center justify-between text-[11px] font-dotgothic text-neutral-400 px-1">
                         <span className="text-cyan-300 flex items-center gap-1">
                           <Keyboard size={13} />
-                          キー入力（Space / 文字キー）または画面タップでリアルタイム判定
+                          キーボードの入力またはタップで判定
                         </span>
-                        <span>BPM 120 // 周期 500ms</span>
                       </div>
 
                       <div

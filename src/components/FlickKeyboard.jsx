@@ -71,7 +71,7 @@ export default function FlickKeyboard() {
   };
 
   return (
-    <div className="w-full max-w-sm mx-auto bg-neutral-900/95 p-3 pb-4 rounded-t-3xl border-t-2 border-x-2 border-neutral-700 select-none z-10 backdrop-blur-md touch-none flex-shrink-0 shadow-none">
+    <div className="flick-keyboard-safe-bottom w-full max-w-sm mx-auto bg-neutral-900/95 px-3 pt-3 rounded-t-3xl border-t-2 border-x-2 border-neutral-700 select-none z-10 backdrop-blur-md touch-none flex-shrink-0 shadow-none">
       {/* Status Bar */}
       <div className="flex justify-between items-center mb-1.5 px-2">
         <span className="text-neutral-400 font-bold text-xs">フリック入力</span>
