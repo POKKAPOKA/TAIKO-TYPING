@@ -1,5 +1,6 @@
 import { useState, useRef, useCallback } from 'react';
 import EditorTimeline from './EditorTimeline';
+import HeaderLogo from '../HeaderLogo';
 import { useEditorStore } from '../../store/editorStore';
 import { useGameStore } from '../../store/gameStore';
 import { exportPlayLogsCsv, exportLevelValidationSummaryCsv } from '../../utils/csvExport';
@@ -237,6 +238,11 @@ export default function EditorView({ onExit }) {
     setLyricsText("");
   };
 
+  const handleExit = () => {
+    useEditorStore.getState().setIsPlaying(false);
+    onExit();
+  };
+
   return (
     <div data-editor-root="true" className="fixed inset-0 z-50 bg-neutral-900 text-white flex flex-col font-sans select-none overflow-hidden p-2">
       {toastMessage && (
@@ -454,11 +460,9 @@ export default function EditorView({ onExit }) {
         {/* コントロールバー */}
         <div className="flex flex-wrap justify-between items-center mb-2 px-2 gap-4">
           <div className="flex flex-wrap gap-2 items-center">
+             <HeaderLogo onHome={handleExit} />
              <button
-               onClick={() => {
-                 useEditorStore.getState().setIsPlaying(false);
-                 onExit();
-               }}
+               onClick={handleExit}
                className="px-6 py-2 bg-neutral-700 hover:bg-neutral-600 text-white rounded-full font-bold transition-colors mr-2 flex-shrink-0"
              >
                もどる

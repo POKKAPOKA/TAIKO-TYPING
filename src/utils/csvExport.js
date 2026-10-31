@@ -237,7 +237,7 @@ export async function fetchMergedPlayLogs() {
   try {
     const { data, error } = await supabase
       .from('rankings')
-      .select('*')
+      .select('id, song_id, player_name, score, max_combo, peak_kps, perfect_count, good_count, miss_count, created_at')
       .order('created_at', { ascending: false })
       .limit(2000);
 

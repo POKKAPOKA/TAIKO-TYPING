@@ -1,0 +1,268 @@
+.clear-transition {
+  --clear-main: #06b6d4;
+  --clear-accent: #ec4899;
+  --clear-third: #fbbf24;
+  position: fixed;
+  inset: 0;
+  z-index: 200;
+  overflow: hidden;
+  background: rgba(13, 9, 26, 0.94);
+  color: white;
+  cursor: pointer;
+  font-family: 'DotGothic16', sans-serif;
+  touch-action: manipulation;
+}
+
+.clear-transition--full_combo {
+  --clear-main: #fbbf24;
+  --clear-accent: #f43f5e;
+  --clear-third: #fff0b3;
+}
+
+.clear-transition--all_perfect {
+  --clear-main: #22d3ee;
+  --clear-accent: #e879f9;
+  --clear-third: #fbbf24;
+}
+
+.clear-transition__stage {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  animation: clear-impact 0.32s 0.45s both;
+}
+
+.clear-transition--all_perfect .clear-transition__stage {
+  animation: clear-impact-strong 0.32s 0.45s both, clear-invert 0.2s both;
+}
+
+.clear-transition__banner {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: min(1080px, 94vw);
+  height: min(55vh, 410px);
+  min-height: 220px;
+  transform: translate(-50%, -50%);
+  border: 5px solid var(--clear-main);
+  border-radius: 24px;
+  background: #171029;
+  overflow: hidden;
+  animation: clear-banner-in 0.36s cubic-bezier(.2,.75,.25,1) both;
+}
+
+.clear-transition__banner-inner {
+  position: absolute;
+  inset: 8px;
+  border: 3px solid var(--clear-accent);
+  border-radius: 14px;
+  background: repeating-linear-gradient(135deg, #241539 0 26px, #1c1230 26px 52px);
+}
+
+.clear-transition--all_perfect .clear-transition__banner-inner {
+  outline: 3px solid var(--clear-third);
+  outline-offset: -9px;
+}
+
+.clear-transition__character {
+  position: absolute;
+  z-index: 1;
+  bottom: -12%;
+  left: 1%;
+  width: 48%;
+  height: 120%;
+  object-fit: contain;
+  object-position: center bottom;
+  animation: clear-character-in 0.5s cubic-bezier(.15,.7,.2,1) both;
+}
+
+.clear-transition__copy {
+  position: absolute;
+  z-index: 2;
+  left: 39%;
+  right: 3%;
+  top: 50%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  transform: translateY(-50%);
+  text-align: center;
+}
+
+.clear-transition__eyebrow,
+.clear-transition__subtitle {
+  max-width: 100%;
+  padding: 5px 12px;
+  border: 2px solid var(--clear-accent);
+  border-radius: 8px;
+  background: #0d091a;
+  color: var(--clear-third);
+  font-size: clamp(0.58rem, 1.5vw, 0.85rem);
+  font-weight: 900;
+  letter-spacing: 0.12em;
+}
+
+.clear-transition__title {
+  display: block;
+  width: 100%;
+  color: #fff;
+  font-size: clamp(1.8rem, 6vw, 5rem);
+  font-weight: 900;
+  letter-spacing: 0.02em;
+  line-height: 1.15;
+  white-space: nowrap;
+  animation: clear-stamp-in 0.34s 0.18s both;
+}
+
+.clear-transition--clear .clear-transition__title { color: #a5f3fc; }
+.clear-transition--full_combo .clear-transition__title { color: #fcd34d; }
+.clear-transition--all_perfect .clear-transition__title { font-size: clamp(1.45rem, 4.7vw, 4.2rem); }
+
+.clear-transition__letter {
+  display: inline-block;
+  color: #fef3c7;
+  animation: clear-letter-bounce 0.65s calc(0.47s + var(--letter-index) * 0.045s) both;
+}
+.clear-transition__letter:nth-child(3n + 1) { color: #67e8f9; }
+.clear-transition__letter:nth-child(3n + 2) { color: #f0abfc; }
+
+.clear-transition__particles {
+  position: absolute;
+  inset: 0;
+  z-index: 3;
+  pointer-events: none;
+}
+
+.clear-transition__particle {
+  position: absolute;
+  left: var(--particle-x);
+  top: var(--particle-y);
+  width: var(--particle-size);
+  height: var(--particle-size);
+  background: #f9a8d4;
+  animation: clear-particle-fall var(--particle-duration) var(--particle-delay) linear infinite;
+}
+.clear-transition__particle:nth-child(3n) { background: var(--clear-main); }
+.clear-transition__particle:nth-child(4n) { background: var(--clear-third); }
+.clear-transition__particle.is-petal { border-radius: 90% 0 90% 0; }
+.clear-transition__particle.is-diamond { clip-path: polygon(50% 0, 100% 50%, 50% 100%, 0 50%); }
+
+.clear-transition__columns {
+  position: absolute;
+  inset: 0;
+  background: repeating-linear-gradient(90deg, transparent 0 7%, rgba(251,191,36,.18) 7% 9%, transparent 9% 17%);
+  transform-origin: bottom;
+  animation: clear-columns-rise 0.8s 0.12s both;
+}
+
+.clear-transition__rings {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+}
+.clear-transition__rings i {
+  position: absolute;
+  width: min(42vw, 420px);
+  aspect-ratio: 1;
+  border: 3px solid var(--clear-main);
+  border-radius: 50%;
+  animation: clear-ring 1.4s ease-out infinite;
+}
+.clear-transition__rings i:nth-child(2) { border-color: var(--clear-accent); animation-delay: 0.25s; }
+.clear-transition__rings i:nth-child(3) { border-color: var(--clear-third); animation-delay: 0.5s; }
+
+.clear-transition__flash { position: absolute; inset: 0; pointer-events: none; }
+.clear-transition--all_perfect .clear-transition__flash {
+  z-index: 4;
+  animation: clear-prism-flash 0.34s both;
+}
+
+.clear-transition__skip {
+  position: absolute;
+  z-index: 5;
+  right: max(16px, env(safe-area-inset-right));
+  bottom: max(16px, env(safe-area-inset-bottom));
+  padding: 8px 14px;
+  border: 2px solid var(--clear-main);
+  border-radius: 10px;
+  background: #0d091a;
+  color: white;
+  font: inherit;
+  font-size: 0.75rem;
+  cursor: pointer;
+}
+.clear-transition__skip:focus-visible { outline: 3px solid white; outline-offset: 3px; }
+
+@keyframes clear-banner-in {
+  from { transform: translate(-120%, -50%); opacity: 0; }
+  to { transform: translate(-50%, -50%); opacity: 1; }
+}
+@keyframes clear-character-in {
+  from { transform: translateX(-12%) scale(0.85); opacity: 0; }
+  to { transform: translateX(0) scale(1); opacity: 1; }
+}
+@keyframes clear-stamp-in {
+  from { transform: scale(1.5); opacity: 0; }
+  75% { transform: scale(0.96); opacity: 1; }
+  to { transform: scale(1); opacity: 1; }
+}
+@keyframes clear-impact {
+  0%, 100% { transform: translate(0, 0); }
+  20% { transform: translate(-3px, 2px); }
+  45% { transform: translate(3px, -2px); }
+  70% { transform: translate(-1px, 1px); }
+}
+@keyframes clear-impact-strong {
+  0%, 100% { transform: translate(0, 0); }
+  20% { transform: translate(-7px, 4px); }
+  45% { transform: translate(7px, -4px); }
+  70% { transform: translate(-3px, 2px); }
+}
+@keyframes clear-letter-bounce {
+  0% { transform: translateY(0); }
+  35% { transform: translateY(-0.2em); color: #fff; }
+  70% { transform: translateY(0.04em); color: var(--clear-third); }
+  100% { transform: translateY(0); }
+}
+@keyframes clear-particle-fall {
+  from { transform: translate(-12px, -15vh) rotate(0); }
+  to { transform: translate(30px, 80vh) rotate(280deg); }
+}
+@keyframes clear-columns-rise {
+  from { transform: scaleY(0); opacity: 0; }
+  to { transform: scaleY(1); opacity: 1; }
+}
+@keyframes clear-ring {
+  from { transform: scale(0.4); opacity: 0.8; }
+  to { transform: scale(2.8); opacity: 0; }
+}
+@keyframes clear-prism-flash {
+  0% { background: #fff; opacity: 0.8; }
+  20% { background: #fff; opacity: 0; }
+  40% { background: #000; opacity: 0.6; }
+  100% { background: #000; opacity: 0; }
+}
+@keyframes clear-invert {
+  0% { filter: grayscale(1) invert(1); }
+  45%, 100% { filter: none; }
+}
+
+@media (max-width: 600px) {
+  .clear-transition__banner { width: 95vw; height: 42vh; min-height: 190px; }
+  .clear-transition__character { left: -8%; width: 62%; height: 112%; }
+  .clear-transition__copy { left: 35%; right: 3%; gap: 8px; }
+  .clear-transition__eyebrow, .clear-transition__subtitle { padding: 4px 6px; letter-spacing: 0; }
+  .clear-transition__title { font-size: clamp(1.35rem, 5.5vw, 2.4rem); }
+  .clear-transition--all_perfect .clear-transition__title { font-size: clamp(1.05rem, 5vw, 2rem); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .clear-transition__stage, .clear-transition__banner, .clear-transition__character,
+  .clear-transition__title, .clear-transition__letter, .clear-transition__particle,
+  .clear-transition__columns, .clear-transition__rings i, .clear-transition__flash {
+    animation: none !important;
+  }
+  .clear-transition__rings, .clear-transition__flash { display: none; }
+}

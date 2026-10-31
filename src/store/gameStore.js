@@ -1,4 +1,5 @@
 import { create } from 'zustand';
+import { DEFAULT_CHARACTER_ID, getCharacterById } from '../config/characters';
 import { getLocalPlayLogs, savePlayLogToLocal, fetchMergedPlayLogs, clearPlayLogs } from '../utils/csvExport';
 import { getLocalSongLikesMap, fetchGlobalSongLikes, updateSongLikeCount, normalizeSongId } from '../api/likes';
 
@@ -12,11 +13,14 @@ const SETTINGS_STORAGE_KEY = 'taiko_settings';
 const CHARACTER_STORAGE_KEY = 'taiko_selected_character';
 const INPUT_MODE_STORAGE_KEY = 'taiko_input_mode';
 
+const normalizeVolume = (value) => Number.isFinite(value) ? Math.max(0, Math.min(1, value)) : 1;
+const defaultVolumes = { musicVolume: 1, gameplaySeVolume: 1, systemSeVolume: 1 };
+
 function loadSelectedCharacter() {
   try {
-    return localStorage.getItem(CHARACTER_STORAGE_KEY) || 'char_test';
+    return getCharacterById(localStorage.getItem(CHARACTER_STORAGE_KEY) || DEFAULT_CHARACTER_ID).id;
   } catch {
-    return 'char_test';
+    return DEFAULT_CHARACTER_ID;
   }
 }
 
@@ -45,7 +49,7 @@ function loadInitialMobileMode() {
 function loadSettings() {
   try {
     const raw = localStorage.getItem(SETTINGS_STORAGE_KEY);
-    if (!raw) return { speedMultiplier: 4.0, wallAmount: 0, offsetMs: 0, showCustomModes: false };
+    if (!raw) return { speedMultiplier: 4.0, wallAmount: 0, offsetMs: 0, showCustomModes: false, isBoothMode: true, boothRecordByName: false, ...defaultVolumes };
     const parsed = JSON.parse(raw);
     // 旧スケール（speedScaleVersion !== 2）で初期値 1.0 のまま保存されていた場合は新基準値 4.0 に移行
     const rawSpeed = parsed.speedScaleVersion === 2
@@ -59,16 +63,23 @@ function loadSettings() {
         : 4.0,
       wallAmount: typeof parsed.wallAmount === 'number' ? parsed.wallAmount : 0,
       offsetMs: typeof parsed.offsetMs === 'number' ? parsed.offsetMs : 0,
-      showCustomModes: typeof parsed.showCustomModes === 'boolean' ? parsed.showCustomModes : false
+      showCustomModes: typeof parsed.showCustomModes === 'boolean' ? parsed.showCustomModes : false,
+      isBoothMode: typeof parsed.isBoothMode === 'boolean' ? parsed.isBoothMode : true,
+      boothRecordByName: typeof parsed.boothRecordByName === 'boolean' ? parsed.boothRecordByName : false,
+      musicVolume: normalizeVolume(parsed.musicVolume),
+      gameplaySeVolume: normalizeVolume(parsed.gameplaySeVolume),
+      systemSeVolume: normalizeVolume(parsed.systemSeVolume)
     };
   } catch {
-    return { speedMultiplier: 4.0, wallAmount: 0, offsetMs: 0, showCustomModes: false };
+    return { speedMultiplier: 4.0, wallAmount: 0, offsetMs: 0, showCustomModes: false, isBoothMode: true, boothRecordByName: false, ...defaultVolumes };
   }
 }
 
 function saveSettings(settings) {
   try {
-    localStorage.setItem(SETTINGS_STORAGE_KEY, JSON.stringify({ ...settings, speedScaleVersion: 2 }));
+    let previous = {};
+    try { previous = JSON.parse(localStorage.getItem(SETTINGS_STORAGE_KEY) || '{}') || {}; } catch { /* 壊れた設定を上書きする */ }
+    localStorage.setItem(SETTINGS_STORAGE_KEY, JSON.stringify({ ...previous, ...settings, speedScaleVersion: 2 }));
   } catch {
     // 保存失敗時は無視（プライベートモード等）
   }
@@ -96,6 +107,9 @@ const initialPlayState = {
   wordQueue: [],
   statsData: null,
   lastRecordedPlayId: null,
+  currentPlaySessionId: null,
+  playBoothMode: false,
+  playBoothRecordByName: false,
   vocalState: 'sing_1',
   isSubmittingScore: false,
   submitSuccessMessage: null,
@@ -127,7 +141,7 @@ export const useGameStore = create((set, get) => ({
   typoCount: 0,
   maxKps: 0,
   maxScore: 0,
-  status: 'idle', // 'idle' | 'playing' | 'result'
+  status: 'idle', // 'idle' | 'playing' | 'clearTransition' | 'result'
   isPaused: false,
   isFullscreen: false,
   isMobileMode: loadInitialMobileMode(),
@@ -147,6 +161,9 @@ export const useGameStore = create((set, get) => ({
   // リザルト画面用の集計データ（プレイ終了時にGameEngineがセットする）
   statsData: null,
   lastRecordedPlayId: null,
+  currentPlaySessionId: null,
+  playBoothMode: false,
+  playBoothRecordByName: false,
   playLogsCount: getLocalPlayLogs().length,
   isExportingCsv: false,
 
@@ -292,35 +309,58 @@ export const useGameStore = create((set, get) => ({
     const val = typeof speedMultiplier === 'number'
       ? Math.min(10.0, Math.max(1.0, parseFloat(speedMultiplier.toFixed(2))))
       : 4.0;
-    const next = { speedMultiplier: val, wallAmount: state.wallAmount, offsetMs: state.offsetMs, showCustomModes: state.showCustomModes };
+    const next = { speedMultiplier: val, wallAmount: state.wallAmount, offsetMs: state.offsetMs, showCustomModes: state.showCustomModes, isBoothMode: state.isBoothMode };
     saveSettings(next);
     return { speedMultiplier: val };
   }),
   setWallAmount: (wallAmount) => set((state) => {
-    const next = { speedMultiplier: state.speedMultiplier, wallAmount, offsetMs: state.offsetMs, showCustomModes: state.showCustomModes };
+    const next = { speedMultiplier: state.speedMultiplier, wallAmount, offsetMs: state.offsetMs, showCustomModes: state.showCustomModes, isBoothMode: state.isBoothMode };
     saveSettings(next);
     return { wallAmount };
   }),
   setOffsetMs: (offsetMs) => set((state) => {
-    const next = { speedMultiplier: state.speedMultiplier, wallAmount: state.wallAmount, offsetMs, showCustomModes: state.showCustomModes };
+    const next = { speedMultiplier: state.speedMultiplier, wallAmount: state.wallAmount, offsetMs, showCustomModes: state.showCustomModes, isBoothMode: state.isBoothMode };
     saveSettings(next);
     return { offsetMs };
   }),
   setShowCustomModes: (showCustomModes) => set((state) => {
-    const next = { speedMultiplier: state.speedMultiplier, wallAmount: state.wallAmount, offsetMs: state.offsetMs, showCustomModes };
+    const next = { speedMultiplier: state.speedMultiplier, wallAmount: state.wallAmount, offsetMs: state.offsetMs, showCustomModes, isBoothMode: state.isBoothMode };
     saveSettings(next);
     return { showCustomModes };
   }),
   toggleShowCustomModes: () => {
     const showCustomModes = !get().showCustomModes;
     const state = get();
-    const next = { speedMultiplier: state.speedMultiplier, wallAmount: state.wallAmount, offsetMs: state.offsetMs, showCustomModes };
+    const next = { speedMultiplier: state.speedMultiplier, wallAmount: state.wallAmount, offsetMs: state.offsetMs, showCustomModes, isBoothMode: state.isBoothMode };
     saveSettings(next);
     set({ showCustomModes });
     if (showCustomModes) {
       get().refreshPlayLogsCount();
     }
   },
+  setBoothMode: (isBoothMode) => set((state) => {
+    saveSettings({ speedMultiplier: state.speedMultiplier, wallAmount: state.wallAmount, offsetMs: state.offsetMs, showCustomModes: state.showCustomModes, isBoothMode });
+    return { isBoothMode };
+  }),
+  setBoothRecordByName: (boothRecordByName) => set(() => {
+    saveSettings({ boothRecordByName });
+    return { boothRecordByName };
+  }),
+  setMusicVolume: (value) => set(() => {
+    const musicVolume = normalizeVolume(value);
+    saveSettings({ musicVolume });
+    return { musicVolume };
+  }),
+  setGameplaySeVolume: (value) => set(() => {
+    const gameplaySeVolume = normalizeVolume(value);
+    saveSettings({ gameplaySeVolume });
+    return { gameplaySeVolume };
+  }),
+  setSystemSeVolume: (value) => set(() => {
+    const systemSeVolume = normalizeVolume(value);
+    saveSettings({ systemSeVolume });
+    return { systemSeVolume };
+  }),
   setStatsData: (statsData) => set({ statsData }),
   setIsExportingCsv: (isExportingCsv) => set({ isExportingCsv }),
   refreshPlayLogsCount: async () => {
@@ -417,8 +457,16 @@ export const useGameStore = create((set, get) => ({
     try {
       const syncedMap = await updateSongLikeCount(songId, nextLiked);
       set({ songLikesMap: { ...syncedMap } });
+    } catch {
+      if (get().currentPlaySessionId === state.currentPlaySessionId) {
+        set((current) => ({
+          hasLikedCurrentResult: state.hasLikedCurrentResult,
+          songLikesMap: { ...current.songLikesMap, [songId]: prevCount },
+        }));
+        get().showToast('いいねの送信に失敗しました');
+      }
     } finally {
-      set({ isLikingSong: false });
+      if (get().currentPlaySessionId === state.currentPlaySessionId) set({ isLikingSong: false });
     }
   },
 

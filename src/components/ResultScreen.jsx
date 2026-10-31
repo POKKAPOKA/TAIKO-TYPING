@@ -3,10 +3,13 @@ import { Heart } from "lucide-react";
 import { useGameStore } from "../store/gameStore";
 import { fetchRankingsResult } from "../api/rankings";
 import { useSystemSE } from "../hooks/useSystemSE";
+import HeaderLogo from "./HeaderLogo";
+import { getAchievementRank } from "../utils/achievementRank";
 
 export default function ResultScreen({
   onRetry,
   onBack,
+  onHome,
   isLocalPlay,
   scoreFileName,
   playerName,
@@ -51,12 +54,7 @@ export default function ResultScreen({
     .slice(0, 3);
 
   const isCleared = score >= 700000;
-  const totalNotes = statsData?.stats?.totalNotes ?? 0;
-  // 打ち残し（dropped）が1つでもある場合、または未完了ノーツがある場合は FULL COMBO / ALL PERFECT 対象外とする
-  const hasDroppedNotes =
-    droppedCount > 0 ||
-    (totalNotes > 0 && completedCount < totalNotes) ||
-    stats.mistakeLog.some(log => log.type === "dropped");
+  const achievement = getAchievementRank({ score, perfectCount, goodCount, missCount, droppedCount, completedCount, statsData });
 
   const getClearRank = () => {
     if (!isCleared) {
@@ -69,7 +67,7 @@ export default function ResultScreen({
         rankBadgeClass: "bg-neutral-800 text-rose-300 border-2 border-rose-500/50"
       };
     }
-    if (!hasDroppedNotes && missCount === 0 && goodCount === 0 && perfectCount > 0) {
+    if (achievement === "ALL_PERFECT") {
       return {
         statusLabel: "CLEAR",
         rank: "ALL PERFECT!!",
@@ -79,7 +77,7 @@ export default function ResultScreen({
         rankBadgeClass: "bg-yellow-400 text-neutral-950 border-2 border-yellow-200"
       };
     }
-    if (!hasDroppedNotes && missCount === 0 && perfectCount > 0) {
+    if (achievement === "FULL_COMBO") {
       return {
         statusLabel: "CLEAR",
         rank: "FULL COMBO!",
@@ -150,6 +148,7 @@ export default function ResultScreen({
   return (
     // 1280x720 の固定解像度で設計し、画面が小さい場合は scale で縮小して収める
     <div ref={setResizeListenerRef} className="relative w-full h-full flex items-center justify-center overflow-hidden py-4" style={{ maxHeight: '100%' }}>
+      <div className="absolute top-0 left-0 z-20"><HeaderLogo onHome={onHome} /></div>
       <div
         className={`bg-neutral-900 relative overflow-hidden shadow-none border-4 rounded-3xl flex-shrink-0 ${
           isCleared ? 'border-emerald-500/60' : 'border-rose-500/50'
@@ -166,12 +165,22 @@ export default function ResultScreen({
 
       {/* クリア判定（700,000点以上でCLEAR / 未満でFAILED）＆ クリアランク */}
       <div className="absolute w-full flex items-center justify-center gap-4" style={{ top: "36px", left: "0px", transform: "none" }}>
-        <h2 className={`text-6xl font-black tracking-widest ${clearInfo.color}`}>
-          {clearInfo.rank}
+        <h2 className={`font-dotgothic text-6xl font-black tracking-widest ${isCleared ? 'text-emerald-400' : clearInfo.color}`}>
+          {clearInfo.statusLabel}
         </h2>
-        <span className={`px-4 py-1.5 rounded-2xl font-black text-lg tracking-wider shadow-none ${clearInfo.rankBadgeClass}`}>
-          {clearInfo.rankBadge}
-        </span>
+        {achievement === "ALL_PERFECT" && (
+          <span className="rounded-2xl border-2 border-cyan-300 p-1 bg-[#0d091a]">
+            <span className="block rounded-xl border-2 border-fuchsia-400 px-4 py-1.5 font-dotgothic text-lg font-black tracking-wider text-amber-300 outline outline-2 outline-amber-400">[ ALL PERFECT ]</span>
+          </span>
+        )}
+        {achievement === "FULL_COMBO" && (
+          <span className="rounded-2xl border-4 border-amber-400 bg-amber-950 px-4 py-1.5 font-dotgothic text-lg font-black tracking-wider text-amber-200">[ FULL COMBO ]</span>
+        )}
+        {achievement !== "FULL_COMBO" && (
+          <span className={`px-4 py-1.5 rounded-2xl font-black text-lg tracking-wider shadow-none ${clearInfo.rankBadgeClass}`}>
+            {clearInfo.rankBadge}
+          </span>
+        )}
       </div>
 
       {/* スコア */}

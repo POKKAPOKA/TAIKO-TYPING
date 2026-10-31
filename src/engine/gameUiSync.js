@@ -46,12 +46,15 @@ useGameStore.subscribe((state, prev) => {
 
   // --- 曲終了（リザルト画面遷移）時：公式譜面ならランキングへ自動登録 ---
   if (state.status === 'result' && prev.status !== 'result') {
-    if (!state.isLocalPlay && state.scoreFileName) {
+    // 名前別の記録では、Guestの重複レコードを作らず手動登録時に名前を確定する。
+    if (!state.isLocalPlay && state.scoreFileName && !(state.playBoothMode && state.playBoothRecordByName)) {
       let savedPlayerName = 'Guest';
-      try {
-        savedPlayerName = (localStorage.getItem('taiko_player_name') || '').trim() || 'Guest';
-      } catch {
-        savedPlayerName = 'Guest';
+      if (!state.playBoothMode) {
+        try {
+          savedPlayerName = (localStorage.getItem('taiko_player_name') || '').trim() || 'Guest';
+        } catch {
+          savedPlayerName = 'Guest';
+        }
       }
 
       state.setIsSubmittingScore(true);
@@ -60,6 +63,7 @@ useGameStore.subscribe((state, prev) => {
       submitScore({
         songId: state.scoreFileName.replace(/\.json$/i, ''),
         playerName: savedPlayerName,
+        deviceId: state.playBoothMode ? state.currentPlaySessionId : undefined,
         score: state.score,
         maxCombo: state.maxCombo,
         maxKps: state.maxKps,
@@ -70,7 +74,7 @@ useGameStore.subscribe((state, prev) => {
       })
         .then((res) => {
           const current = useGameStore.getState();
-          if (current.status !== 'result') return;
+          if (current.status !== 'result' || current.currentPlaySessionId !== state.currentPlaySessionId) return;
           if (res.updated) {
             current.setSubmitSuccessMessage('ベストスコアを更新してランキングに登録しました');
           } else {
@@ -80,12 +84,13 @@ useGameStore.subscribe((state, prev) => {
         .catch((err) => {
           console.error('Auto score submit failed:', err);
           const current = useGameStore.getState();
-          if (current.status === 'result') {
+          if (current.status === 'result' && current.currentPlaySessionId === state.currentPlaySessionId) {
             current.setSubmitSuccessMessage('自動登録に失敗しました。「登録する」から再試行できます');
           }
         })
         .finally(() => {
-          useGameStore.getState().setIsSubmittingScore(false);
+          const current = useGameStore.getState();
+          if (current.currentPlaySessionId === state.currentPlaySessionId) current.setIsSubmittingScore(false);
         });
     }
   }

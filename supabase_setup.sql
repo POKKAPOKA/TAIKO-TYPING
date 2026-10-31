@@ -29,14 +29,8 @@ ALTER TABLE public.rankings ENABLE ROW LEVEL SECURITY;
 CREATE POLICY "Allow public read access" ON public.rankings FOR
 SELECT USING (true);
 
--- 誰でもスコアを送信（INSERT）できるポリシー
-CREATE POLICY "Allow public insert access" ON public.rankings FOR
-INSERT
-WITH
-    CHECK (true);
-
--- ※ 注意: 更新(UPDATE)や削除(DELETE)は許可しないことで、
--- 送信されたスコアが第三者に改ざんされるのを防ぎます。
+-- 書き込みは supabase_security_fix.sql のRPC経由に限定する。
+-- セットアップ後は必ず同SQLを適用して権限と関数を設定する。
 
 -- ==============================================================================
 -- パフォーマンス向上のためのインデックス

@@ -80,6 +80,11 @@ export default function SettingsModal({ onClose }) {
   const wallAmount = useGameStore(state => state.wallAmount);
   const offsetMs = useGameStore(state => state.offsetMs);
   const showCustomModes = useGameStore(state => state.showCustomModes);
+  const isBoothMode = useGameStore(state => state.isBoothMode);
+  const boothRecordByName = useGameStore(state => state.boothRecordByName);
+  const musicVolume = useGameStore(state => state.musicVolume);
+  const gameplaySeVolume = useGameStore(state => state.gameplaySeVolume);
+  const systemSeVolume = useGameStore(state => state.systemSeVolume);
   const playLogsCount = useGameStore(state => state.playLogsCount);
   const isExportingCsv = useGameStore(state => state.isExportingCsv);
 
@@ -87,6 +92,11 @@ export default function SettingsModal({ onClose }) {
   const setWallAmount = useGameStore(state => state.setWallAmount);
   const setOffsetMs = useGameStore(state => state.setOffsetMs);
   const toggleShowCustomModes = useGameStore(state => state.toggleShowCustomModes);
+  const setBoothMode = useGameStore(state => state.setBoothMode);
+  const setBoothRecordByName = useGameStore(state => state.setBoothRecordByName);
+  const setMusicVolume = useGameStore(state => state.setMusicVolume);
+  const setGameplaySeVolume = useGameStore(state => state.setGameplaySeVolume);
+  const setSystemSeVolume = useGameStore(state => state.setSystemSeVolume);
   const setIsExportingCsv = useGameStore(state => state.setIsExportingCsv);
   const refreshPlayLogsCount = useGameStore(state => state.refreshPlayLogsCount);
   const clearAllPlayLogs = useGameStore(state => state.clearAllPlayLogs);
@@ -334,6 +344,7 @@ export default function SettingsModal({ onClose }) {
         }
 
         if (demoStateRef.current.activeTab === 'sound') {
+          if (e.target instanceof HTMLElement && e.target.closest('input, button, select, textarea')) return;
           if (e.repeat || e.ctrlKey || e.altKey || e.metaKey) return;
           const isHitKey =
             e.key === ' ' ||
@@ -428,7 +439,6 @@ export default function SettingsModal({ onClose }) {
             >
               <span className={`w-2.5 h-2.5 rounded-xs ${activeTab === 'general' ? 'bg-cyan-400' : 'bg-neutral-600'}`} />
               <span>基本設定</span>
-              <span className="hidden sm:inline text-[10px] text-amber-400/80 font-normal">[UNIT-01]</span>
             </button>
             <button
               type="button"
@@ -443,8 +453,7 @@ export default function SettingsModal({ onClose }) {
               }}
             >
               <span className={`w-2.5 h-2.5 rounded-xs ${activeTab === 'sound' ? 'bg-rose-500' : 'bg-neutral-600'}`} />
-              <span>判定調整</span>
-              <span className="hidden sm:inline text-[10px] text-cyan-400/80 font-normal">[SYNC-02]</span>
+              <span>音量・判定</span>
             </button>
           </div>
 
@@ -652,6 +661,40 @@ export default function SettingsModal({ onClose }) {
                   </div>
                 </div>
 
+                <div className="rounded-2xl border-2 border-cyan-500/60 bg-[#100d1c] p-4 sm:p-5 flex flex-wrap items-center justify-between gap-4">
+                  <div>
+                    <h3 className="text-lg font-black text-cyan-300 font-dotgothic">🎪 展示ブースモード</h3>
+                    <p className="text-xs sm:text-sm text-neutral-300 font-bold mt-1">共有PC・1プレイごとに別記録としてランキング登録</p>
+                  </div>
+                  <button
+                    type="button"
+                    role="switch"
+                    aria-checked={isBoothMode}
+                    aria-label="展示ブースモード"
+                    onClick={() => setBoothMode(!isBoothMode)}
+                    className={`px-5 py-3 rounded-xl font-dotgothic font-black border-2 cursor-pointer shadow-none ${isBoothMode ? 'bg-emerald-500 text-[#09080f] border-emerald-300' : 'bg-[#171326] text-neutral-300 border-neutral-500'}`}
+                  >
+                    {isBoothMode ? 'ON' : 'OFF'}
+                  </button>
+                </div>
+
+                {isBoothMode && (
+                  <fieldset className="rounded-2xl border-2 border-cyan-500/60 bg-[#100d1c] p-4 sm:p-5 text-neutral-200">
+                    <legend className="px-2 font-black text-cyan-300">展示ブースの記録方法</legend>
+                    <div className="flex flex-col gap-3 text-sm font-bold">
+                      <label className="flex items-center gap-2 cursor-pointer">
+                        <input type="radio" name="booth-record-mode" checked={!boothRecordByName} onChange={() => setBoothRecordByName(false)} />
+                        1プレイごとに別記録（おすすめ）
+                      </label>
+                      <label className="flex items-center gap-2 cursor-pointer">
+                        <input type="radio" name="booth-record-mode" checked={boothRecordByName} onChange={() => setBoothRecordByName(true)} />
+                        同じ名前の自己ベストを更新（Guestは別記録）
+                      </label>
+                      {boothRecordByName && <p className="text-xs text-neutral-300">この方法ではリザルト画面の「登録する」で記録を送信します。名前を空欄にするとGuestとして別記録になります。</p>}
+                    </div>
+                  </fieldset>
+                )}
+
                 {/* 3. 創作・エディター機能トグルパネル ＆ プレイ記録・レベル妥当性検証CSV出力 */}
                 <div className="relative rounded-2xl border-2 border-amber-500/60 bg-[#100d1c] p-1">
                   <MechCornerBrackets color="amber" />
@@ -766,6 +809,24 @@ export default function SettingsModal({ onClose }) {
 
             {activeTab === 'sound' && (
               <>
+                <section className="rounded-2xl border-2 border-cyan-500/60 bg-[#100d1c] p-4 sm:p-5 flex flex-col gap-4" aria-label="音量設定">
+                  <div className="flex items-center gap-2">
+                    <span className="text-[11px] font-dotgothic px-2 py-0.5 rounded bg-cyan-500/15 border border-cyan-400/50 text-cyan-300 font-bold">
+                      VOLUME
+                    </span>
+                    <h3 className="text-lg font-black text-amber-300 font-dotgothic">音量設定</h3>
+                  </div>
+                  {[
+                    { label: '楽曲の音量', value: musicVolume, set: setMusicVolume },
+                    { label: '演奏中の効果音', value: gameplaySeVolume, set: setGameplaySeVolume },
+                    { label: '操作中の効果音', value: systemSeVolume, set: setSystemSeVolume },
+                  ].map(({ label, value, set }) => (
+                    <label key={label} className="flex flex-col gap-2 text-sm font-bold text-neutral-200">
+                      <span className="flex justify-between gap-4"><span>{label}</span><span className="text-cyan-300">{Math.round(value * 100)}%</span></span>
+                      <input type="range" min="0" max="100" step="1" value={Math.round(value * 100)} onChange={(e) => set(Number(e.target.value) / 100)} className="mech-gauge-slider w-full" style={{ background: `linear-gradient(to right, #06b6d4 0%, #f59e0b calc(13px + (100% - 26px) * ${value}), #161224 calc(13px + (100% - 26px) * ${value}), #161224 100%)` }} />
+                    </label>
+                  ))}
+                </section>
                 <div className="relative rounded-2xl border-2 border-rose-500/65 bg-[#100d1c] p-1">
                   <MechCornerBrackets color="crimson" />
                   <div className="rounded-xl border border-amber-500/35 bg-[#0c0a16] p-4 sm:p-5 flex flex-col gap-5">

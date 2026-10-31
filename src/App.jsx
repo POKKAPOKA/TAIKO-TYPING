@@ -1,4 +1,6 @@
-import { useState } from 'react';
+import { useCallback, useState } from 'react';
+import titleLogo from './assets/title_logo.png';
+import titleLogo2 from './assets/title_logo2.png';
 import { useGameStore } from './store/gameStore';
 import { gameEngine } from './engine/GameEngine';
 import NotesArea from './components/NotesArea';
@@ -15,7 +17,11 @@ import SettingsModal from './components/SettingsModal';
 import SurveyModal from './components/SurveyModal';
 import FlickKeyboard from './components/FlickKeyboard';
 import ResultScreen from './components/ResultScreen';
+import ClearTransitionOverlay from './components/ClearTransitionOverlay';
+import HeaderLogo from './components/HeaderLogo';
+import { getAchievementRank } from './utils/achievementRank';
 import { fetchRankingsResult, submitScore } from './api/rankings';
+import { getDeviceId } from './lib/deviceId';
 import { loadSongs } from './api/songList';
 import { Maximize, Minimize, Smartphone, Monitor, User, Settings, Pause, Play, RotateCcw, Home, HelpCircle, X } from 'lucide-react';
 
@@ -125,20 +131,31 @@ function App() {
 
 
   // ランキング登録用のプレイヤー名（localStorageに保存して次回起動時も使う）
-  const [playerName, setPlayerName] = useState(() => {
+  const [nameState, setNameState] = useState(() => {
+    if (useGameStore.getState().isBoothMode) return { value: '', sessionId: null };
     try {
-      return localStorage.getItem('taiko_player_name') || '';
+      return { value: localStorage.getItem('taiko_player_name') || '', sessionId: null };
     } catch {
-      return '';
+      return { value: '', sessionId: null };
     }
   });
+  const currentPlaySessionId = useGameStore(state => state.currentPlaySessionId);
+  const handleClearTransitionEnd = useCallback(() => {
+    const state = useGameStore.getState();
+    if (state.status === 'clearTransition' && state.currentPlaySessionId === currentPlaySessionId) {
+      state.setStatus('result');
+    }
+  }, [currentPlaySessionId]);
+  const playBoothMode = useGameStore(state => state.playBoothMode);
+  const playBoothRecordByName = useGameStore(state => state.playBoothRecordByName);
+  const playerName = playBoothMode && nameState.sessionId !== currentPlaySessionId ? '' : nameState.value;
   const isSubmitting = useGameStore(state => state.isSubmittingScore);
   const submitSuccessMessage = useGameStore(state => state.submitSuccessMessage);
   const setIsSubmitting = useGameStore(state => state.setIsSubmittingScore);
   const setSubmitSuccessMessage = useGameStore(state => state.setSubmitSuccessMessage);
 
   const handleNameChange = (e) => {
-    setPlayerName(e.target.value);
+    setNameState({ value: e.target.value, sessionId: currentPlaySessionId });
   };
 
   const handleScoreSubmit = async () => {
@@ -146,15 +163,18 @@ function App() {
     setIsSubmitting(true);
     setSubmitSuccessMessage(null);
     const finalName = playerName.trim() || 'Guest';
-    try {
-      localStorage.setItem('taiko_player_name', finalName);
-    } catch {
-      // localStorage 保存不可時は無視
+    if (!playBoothMode) {
+      try {
+        localStorage.setItem('taiko_player_name', finalName);
+      } catch {
+        // localStorage 保存不可時は無視
+      }
     }
     try {
       const res = await submitScore({
         songId: scoreFileName.replace(/\.json$/i, ''),
         playerName: finalName,
+        deviceId: playBoothMode ? (playBoothRecordByName && finalName !== 'Guest' ? `${getDeviceId()}__name__${finalName.slice(0, 20)}` : currentPlaySessionId) : undefined,
         score,
         maxCombo,
         maxKps,
@@ -163,15 +183,16 @@ function App() {
         missCount: useGameStore.getState().missCount,
         isAuto: false
       });
+      if (useGameStore.getState().currentPlaySessionId !== currentPlaySessionId) return;
       if (res.updated) {
         setSubmitSuccessMessage(res.message || 'ベストスコアを更新してランキングに登録しました');
       } else {
         setSubmitSuccessMessage(res.message || 'ベストスコア未更新のため登録されませんでした');
       }
     } catch (err) {
-      showToast('送信失敗: ' + (err.message || '不明なエラー'));
+      if (useGameStore.getState().currentPlaySessionId === currentPlaySessionId) showToast('送信失敗: ' + (err.message || '不明なエラー'));
     } finally {
-      setIsSubmitting(false);
+      if (useGameStore.getState().currentPlaySessionId === currentPlaySessionId) setIsSubmitting(false);
     }
   };
 
@@ -204,6 +225,13 @@ function App() {
       }
       setAppMode('songSelect');
     }
+  };
+
+  const handleReturnHome = () => {
+    gameEngine.stop(false);
+    resetGameState();
+    setSubmitSuccessMessage(null);
+    setAppMode('menu');
   };
 
   const handleScoreLoad = (e) => {
@@ -294,7 +322,7 @@ function App() {
       {(appMode === "menu" || appMode === "songSelect") && (
         <div className={`absolute z-30 flex items-center ${
           appMode === "menu"
-            ? "top-7 right-8 sm:top-10 sm:right-12 md:top-12 md:right-16 gap-3 sm:gap-4 top-right-buttons"
+            ? "top-3 right-3 sm:top-4 sm:right-6 gap-3 sm:gap-4 top-right-buttons"
             : "top-4 right-4 gap-4"
         } ${showSettings ? "pointer-events-none opacity-0 invisible" : ""}`}>
           {appMode === "menu" ? (
@@ -358,11 +386,14 @@ function App() {
         </div>
       )}
 
-      <div className={`flex flex-col items-center w-full h-full ${appMode === 'menu' || (appMode === 'game' && !isMobileMode) ? 'justify-center z-10' : 'z-10'} ${isMobileMode && appMode === 'game' ? 'min-h-0' : ''}`}>
+      <div className={`flex flex-col items-center w-full h-full ${appMode === 'menu' ? 'overflow-y-auto z-10' : (appMode === 'game' && !isMobileMode) ? 'justify-center z-10' : 'z-10'} ${isMobileMode && appMode === 'game' ? 'min-h-0' : ''}`}>
         <h1 className={`text-4xl font-black mb-8 text-orange-400 tracking-wider flex-shrink-0 ${appMode === 'menu' || appMode === 'game' ? 'hidden' : ''}`}>TAiKOTYPiNG</h1>
 
       {appMode === 'menu' && (
-        <div className="w-full max-w-[340px] flex flex-col items-center justify-center gap-4 sm:gap-[18px] md:gap-5 my-auto px-4">
+        <div className="w-full max-w-[340px] flex flex-col items-center gap-2.5 sm:gap-3 my-auto px-4 pt-16 pb-28 shrink-0">
+          <h1 className="relative w-full aspect-[2.1/1] overflow-hidden">
+            <img src={titleLogo2} alt="TAiKOTYPiNG" className="absolute bottom-0 left-0 w-full max-w-none" />
+          </h1>
           {/* ボタン1: 「公式譜面で遊ぶ」 */}
           <button
             type="button"
@@ -504,8 +535,7 @@ function App() {
 
           {/* フッター：サークル名「SRB」クレジット表記 */}
           <div
-            className="fixed left-1/2 -translate-x-1/2 z-20 pointer-events-none text-[11px] sm:text-xs font-dotgothic font-bold tracking-widest text-purple-200/80 bg-[#0b0718]/75 border border-purple-400/35 px-3.5 py-1 rounded-full"
-            style={{ bottom: 'calc(0.6rem + env(safe-area-inset-bottom, 0px))' }}
+            className="pointer-events-none text-[11px] sm:text-xs font-dotgothic font-bold tracking-widest text-purple-200/80 bg-[#0b0718]/75 border border-purple-400/35 px-3.5 py-1 rounded-full"
           >
             © SRB
           </div>
@@ -514,6 +544,7 @@ function App() {
 
       {appMode === 'setup' && (
         <div className="bg-neutral-800 rounded-3xl p-8 flex flex-col items-center gap-8 w-full max-w-xl overflow-y-auto max-h-full shadow-none">
+          <div className="w-full"><HeaderLogo onHome={handleReturnHome} /></div>
           <h2 className="text-2xl font-black text-white">セットアップ</h2>
 
           {isMobileMode ? (
@@ -922,6 +953,7 @@ function App() {
         <ResultScreen
           onRetry={handleRetry}
           onBack={handleBackToMenu}
+          onHome={handleReturnHome}
           isLocalPlay={isLocalPlay}
           scoreFileName={scoreFileName}
           playerName={playerName}
@@ -930,6 +962,14 @@ function App() {
           isSubmitting={isSubmitting}
           submitSuccessMessage={submitSuccessMessage}
           setLeaderboardData={setLeaderboardData}
+        />
+      )}
+
+      {appMode === 'game' && status === 'clearTransition' && (
+        <ClearTransitionOverlay
+          rank={getAchievementRank(useGameStore.getState())}
+          character={activeCharacter}
+          onComplete={handleClearTransitionEnd}
         />
       )}
 

@@ -2,6 +2,7 @@ import { useState, useMemo, useRef, useCallback, Suspense, use } from 'react';
 import { useGameStore } from '../store/gameStore';
 import { gameEngine } from '../engine/GameEngine';
 import Leaderboard from './Leaderboard';
+import HeaderLogo from './HeaderLogo';
 import { fetchRankingsResult } from '../api/rankings';
 import { exportPlayLogsCsv, exportLevelValidationSummaryCsv } from '../utils/csvExport';
 import { ChevronDown, Check } from 'lucide-react';
@@ -99,6 +100,7 @@ export default function SongSelect({ songsPromise, onBack, onStartGame }) {
         style={{ backgroundImage: 'url(./assets/bg_main.jpg)' }}
       >
         <div className="absolute inset-0 bg-[#0c0520]/45 pointer-events-none" />
+        <div className="absolute top-4 left-4 z-10"><HeaderLogo onHome={onBack} /></div>
         <div className="text-xl text-purple-200 font-bold relative z-10">曲を読み込み中...</div>
       </div>
     }>
@@ -221,6 +223,19 @@ function SongListContent({ songsPromise, onBack, onStartGame }) {
   // ☆10 特別封印演出ステート: 'sealed' | 'warning' | 'shattering' | 'unlocked'
   const [sealPhase, setSealPhase] = useState('sealed');
   const scrollContainerRef = useRef(null);
+  const songRequestRef = useRef(null);
+  const handleScrollContainerRef = useCallback((node) => {
+    scrollContainerRef.current = node;
+    if (!node) {
+      songRequestRef.current?.abort();
+      songRequestRef.current = null;
+    }
+  }, []);
+  const handleGoHome = () => {
+    songRequestRef.current?.abort();
+    songRequestRef.current = null;
+    onBack();
+  };
   const maxDiffSectionRef = useRef(null);
   const maxDiffCardRef = useRef(null);
   const retreatIgnoreScrollRef = useRef(false);
@@ -322,12 +337,16 @@ function SongListContent({ songsPromise, onBack, onStartGame }) {
   const setAudioUrl = useGameStore(state => state.setAudioUrl);
 
   const handleSelectSong = async (song) => {
+    songRequestRef.current?.abort();
+    const controller = new AbortController();
+    songRequestRef.current = controller;
     try {
-      const response = await fetch(song.scorePath);
+      const response = await fetch(song.scorePath, { signal: controller.signal });
       if (!response.ok) {
         throw new Error(`Failed to load score: ${response.statusText}`);
       }
       const data = await response.json();
+      if (controller.signal.aborted || songRequestRef.current !== controller) return;
 
       const scoreFileName = song.scorePath.split('/').pop();
       const audioFileName = song.audioPath.split('/').pop();
@@ -348,8 +367,11 @@ function SongListContent({ songsPromise, onBack, onStartGame }) {
       onStartGame();
       setTimeout(() => gameEngine.start(), 0);
     } catch (err) {
+      if (controller.signal.aborted || songRequestRef.current !== controller) return;
       console.error(err);
       useGameStore.getState().showToast('譜面データの読み込みに失敗しました。');
+    } finally {
+      if (songRequestRef.current === controller) songRequestRef.current = null;
     }
   };
 
@@ -471,7 +493,7 @@ function SongListContent({ songsPromise, onBack, onStartGame }) {
     // 氷が砕ける効果音を再生
     try {
       const iceAudio = new Audio('./assets/se_ice_break.mp3');
-      iceAudio.volume = 0.9;
+      iceAudio.volume = 0.9 * useGameStore.getState().systemSeVolume;
       iceAudio.play().catch(() => {});
     } catch {
       // オーディオ再生エラー時は演出のみ継続
@@ -657,7 +679,7 @@ function SongListContent({ songsPromise, onBack, onStartGame }) {
 
   return (
     <div
-      ref={scrollContainerRef}
+      ref={handleScrollContainerRef}
       onScroll={handleContainerScroll}
       className="h-[100dvh] overflow-y-auto overscroll-none mech-scrollbar bg-neutral-900 bg-cover bg-center bg-no-repeat bg-fixed text-white flex flex-col items-center p-4 md:p-8 pb-[calc(3rem+env(safe-area-inset-bottom,0px))] font-sans select-none w-full relative"
       style={{ backgroundImage: 'url(./assets/bg_main.jpg)' }}
@@ -668,12 +690,12 @@ function SongListContent({ songsPromise, onBack, onStartGame }) {
       <div className="w-full max-w-4xl relative z-10 flex flex-col items-center">
         {/* ヘッダー：タイトル ＆ 右上透過PNGボタングループ */}
         <div className="w-full flex flex-wrap justify-between items-center gap-3 mb-6">
-          <h1
-            className="text-2xl sm:text-3xl md:text-4xl font-black text-cyan-300 tracking-wider"
-            style={{ textShadow: '0 0 12px rgba(0, 245, 255, 0.6)' }}
-          >
-            曲を選ぶ
-          </h1>
+          <div className="flex flex-wrap items-center gap-3">
+            <HeaderLogo onHome={handleGoHome} />
+            <h1 className="text-2xl sm:text-3xl md:text-4xl font-black text-cyan-300 tracking-wider">
+              曲を選ぶ
+            </h1>
+          </div>
           <div className={`flex items-center gap-1.5 sm:gap-3 ${showSettings ? 'pointer-events-none opacity-0 invisible' : ''}`}>
             {/* ランダム選曲ボタン */}
             <button
@@ -733,7 +755,7 @@ function SongListContent({ songsPromise, onBack, onStartGame }) {
             {/* メニューに戻るボタン */}
             <button
               type="button"
-              onClick={onBack}
+              onClick={handleGoHome}
               className="image-btn h-9 sm:h-12 md:h-14 w-auto"
               title="メニューに戻る"
               aria-label="メニューに戻る"

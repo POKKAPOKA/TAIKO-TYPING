@@ -1,3 +1,5 @@
+import { useGameStore } from '../store/gameStore';
+
 // アプリケーション全体でAudioインスタンスおよびWeb Audioバッファを共有し、プレロードを確実にする
 const audioCache = {};
 
@@ -8,8 +10,10 @@ let goodBuffer = null;
 let isGoodBufferLoading = false;
 let missBuffer = null;
 let isMissBufferLoading = false;
+const hoverSound = { buffer: null, loading: false };
+const clickSound = { buffer: null, loading: false };
 
-function getAudioContext() {
+export function getAudioContext() {
   if (typeof window === 'undefined') return null;
   if (!audioCtx) {
     const AudioCtx = window.AudioContext || window.webkitAudioContext;
@@ -25,8 +29,9 @@ function getAudioContext() {
 }
 
 const unlockAudioContext = () => {
-  if (audioCtx && audioCtx.state === 'suspended') {
-    audioCtx.resume().catch(() => {});
+  const ctx = getAudioContext();
+  if (ctx && ctx.state === 'suspended') {
+    ctx.resume().catch(() => {});
   }
 };
 
@@ -121,20 +126,58 @@ const preloadAudio = (path) => {
   return audioCache[path];
 };
 
-const playHover = () => {
-  const audio = preloadAudio('/assets/se_hover.mp3');
+// HTMLAudioElement.volume を無視する端末でも音量設定を反映する。
+function preloadSystemBuffer(path, sound) {
+  if (typeof window === 'undefined' || typeof fetch === 'undefined') return;
+  sound.loading = true;
+  fetch(path)
+    .then(res => {
+      if (!res.ok) throw new Error(`HTTP error ${res.status}`);
+      return res.arrayBuffer();
+    })
+    .then(data => {
+      const ctx = getAudioContext();
+      return ctx ? ctx.decodeAudioData(data) : null;
+    })
+    .then(buffer => { sound.buffer = buffer; })
+    .catch(err => console.warn(`Failed to load ${path}:`, err))
+    .finally(() => { sound.loading = false; });
+}
+
+function playSystemSound(path, sound, baseVolume) {
+  const volume = baseVolume * useGameStore.getState().systemSeVolume;
+  if (volume === 0) return;
+  const ctx = getAudioContext();
+  if (ctx && sound.buffer) {
+    try {
+      if (ctx.state === 'suspended') ctx.resume().catch(() => {});
+      const source = ctx.createBufferSource();
+      const gainNode = ctx.createGain();
+      source.buffer = sound.buffer;
+      gainNode.gain.setValueAtTime(volume, ctx.currentTime);
+      source.connect(gainNode);
+      gainNode.connect(ctx.destination);
+      source.start(0);
+      return;
+    } catch (err) {
+      console.warn('Web Audio system sound failed:', err);
+    }
+  }
+  // 読み込み中は音量を制御できない HTML Audio に切り替えない。
+  if (ctx && sound.loading) return;
+  const audio = preloadAudio(path);
   if (!audio) return;
   const clone = audio.cloneNode();
-  clone.volume = 0.5;
-  clone.play().catch(() => {}); // インタラクション前のエラーを無視
+  clone.volume = volume;
+  clone.play().catch(() => {});
+}
+
+const playHover = () => {
+  playSystemSound('/assets/se_hover.mp3', hoverSound, 0.5);
 };
 
 const playDecide = () => {
-  const audio = preloadAudio('/assets/se_click.mp3');
-  if (!audio) return;
-  const clone = audio.cloneNode();
-  clone.volume = 0.6;
-  clone.play().catch(() => {});
+  playSystemSound('/assets/se_click.mp3', clickSound, 0.6);
 };
 
 export const playPerfect = () => {
@@ -148,7 +191,7 @@ export const playPerfect = () => {
       const source = ctx.createBufferSource();
       source.buffer = perfectBuffer;
       const gainNode = ctx.createGain();
-      gainNode.gain.setValueAtTime(0.7, ctx.currentTime);
+      gainNode.gain.setValueAtTime(0.7 * useGameStore.getState().gameplaySeVolume, ctx.currentTime);
       source.connect(gainNode);
       gainNode.connect(ctx.destination);
       source.start(0);
@@ -163,7 +206,7 @@ export const playPerfect = () => {
   if (audio) {
     try {
       const clone = audio.cloneNode();
-      clone.volume = 0.7;
+      clone.volume = 0.7 * useGameStore.getState().gameplaySeVolume;
       clone.play().catch(() => {});
     } catch (_) {}
   }
@@ -180,7 +223,7 @@ export const playGood = () => {
       const source = ctx.createBufferSource();
       source.buffer = goodBuffer;
       const gainNode = ctx.createGain();
-      gainNode.gain.setValueAtTime(0.7, ctx.currentTime);
+      gainNode.gain.setValueAtTime(0.7 * useGameStore.getState().gameplaySeVolume, ctx.currentTime);
       source.connect(gainNode);
       gainNode.connect(ctx.destination);
       source.start(0);
@@ -195,7 +238,7 @@ export const playGood = () => {
   if (audio) {
     try {
       const clone = audio.cloneNode();
-      clone.volume = 0.7;
+      clone.volume = 0.7 * useGameStore.getState().gameplaySeVolume;
       clone.play().catch(() => {});
     } catch (_) {}
   }
@@ -212,7 +255,7 @@ export const playMiss = () => {
       const source = ctx.createBufferSource();
       source.buffer = missBuffer;
       const gainNode = ctx.createGain();
-      gainNode.gain.setValueAtTime(0.7, ctx.currentTime);
+      gainNode.gain.setValueAtTime(0.7 * useGameStore.getState().gameplaySeVolume, ctx.currentTime);
       source.connect(gainNode);
       gainNode.connect(ctx.destination);
       source.start(0);
@@ -227,7 +270,7 @@ export const playMiss = () => {
   if (audio) {
     try {
       const clone = audio.cloneNode();
-      clone.volume = 0.7;
+      clone.volume = 0.7 * useGameStore.getState().gameplaySeVolume;
       clone.play().catch(() => {});
     } catch (_) {}
   }
@@ -261,12 +304,15 @@ const handleMouseDown = (e) => {
 if (typeof document !== 'undefined') {
   preloadAudio('/assets/se_hover.mp3');
   preloadAudio('/assets/se_click.mp3');
+  preloadSystemBuffer('/assets/se_hover.mp3', hoverSound);
+  preloadSystemBuffer('/assets/se_click.mp3', clickSound);
   preloadAudio('/assets/se_perfect.mp3');
   preloadAudio('/assets/se_good.mp3');
   preloadAudio('/assets/se_miss.mp3');
   preloadPerfectSE();
   preloadGoodSE();
   preloadMissSE();
+  document.addEventListener('pointerdown', unlockAudioContext);
   document.addEventListener('mouseover', handleMouseOver);
   document.addEventListener('mousedown', (e) => {
     unlockAudioContext();

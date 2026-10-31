@@ -1,6 +1,8 @@
 import { useGameStore } from '../store/gameStore';
+import { createPlaySessionId } from '../lib/deviceId';
 import { RomajiParser, calculateMinKeystrokes, toBaseKana } from './RomajiParser';
 import { playPerfect, playGood, playMiss } from '../hooks/useSystemSE';
+import { getAchievementRank } from '../utils/achievementRank';
 
 const JUDGE_WINDOW = {
   PERFECT: 50,
@@ -152,6 +154,7 @@ export class GameEngine {
     this.reset();
 
     store.resetPlayState();
+    useGameStore.setState({ currentPlaySessionId: createPlaySessionId(), playBoothMode: store.isBoothMode, playBoothRecordByName: store.boothRecordByName });
     store.setStatus('playing');
 
     this.queue = [...loadedScore.notes]
@@ -200,18 +203,20 @@ export class GameEngine {
     //   （設定値 4.00＝標準 1.0倍 となるよう getEffectiveSpeedMultiplier で speed / 4.0 に補正）
 
     if (this.leadInTime === 0) {
-      this.audio.volume = 0.5;
+      this.audio.volume = 0.5 * useGameStore.getState().musicVolume;
       this.startAudio();
     } else {
       this.audio.volume = 0;
       // ユーザーアクション中に再生を試みてアンロックする
-      this.audio.play().then(() => {
-        this.audio.pause();
-        this.audio.currentTime = 0;
-        this.audio.volume = 0.5;
+      const audio = this.audio;
+      audio.play().then(() => {
+        if (this.audio !== audio || this.audioStarted) return;
+        audio.pause();
+        audio.currentTime = 0;
+        audio.volume = 0.5 * useGameStore.getState().musicVolume;
       }).catch(e => {
         console.warn("Audio unlock failed:", e);
-        this.audio.volume = 0.5;
+        if (this.audio === audio) audio.volume = 0.5 * useGameStore.getState().musicVolume;
       });
     }
 
@@ -222,6 +227,7 @@ export class GameEngine {
   startAudio() {
     this.audioStarted = true;
     if (this.audio) {
+      this.audio.volume = 0.5 * useGameStore.getState().musicVolume;
       this.audio.play().catch(e => {
         console.warn("Audio play failed, switching to fallback mode:", e);
         this.isFallbackMode = true;
@@ -288,7 +294,9 @@ export class GameEngine {
       }
     });
 
-    store.setStatus('result');
+    // 全判定と統計を確定した後にランクを判定する。FAILEDは演出を挟まない。
+    const rank = getAchievementRank(useGameStore.getState());
+    store.setStatus(rank === 'FAILED' ? 'result' : 'clearTransition');
     // リザルト画面到達時にプレイ記録（Play Logs）を自動保存
     store.recordCurrentPlayLog();
   }
@@ -626,3 +634,9 @@ export class GameEngine {
 }
 
 export const gameEngine = new GameEngine();
+
+useGameStore.subscribe((state, prev) => {
+  if (state.musicVolume !== prev.musicVolume && gameEngine.audio && gameEngine.audioStarted) {
+    gameEngine.audio.volume = 0.5 * state.musicVolume;
+  }
+});

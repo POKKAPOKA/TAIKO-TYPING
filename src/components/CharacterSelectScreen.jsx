@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { useGameStore } from '../store/gameStore';
 import { CHARACTERS, getCharacterById } from '../config/characters';
 import { Home, Check } from 'lucide-react';
+import HeaderLogo from './HeaderLogo';
 
 const POSE_ORDER = ['sing_1', 'sing_2', 'miss'];
 
@@ -10,7 +11,7 @@ const POSE_META = {
     id: 'sing_1',
     icon: '🎵',
     shortLabel: '通常',
-    fullLabel: '通常 (sing_1)',
+    fullLabel: '通常',
     statusBadge: '通常',
     animClass: 'char-preview-sing-1',
     stageBorder: 'border-cyan-400',
@@ -26,7 +27,7 @@ const POSE_META = {
     id: 'sing_2',
     icon: '🔥',
     shortLabel: '熱唱',
-    fullLabel: '熱唱 (sing_2)',
+    fullLabel: '熱唱',
     statusBadge: '熱唱',
     animClass: 'char-preview-sing-2',
     stageBorder: 'border-orange-500',
@@ -42,7 +43,7 @@ const POSE_META = {
     id: 'miss',
     icon: '💥',
     shortLabel: 'ミス',
-    fullLabel: 'ミス (miss)',
+    fullLabel: 'ミス',
     statusBadge: 'ミス',
     animClass: 'char-preview-miss',
     stageBorder: 'border-rose-500',
@@ -106,8 +107,9 @@ export default function CharacterSelectScreen({ onBack }) {
         </div>
 
         {/* ステージ上部ステータスバー */}
-        <div className="w-full flex items-center justify-between gap-2 z-20 px-1 sm:px-2">
-          <div className="flex items-center gap-1.5 sm:gap-2 min-w-0">
+        <div className="w-full flex flex-wrap items-center justify-between gap-2 z-20 px-1 sm:px-2">
+          <div className="flex flex-wrap items-center gap-1.5 sm:gap-2 min-w-0">
+            <HeaderLogo onHome={onBack} />
             <span className={`px-2 py-0.5 sm:px-2.5 sm:py-1 rounded-lg border-2 font-dotgothic font-black text-[10px] sm:text-xs tracking-wider shrink-0 transition-colors duration-200 ${currentMeta.badgeClass}`}>
               PREVIEW
             </span>
@@ -198,18 +200,12 @@ export default function CharacterSelectScreen({ onBack }) {
               className="w-14 h-1.5 rounded-full bg-neutral-400/80 border border-neutral-300/30"
               aria-hidden="true"
             />
-            <span className="text-[10px] font-dotgothic font-bold text-neutral-400 tracking-wider text-center">
-              スワイプ・スクロールでキャラ変更 // SWIPE TO SCROLL
-            </span>
           </div>
 
           {/* 1. 上部：ヘッダー＆選択中キャラクター詳細プロフィール */}
           <div className="flex flex-col gap-2.5 sm:gap-3.5 shrink-0">
             <div className="flex items-center justify-between gap-2 border-b-2 border-[#261f3d] pb-2 sm:pb-3">
               <div>
-                <span className="text-[10px] sm:text-xs font-dotgothic font-bold tracking-widest text-amber-400 bg-amber-500/15 border border-amber-500/50 px-2 py-0.5 rounded">
-                  VOCALIST SELECT // 演者選択
-                </span>
                 <h1 className="text-lg sm:text-2xl font-black text-white tracking-widest font-dotgothic mt-0.5">
                   キャラクター選択
                 </h1>

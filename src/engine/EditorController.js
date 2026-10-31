@@ -1,6 +1,7 @@
 // エディタの音声再生・シーク・キーボードショートカット・保存/読み込みなどの副作用を一元管理するコントローラ。
 // ReactのuseEffectに依存せず、Zustandストアの購読（subscribe）とイベント駆動で動作する。
 import { useEditorStore } from '../store/editorStore';
+import { useGameStore } from '../store/gameStore';
 
 let audioEl = null;
 let viewportEl = null;
@@ -11,7 +12,12 @@ let mockStartCurrentTime = 0;
 // --- DOM要素の登録（コンポーネントのコールバックrefから呼ばれる） ---
 export function registerEditorAudio(el) {
   audioEl = el;
+  if (audioEl) audioEl.volume = useGameStore.getState().musicVolume;
 }
+
+useGameStore.subscribe((state, prev) => {
+  if (audioEl && state.musicVolume !== prev.musicVolume) audioEl.volume = state.musicVolume;
+});
 
 export function registerEditorViewport(el) {
   viewportEl = el;
