@@ -62,7 +62,7 @@ export class GameEngine {
     this.mockStartTime = 0;
     // スコア計算・統計もここで初期化する（前回プレイの持ち越し防止）
     this.scorePerChar = 0;
-    this.stats = { typosByChar: {}, mistakeLog: [], totalNotes: 0 };
+    this.stats = { typosByChar: {}, mistakeLog: [], missHistory: [], totalNotes: 0 };
   }
 
   updateCurrentTarget(store, newTarget) {
@@ -180,6 +180,7 @@ export class GameEngine {
     this.stats = {
       typosByChar: {},
       mistakeLog: [],
+      missHistory: [],
       totalNotes: this.queue.length
     };
 
@@ -243,6 +244,29 @@ export class GameEngine {
     }
   }
 
+  recordMistype(store, expectedChar, typedChar, timeMs) {
+    store.addTypoCount();
+    store.triggerVocalMiss();
+    this.stats.typosByChar[expectedChar] = (this.stats.typosByChar[expectedChar] || 0) + 1;
+    this.stats.mistakeLog.push({ time: timeMs / 1000, note: this.currentTarget.word, type: 'typo', char: expectedChar });
+    this.stats.missHistory.push({ time: timeMs / 1000, note: this.currentTarget.word, targetChar: expectedChar, typedChar, type: 'mistype' });
+  }
+
+  recordDropped(store, note, wasUnstarted, timeMs) {
+    store.addDroppedCount();
+    if (wasUnstarted) store.addUntypedCount();
+    const remaining = !wasUnstarted && note === this.currentTarget
+      ? (store.isMobileMode ? this.mobileTargetKana[this.mobileTypedIndex] : this.romajiParser?.getDisplayState?.().next?.[0])
+      : '';
+    this.stats.mistakeLog.push({ time: timeMs / 1000, note: note.word, type: 'dropped' });
+    this.stats.missHistory.push({ time: timeMs / 1000, note: note.word, targetChar: remaining || note.reading || note.word, typedChar: '', type: 'untyped', partial: !wasUnstarted });
+  }
+
+  recordTimingMiss(timeMs, targetChar, typedChar) {
+    this.stats.mistakeLog.push({ time: timeMs / 1000, note: this.currentTarget.word, type: 'miss' });
+    this.stats.missHistory.push({ time: timeMs / 1000, note: this.currentTarget.word, targetChar, typedChar, type: 'timing' });
+  }
+
   stop(finishToResult = true) {
     this.audioAttempt = null;
     if (this.animationFrameId) {
@@ -267,13 +291,18 @@ export class GameEngine {
       : Boolean(this.romajiParser && !this.romajiParser.isComplete());
 
     if (this.currentTarget && isCurrentIncomplete) {
-      store.addDroppedCount();
       store.setCombo(0);
       if (!this.currentTargetJudged) {
         store.addMissCount();
       }
-      this.stats.mistakeLog.push({ time: this.currentTime / 1000, note: this.currentTarget.word, type: "dropped" });
+      this.recordDropped(store, this.currentTarget, !this.currentTargetJudged, this.currentTime);
     }
+    // 音源が譜面より先に終了した場合も、残りを未入力として集計する。
+    for (const note of this.queue) {
+      store.addMissCount();
+      this.recordDropped(store, note, true, this.currentTime);
+    }
+    this.queue = [];
 
     // リザルト画面では現在ターゲットを表示しないため、打ち残しの有無にかかわらず
     // 常にクリアする（次回プレイへの状態持ち越しも防げる）
@@ -294,13 +323,20 @@ export class GameEngine {
     store.setStatsData({
       worstKeys: sortedWorst,
       mistakeLog: this.stats.mistakeLog,
+      missHistory: this.stats.missHistory,
       stats: {
         maxKps: finalState.maxKps,
         clearRate: clearRate.toFixed(2),
         totalNotes: this.stats.totalNotes,
         perfectCount: finalState.perfectCount,
         goodCount: finalState.goodCount,
-        missCount: finalState.missCount
+        missCount: finalState.missCount,
+        fastCount: finalState.fastCount,
+        lateCount: finalState.lateCount,
+        untypedCount: finalState.untypedCount,
+        droppedCount: finalState.droppedCount,
+        mistypeCount: finalState.typoCount,
+        completedCount: finalState.completedCount
       }
     });
 
@@ -389,14 +425,12 @@ export class GameEngine {
     if (!this.currentTargetJudged) {
       // 1打目未入力のまま判定ライン（+150ms）を通過した場合：ここで MISS 判定を1回だけ発生させる
       this.applyJudgment('MISS');
-      store.addDroppedCount();
-      this.stats.mistakeLog.push({ time: this.currentTime / 1000, note: this.currentTarget.word, type: "dropped" });
+      this.recordDropped(store, this.currentTarget, true, this.currentTime);
     } else {
       // 1打目は判定ライン上で既に判定済みだが、2文字目以降を時間内に打ち切れなかった場合：
       // 判定ラインから離れた場所で2回目の遅れ MISS ポップアップが出ないよう、コンボリセットと打ち残し記録のみ行う
       store.setCombo(0);
-      store.addDroppedCount();
-      this.stats.mistakeLog.push({ time: this.currentTime / 1000, note: this.currentTarget.word, type: "dropped" });
+      this.recordDropped(store, this.currentTarget, false, this.currentTime);
     }
 
     this.updateCurrentTarget(store, this.queue.shift() || null);
@@ -430,28 +464,22 @@ export class GameEngine {
       }
 
       if (normalizedInput !== expectedChar) {
-        store.addTypoCount();
-        store.triggerVocalMiss();
-        this.stats.typosByChar[expectedChar] = (this.stats.typosByChar[expectedChar] || 0) + 1;
-        this.stats.mistakeLog.push({ time: currentTimeMs / 1000, note: this.currentTarget.word, type: "typo", char: expectedChar });
+        this.recordMistype(store, expectedChar, inputKana, currentTimeMs);
         return;
       }
 
       if (diff <= JUDGE_WINDOW.PERFECT) {
-        this.applyJudgment('PERFECT');
+        this.applyJudgment('PERFECT', currentTimeMs - targetTime);
       } else if (diff <= JUDGE_WINDOW.GOOD) {
-        this.applyJudgment('GOOD');
+        this.applyJudgment('GOOD', currentTimeMs - targetTime);
       } else if (diff <= JUDGE_WINDOW.MISS) {
         this.applyJudgment('MISS');
         this.firstHitMiss = true;
-        this.stats.mistakeLog.push({ time: currentTimeMs / 1000, note: this.currentTarget.word, type: "miss" });
+        this.recordTimingMiss(currentTimeMs, expectedChar, inputKana);
       }
     } else {
       if (normalizedInput !== expectedChar) {
-        store.addTypoCount();
-        store.triggerVocalMiss();
-        this.stats.typosByChar[expectedChar] = (this.stats.typosByChar[expectedChar] || 0) + 1;
-        this.stats.mistakeLog.push({ time: currentTimeMs / 1000, note: this.currentTarget.word, type: "typo", char: expectedChar });
+        this.recordMistype(store, expectedChar, inputKana, currentTimeMs);
         return;
       }
     }
@@ -509,26 +537,26 @@ export class GameEngine {
         return;
       }
 
+      const firstExpectedChar = store.isMobileMode
+        ? (this.mobileTargetKana[this.mobileTypedIndex] || '?')
+        : (this.romajiParser.getDisplayState().next[0] || '?');
       const isCorrect = this.romajiParser.input(e.key);
       if (!isCorrect) {
         const expectedChar = store.isMobileMode
           ? (this.mobileTargetKana[this.mobileTypedIndex] || "?")
           : (this.romajiParser.getDisplayState().next[0] || "?");
-        store.addTypoCount();
-        store.triggerVocalMiss();
-        this.stats.typosByChar[expectedChar] = (this.stats.typosByChar[expectedChar] || 0) + 1;
-        this.stats.mistakeLog.push({ time: currentTimeMs / 1000, note: this.currentTarget.word, type: "typo", char: expectedChar });
+        this.recordMistype(store, expectedChar, e.key, currentTimeMs);
         return;
       }
 
       if (diff <= JUDGE_WINDOW.PERFECT) {
-        this.applyJudgment('PERFECT');
+        this.applyJudgment('PERFECT', currentTimeMs - targetTime);
       } else if (diff <= JUDGE_WINDOW.GOOD) {
-        this.applyJudgment('GOOD');
+        this.applyJudgment('GOOD', currentTimeMs - targetTime);
       } else if (diff <= JUDGE_WINDOW.MISS) {
         this.applyJudgment('MISS');
         this.firstHitMiss = true;
-        this.stats.mistakeLog.push({ time: currentTimeMs / 1000, note: this.currentTarget.word, type: "miss" });
+        this.recordTimingMiss(currentTimeMs, firstExpectedChar, e.key);
       }
     } else {
       this.absorbTrailingN = false;
@@ -537,10 +565,7 @@ export class GameEngine {
         const expectedChar = store.isMobileMode
           ? (this.mobileTargetKana[this.mobileTypedIndex] || "?")
           : (this.romajiParser.getDisplayState().next[0] || "?");
-        store.addTypoCount();
-        store.triggerVocalMiss();
-        this.stats.typosByChar[expectedChar] = (this.stats.typosByChar[expectedChar] || 0) + 1;
-        this.stats.mistakeLog.push({ time: currentTimeMs / 1000, note: this.currentTarget.word, type: "typo", char: expectedChar });
+        this.recordMistype(store, expectedChar, e.key, currentTimeMs);
         return;
       }
     }
@@ -570,9 +595,13 @@ export class GameEngine {
     }
   }
 
-  applyJudgment(judgment) {
+  applyJudgment(judgment, timingOffset = null) {
     const store = useGameStore.getState();
     this.currentTargetJudged = true;
+    if ((judgment === 'PERFECT' || judgment === 'GOOD') && timingOffset != null) {
+      if (timingOffset < 0) store.addFastCount();
+      else if (timingOffset > 0) store.addLateCount();
+    }
     const noteChars = this._getNoteKeystrokes(this.currentTarget, store.isMobileMode);
 
     this.accumulatedChars += noteChars;

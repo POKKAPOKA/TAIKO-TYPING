@@ -94,6 +94,9 @@ const initialPlayState = {
   perfectCount: 0,
   greatCount: 0,
   goodCount: 0,
+  fastCount: 0,
+  lateCount: 0,
+  untypedCount: 0,
   completedCount: 0,
   droppedCount: 0,
   typoCount: 0,
@@ -136,6 +139,9 @@ export const useGameStore = create((set, get) => ({
   perfectCount: 0,
   greatCount: 0,
   goodCount: 0,
+  fastCount: 0,
+  lateCount: 0,
+  untypedCount: 0,
   completedCount: 0,
   droppedCount: 0,
   typoCount: 0,
@@ -209,6 +215,9 @@ export const useGameStore = create((set, get) => ({
   addPerfectCount: () => set((state) => ({ perfectCount: state.perfectCount + 1 })),
   addGreatCount: () => set((state) => ({ greatCount: state.greatCount + 1 })),
   addGoodCount: () => set((state) => ({ goodCount: state.goodCount + 1 })),
+  addFastCount: () => set((state) => ({ fastCount: state.fastCount + 1 })),
+  addLateCount: () => set((state) => ({ lateCount: state.lateCount + 1 })),
+  addUntypedCount: () => set((state) => ({ untypedCount: state.untypedCount + 1 })),
 
   setSelectedCharacterId: (selectedCharacterId) => {
     try {

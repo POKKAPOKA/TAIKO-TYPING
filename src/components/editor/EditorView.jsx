@@ -1,9 +1,7 @@
-import { useState, useRef, useCallback } from 'react';
+import { useState } from 'react';
 import EditorTimeline from './EditorTimeline';
 import HeaderLogo from '../HeaderLogo';
 import { useEditorStore } from '../../store/editorStore';
-import { useGameStore } from '../../store/gameStore';
-import { exportPlayLogsCsv, exportLevelValidationSummaryCsv } from '../../utils/csvExport';
 import {
   registerEditorAudio,
   loadEditorAudio,
@@ -26,60 +24,6 @@ export default function EditorView({ onExit }) {
   const toastMessage = useEditorStore(state => state.toastMessage);
   const activeModal = useEditorStore(state => state.activeModal);
   const closeModal = useEditorStore(state => state.closeModal);
-
-  const showCustomModes = useGameStore(state => state.showCustomModes);
-  const playLogsCount = useGameStore(state => state.playLogsCount);
-  const isExportingCsv = useGameStore(state => state.isExportingCsv);
-  const setIsExportingCsv = useGameStore(state => state.setIsExportingCsv);
-  const refreshPlayLogsCount = useGameStore(state => state.refreshPlayLogsCount);
-
-  const editorSyncRef = useRef(false);
-  const handleEditorAnalyticsRef = useCallback((node) => {
-    if (node && !editorSyncRef.current) {
-      editorSyncRef.current = true;
-      useGameStore.getState().refreshPlayLogsCount();
-    } else if (!node) {
-      editorSyncRef.current = false;
-    }
-  }, []);
-
-  const handleExportRawCsv = async () => {
-    if (isExportingCsv) return;
-    setIsExportingCsv(true);
-    try {
-      const { count, filename } = await exportPlayLogsCsv();
-      await refreshPlayLogsCount();
-      useEditorStore.getState().showEditorToast(`全プレイ履歴CSV（${count}件）を出力: ${filename}`);
-    } catch (err) {
-      console.error(err);
-      useEditorStore.getState().showEditorToast('CSV出力に失敗しました');
-    } finally {
-      setIsExportingCsv(false);
-    }
-  };
-
-  const handleExportSummaryCsv = async () => {
-    if (isExportingCsv) return;
-    setIsExportingCsv(true);
-    try {
-      const { count, excludedCount, filename } = await exportLevelValidationSummaryCsv();
-      await refreshPlayLogsCount();
-      const excludeNote = excludedCount > 0 ? `・外れ値${excludedCount}件除外` : '';
-      useEditorStore.getState().showEditorToast(`レベル検証サマリーCSV（有効${count}件集計${excludeNote}）を出力: ${filename}`);
-    } catch (err) {
-      console.error(err);
-      useEditorStore.getState().showEditorToast('CSV出力に失敗しました');
-    } finally {
-      setIsExportingCsv(false);
-    }
-  };
-
-  const [confirmClearLogs, setConfirmClearLogs] = useState(false);
-  const handleClearLogs = () => {
-    useGameStore.getState().clearAllPlayLogs();
-    setConfirmClearLogs(false);
-    useEditorStore.getState().showEditorToast('これまでのプレイ記録ログをすべてクリアしました');
-  };
 
   // 一括置換モーダル用
   const [findText, setFindText] = useState("");
@@ -529,58 +473,6 @@ export default function EditorView({ onExit }) {
                <input type="file" accept=".json" className="hidden" onChange={(e) => { importScoreFile(e.target.files[0]); e.target.value = null; }} />
              </label>
 
-             {/* 創作・エディター表示ON時：プレイ記録＆レベル検証CSV出力 */}
-             <div
-               ref={handleEditorAnalyticsRef}
-               className="flex flex-wrap items-center gap-2 pl-2 border-l-2 border-neutral-700"
-             >
-               <span className="px-3 py-1.5 rounded-xl bg-neutral-900 border-2 border-amber-500/60 text-amber-300 font-bold text-xs flex-shrink-0">
-                 記録データ: {playLogsCount}件
-               </span>
-               <button
-                 type="button"
-                 disabled={isExportingCsv}
-                 onClick={handleExportRawCsv}
-                 className="px-3.5 py-2 bg-neutral-900 hover:bg-cyan-950 disabled:opacity-50 border-2 border-cyan-400 text-cyan-200 rounded-xl font-bold text-xs transition-colors flex-shrink-0 cursor-pointer shadow-none"
-               >
-                 📊 プレイ記録CSV出力（ローデータ）
-               </button>
-               <button
-                 type="button"
-                 disabled={isExportingCsv}
-                 onClick={handleExportSummaryCsv}
-                 className="px-3.5 py-2 bg-neutral-900 hover:bg-emerald-950 disabled:opacity-50 border-2 border-emerald-400 text-emerald-200 rounded-xl font-bold text-xs transition-colors flex-shrink-0 cursor-pointer shadow-none"
-               >
-                 📈 レベル検証サマリーCSV出力
-               </button>
-               {!confirmClearLogs ? (
-                 <button
-                   type="button"
-                   disabled={isExportingCsv || playLogsCount === 0}
-                   onClick={() => setConfirmClearLogs(true)}
-                   className="px-3 py-2 bg-neutral-900 hover:bg-rose-950 disabled:opacity-40 disabled:cursor-not-allowed border-2 border-rose-400 text-rose-200 rounded-xl font-bold text-xs transition-colors flex-shrink-0 cursor-pointer shadow-none"
-                 >
-                   🗑️ ログをクリア
-                 </button>
-               ) : (
-                 <div className="flex items-center gap-1.5">
-                   <button
-                     type="button"
-                     onClick={handleClearLogs}
-                     className="px-3 py-2 bg-rose-700 hover:bg-rose-600 border-2 border-rose-300 text-white rounded-xl font-black text-xs transition-colors flex-shrink-0 cursor-pointer shadow-none"
-                   >
-                     ⚠️ 本当にクリアする
-                   </button>
-                   <button
-                     type="button"
-                     onClick={() => setConfirmClearLogs(false)}
-                     className="px-2.5 py-2 bg-neutral-900 hover:bg-neutral-700 border-2 border-neutral-500 text-neutral-300 rounded-xl font-bold text-xs transition-colors flex-shrink-0 cursor-pointer shadow-none"
-                   >
-                     キャンセル
-                   </button>
-                 </div>
-               )}
-             </div>
           </div>
         </div>
 

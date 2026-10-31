@@ -17,12 +17,13 @@ describe('楽曲完走からリザルトへの遷移', () => {
     engine.stats.totalNotes = 2;
     const state = {
       status: 'playing', score: 900000, perfectCount: 2, goodCount: 0, missCount: 0,
-      completedCount: 2, droppedCount: 0, maxKps: 0, isMobileMode: false,
+      completedCount: 2, droppedCount: 0, untypedCount: 0, fastCount: 0, lateCount: 0, typoCount: 0, maxKps: 0, isMobileMode: false,
       setTargetState: vi.fn(), setCombo: vi.fn(), recordCurrentPlayLog: vi.fn(),
       setStatsData: data => { state.statsData = data; },
       setStatus: status => { state.status = status; },
       addDroppedCount: () => { state.droppedCount++; },
       addMissCount: () => { state.missCount++; },
+      addUntypedCount: () => { testState.current = { ...testState.current, untypedCount: testState.current.untypedCount + 1 }; },
     };
     testState.current = state;
   });

@@ -3,6 +3,7 @@ import titleLogo from './assets/title_logo.png';
 import titleLogo2 from './assets/title_logo2.png';
 import { useGameStore } from './store/gameStore';
 import { gameEngine } from './engine/GameEngine';
+import { backgroundMusic } from './engine/backgroundMusic';
 import NotesArea from './components/NotesArea';
 import EditorView from './components/editor/EditorView';
 import ActiveWordDisplay from './components/ActiveWordDisplay';
@@ -89,7 +90,11 @@ if (typeof window !== 'undefined') {
 function App() {
   const { playDecide } = useSystemSE();
 
-  const [appMode, setAppMode] = useState('menu'); // 'menu' | 'setup' | 'game' | 'editor' | 'songSelect'
+  const [appMode, setAppModeState] = useState('menu'); // 'menu' | 'setup' | 'game' | 'editor' | 'songSelect'
+  const setAppMode = (mode) => {
+    backgroundMusic.setScreen(mode);
+    setAppModeState(mode);
+  };
   const [leaderboardData, setLeaderboardData] = useState(null); // { songTitle, promise } | null
   const [songsPromise, setSongsPromise] = useState(null);
 
@@ -302,7 +307,7 @@ function App() {
     <>
       <Toast />
       <div
-        className={`w-screen h-[100dvh] bg-neutral-900 text-white flex flex-col items-center font-sans select-none overflow-hidden box-border relative ${
+        className={`w-screen h-[100dvh] max-h-[100dvh] bg-neutral-900 text-white flex flex-col items-center font-sans select-none overflow-hidden box-border relative ${
           appMode === 'game' && status !== 'result'
             ? isMobileMode
               ? 'p-1.5 sm:p-2 bg-cover bg-center bg-no-repeat'
@@ -386,12 +391,12 @@ function App() {
         </div>
       )}
 
-      <div className={`flex flex-col items-center w-full h-full ${appMode === 'menu' ? 'overflow-y-auto z-10' : (appMode === 'game' && !isMobileMode) ? 'justify-center z-10' : 'z-10'} ${isMobileMode && appMode === 'game' ? 'min-h-0' : ''}`}>
+      <div className={`flex flex-col items-center w-full h-full ${appMode === 'menu' ? 'overflow-hidden z-10' : (appMode === 'game' && !isMobileMode) ? 'justify-center z-10' : 'z-10'} ${isMobileMode && appMode === 'game' ? 'min-h-0' : ''}`}>
         <h1 className={`text-4xl font-black mb-8 text-orange-400 tracking-wider flex-shrink-0 ${appMode === 'menu' || appMode === 'game' ? 'hidden' : ''}`}>TAiKOTYPiNG</h1>
 
       {appMode === 'menu' && (
-        <div className="w-full max-w-[340px] flex flex-col items-center gap-2.5 sm:gap-3 my-auto px-4 pt-16 pb-28 shrink-0">
-          <h1 className="relative w-full aspect-[2.1/1] overflow-hidden">
+        <div className="home-content">
+          <h1 className="home-logo relative w-full aspect-[2.1/1] overflow-hidden">
             <img src={titleLogo2} alt="TAiKOTYPiNG" className="absolute bottom-0 left-0 w-full max-w-none" />
           </h1>
           {/* ボタン1: 「公式譜面で遊ぶ」 */}
@@ -435,7 +440,7 @@ function App() {
           <div
             role="group"
             aria-label="入力モード切替"
-            className="w-[calc(100vw-24px)] max-w-[420px] sm:max-w-[480px] grid grid-cols-2 gap-2 sm:gap-3 items-center justify-items-center"
+            className="home-mode-buttons grid grid-cols-2 gap-2 sm:gap-3 items-center justify-items-center"
           >
             <button
               type="button"
@@ -504,11 +509,11 @@ function App() {
           </button>
 
           {/* サブボタンエリア：アンケート＆スマホ版プレイ案内 ／ 創作譜面モード */}
-          <div className="flex flex-wrap gap-2.5 w-full mt-1 justify-center items-center">
+          <div className="home-extra-buttons">
             <button
               type="button"
               onClick={() => setShowSurveyModal(true)}
-              className="px-6 py-2.5 bg-[#160c2e]/90 hover:bg-pink-500/30 border-2 border-pink-400 text-pink-100 hover:text-white rounded-xl font-black text-xs sm:text-sm tracking-wider backdrop-blur-md transition-colors cursor-pointer shadow-none flex items-center gap-1.5"
+              className="px-6 py-2.5 bg-[#160c2e]/90 hover:bg-pink-500/30 border-2 border-pink-400 text-pink-100 hover:text-white rounded-xl font-black text-xs sm:text-sm tracking-wider transition-colors cursor-pointer shadow-none flex items-center gap-1.5"
             >
               <span>📝 アンケート</span>
             </button>
@@ -518,14 +523,14 @@ function App() {
                 <button
                   type="button"
                   onClick={() => setAppMode('setup')}
-                  className="px-4 py-2.5 bg-[#100d1f]/85 hover:bg-cyan-950/80 border-2 border-cyan-500/60 text-cyan-300 rounded-xl font-bold text-xs backdrop-blur-sm transition-colors cursor-pointer shadow-none"
+                  className="px-4 py-2.5 bg-[#100d1f]/85 hover:bg-cyan-950/80 border-2 border-cyan-500/60 text-cyan-300 rounded-xl font-bold text-xs transition-colors cursor-pointer shadow-none"
                 >
                   創作譜面を遊ぶ
                 </button>
                 <button
                   type="button"
                   onClick={() => setAppMode('editor')}
-                  className="px-4 py-2.5 bg-[#100d1f]/85 hover:bg-neutral-800/80 border-2 border-neutral-600 text-neutral-300 rounded-xl font-bold text-xs backdrop-blur-sm transition-colors cursor-pointer shadow-none"
+                  className="px-4 py-2.5 bg-[#100d1f]/85 hover:bg-neutral-800/80 border-2 border-neutral-600 text-neutral-300 rounded-xl font-bold text-xs transition-colors cursor-pointer shadow-none"
                 >
                   創作譜面を作る
                 </button>
@@ -533,11 +538,11 @@ function App() {
             )}
           </div>
 
-          {/* フッター：サークル名「SRB」クレジット表記 */}
+          {/* フッター：サークル・BGMクレジット */}
           <div
             className="pointer-events-none text-[11px] sm:text-xs font-dotgothic font-bold tracking-widest text-purple-200/80 bg-[#0b0718]/75 border border-purple-400/35 px-3.5 py-1 rounded-full"
           >
-            © SRB
+            <span>● SRB</span><span className="mx-2 text-purple-200/40" aria-hidden="true">|</span><span><span className="text-cyan-300">♪</span> BGM: ナオキ</span>
           </div>
         </div>
       )}
