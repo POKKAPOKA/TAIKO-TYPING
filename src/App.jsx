@@ -16,6 +16,7 @@ import CharacterSelectScreen from './components/CharacterSelectScreen';
 import Leaderboard from './components/Leaderboard';
 import SettingsModal from './components/SettingsModal';
 import SurveyModal from './components/SurveyModal';
+import CreditsModal from './components/CreditsModal';
 import FlickKeyboard from './components/FlickKeyboard';
 import ResultScreen from './components/ResultScreen';
 import ClearTransitionOverlay from './components/ClearTransitionOverlay';
@@ -24,7 +25,7 @@ import { getAchievementRank } from './utils/achievementRank';
 import { fetchRankingsResult, submitScore } from './api/rankings';
 import { getDeviceId } from './lib/deviceId';
 import { loadSongs } from './api/songList';
-import { Maximize, Minimize, Smartphone, Monitor, User, Settings, Pause, Play, RotateCcw, Home, HelpCircle, X } from 'lucide-react';
+import { Maximize, Minimize, Smartphone, Monitor, User, Settings, Pause, Play, RotateCcw, Home, HelpCircle, Info, X } from 'lucide-react';
 
 // 操作ガイドの自動消去・ボーカリスト歌唱ループをストア購読で行うモジュール（importするだけで有効になる）
 import './engine/gameUiSync';
@@ -133,6 +134,7 @@ function App() {
   const toggleFullscreen = useGameStore(state => state.toggleFullscreen);
 
   const [showHowToPlay, setShowHowToPlay] = useState(false);
+  const [isCreditsOpen, setIsCreditsOpen] = useState(false);
 
 
   // ランキング登録用のプレイヤー名（localStorageに保存して次回起動時も使う）
@@ -539,11 +541,15 @@ function App() {
           </div>
 
           {/* フッター：サークル・BGMクレジット */}
-          <div
-            className="pointer-events-none text-[11px] sm:text-xs font-dotgothic font-bold tracking-widest text-purple-200/80 bg-[#0b0718]/75 border border-purple-400/35 px-3.5 py-1 rounded-full"
+          <button
+            type="button"
+            onClick={() => setIsCreditsOpen(true)}
+            aria-label="制作クレジットを表示"
+            className="inline-flex items-center cursor-pointer text-[11px] sm:text-xs font-dotgothic font-bold tracking-widest text-purple-200 bg-[#0b0718]/90 border border-purple-400/60 px-3.5 py-1 rounded-full transition-transform hover:scale-105 hover:border-cyan-300 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-cyan-300"
           >
             <span>● SRB</span><span className="mx-2 text-purple-200/40" aria-hidden="true">|</span><span><span className="text-cyan-300">♪</span> BGM: ナオキ</span>
-          </div>
+            <Info size={13} className="ml-2 text-cyan-300" aria-hidden="true" />
+          </button>
         </div>
       )}
 
@@ -1034,6 +1040,10 @@ function App() {
 
       {showSurveyModal && (
         <SurveyModal onClose={() => setShowSurveyModal(false)} />
+      )}
+
+      {appMode === 'menu' && isCreditsOpen && (
+        <CreditsModal onClose={() => setIsCreditsOpen(false)} />
       )}
 
       {showHowToPlay && (

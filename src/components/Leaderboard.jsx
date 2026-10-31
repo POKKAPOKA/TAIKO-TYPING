@@ -251,9 +251,6 @@ export default function Leaderboard({ songTitle, rankingsPromise, onClose }) {
                 <h2 className="text-2xl sm:text-3xl font-black text-cyan-300 tracking-widest leading-none">
                   ランキング
                 </h2>
-                <span className="px-2.5 py-1 rounded-md bg-pink-500/15 border border-pink-400/60 font-dotgothic text-xs font-black text-pink-300 tracking-[0.2em]">
-                  RANKING // 番付
-                </span>
                 <div className="hidden sm:flex items-center gap-1.5 flex-1 max-w-[180px]">
                   <span className="w-1.5 h-1.5 rotate-45 bg-cyan-400 shrink-0" />
                   <div className="h-[2px] w-full bg-gradient-to-r from-cyan-400/70 via-pink-400/50 to-transparent" />
@@ -293,7 +290,7 @@ export default function Leaderboard({ songTitle, rankingsPromise, onClose }) {
                 <div className="flex flex-col justify-center items-center h-48 gap-3">
                   <div className="w-3 h-3 rotate-45 bg-cyan-400 animate-ping" />
                   <div className="font-dotgothic text-lg sm:text-xl font-black text-cyan-300 tracking-[0.25em]">
-                    LOADING // 番付読込中...
+                    LOADING...
                   </div>
                 </div>
               }

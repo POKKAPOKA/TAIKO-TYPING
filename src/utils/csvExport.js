@@ -313,9 +313,12 @@ export async function fetchMergedPlayLogs() {
  * @param {any} val
  * @returns {string}
  */
-function escapeCsvCell(val) {
+export function escapeCsvCell(val) {
   if (val === null || val === undefined) return '""';
-  const str = String(val).replace(/"/g, '""');
+  let str = String(val);
+  // プレイヤー名などの文字列を表計算ソフトが数式として実行しないようにする。
+  if (typeof val === 'string' && /^[\s\u0000-\u001f\u007f]*[=+\-@]/u.test(str)) str = `'${str}`;
+  str = str.replace(/"/g, '""');
   return `"${str}"`;
 }
 

@@ -272,6 +272,10 @@ export const useGameStore = create((set, get) => ({
   setShowGuide: (showGuide) => set({ showGuide }),
   toggleFullscreen: () => {
     if (typeof document === 'undefined') return;
+    if (isStandaloneMode()) {
+      get().showToast('ホーム画面アプリとして表示中です');
+      return;
+    }
     const docEl = document.documentElement;
     const fsElement = document.fullscreenElement || document.webkitFullscreenElement;
     const requestFs = docEl.requestFullscreen || docEl.webkitRequestFullscreen;
@@ -293,7 +297,7 @@ export const useGameStore = create((set, get) => ({
         const res = requestFs.call(docEl);
         if (res && typeof res.catch === 'function') {
           res.catch(() => {
-            if (!isStandaloneMode() && get().isMobileMode) {
+            if (get().isMobileMode || /iPhone|iPad|iPod/i.test(navigator.userAgent)) {
               set({ showPwaGuideModal: true });
               get().showToast('スマホで全画面プレイするには、ブラウザの共有メニューから「ホーム画面に追加」して起動してください');
             } else {

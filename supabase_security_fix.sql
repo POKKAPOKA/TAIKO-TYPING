@@ -43,7 +43,7 @@ CREATE OR REPLACE FUNCTION public.submit_ranking_score(
   p_perfect_count integer, p_good_count integer, p_miss_count integer,
   p_max_combo numeric, p_max_kps numeric
 ) RETURNS jsonb
-LANGUAGE plpgsql SECURITY DEFINER SET search_path = public
+LANGUAGE plpgsql SECURITY DEFINER SET search_path = pg_catalog, public, pg_temp
 AS $$
 DECLARE
   existing public.rankings%ROWTYPE;
@@ -100,7 +100,7 @@ BEGIN
 END $$;
 
 CREATE OR REPLACE FUNCTION public.get_song_like_status(p_song_id text, p_device_id text)
-RETURNS jsonb LANGUAGE plpgsql SECURITY DEFINER SET search_path = public AS $$
+RETURNS jsonb LANGUAGE plpgsql SECURITY DEFINER SET search_path = pg_catalog, public, pg_temp AS $$
 DECLARE device_count numeric; total_count numeric;
 BEGIN
   IF p_song_id IS NULL OR btrim(p_song_id) = '' OR char_length(p_song_id) > 91 OR left(p_song_id, 9) = '__like__:'
@@ -113,7 +113,7 @@ BEGIN
 END $$;
 
 CREATE OR REPLACE FUNCTION public.update_song_like(p_song_id text, p_device_id text, p_delta integer)
-RETURNS jsonb LANGUAGE plpgsql SECURITY DEFINER SET search_path = public AS $$
+RETURNS jsonb LANGUAGE plpgsql SECURITY DEFINER SET search_path = pg_catalog, public, pg_temp AS $$
 BEGIN
   IF p_song_id IS NULL OR btrim(p_song_id) = '' OR char_length(p_song_id) > 91 OR left(p_song_id, 9) = '__like__:'
      OR p_device_id IS NULL OR btrim(p_device_id) = '' OR char_length(p_device_id) > 200
@@ -128,7 +128,7 @@ BEGIN
 END $$;
 
 CREATE OR REPLACE FUNCTION public.get_song_like_totals()
-RETURNS jsonb LANGUAGE sql SECURITY DEFINER SET search_path = public AS $$
+RETURNS jsonb LANGUAGE sql SECURITY DEFINER SET search_path = pg_catalog, public, pg_temp AS $$
   SELECT coalesce(jsonb_object_agg(song_id, total), '{}'::jsonb)
   FROM (
     SELECT substring(song_id FROM 10) AS song_id, sum(score) AS total
