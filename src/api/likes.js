@@ -4,6 +4,8 @@ import { getDeviceId } from '../lib/deviceId';
 const DEVICE_LIKES_STORAGE_KEY = 'taiko_song_device_likes';
 const TOTAL_LIKES_CACHE_KEY = 'taiko_song_total_likes_cache';
 export const LIKE_SONG_ID_PREFIX = '__like__:';
+let likesRevision = 0;
+let latestFetch = 0;
 
 export function normalizeSongId(songIdOrFile) {
   if (!songIdOrFile) return '';
@@ -38,8 +40,12 @@ export function getLocalSongLikesMap() {
 
 // 集計値だけを取得し、他端末の識別子はブラウザに渡さない。
 export async function fetchGlobalSongLikes() {
+  const revision = likesRevision;
+  const request = ++latestFetch;
   try {
     const { data, error } = await supabase.rpc('get_song_like_totals');
+    // 古い一覧が、後から行ったいいね操作や新しい一覧取得を巻き戻さない。
+    if (revision !== likesRevision || request !== latestFetch) return getLocalSongLikesMap();
     if (error || !data || typeof data !== 'object' || Array.isArray(data)) return getLocalSongLikesMap();
     const totals = Object.fromEntries(Object.entries(data).map(([songId, value]) => [songId, count(value)]));
     writeJsonStorage(TOTAL_LIKES_CACHE_KEY, totals);
@@ -65,18 +71,23 @@ export async function getSongLikeStatus(songIdOrFile) {
 export async function updateSongLikeCount(songIdOrFile, isAdding) {
   const songId = normalizeSongId(songIdOrFile);
   if (!songId) return getLocalSongLikesMap();
-  const { data, error } = await supabase.rpc('update_song_like', {
-    p_song_id: songId,
-    p_device_id: getDeviceId(),
-    p_delta: isAdding ? 1 : -1,
-  });
-  if (error) throw error;
-  if (!data || typeof data !== 'object' || !Number.isFinite(Number(data.total_count)) || !Number.isFinite(Number(data.device_count))) {
-    throw new Error('いいねの応答が不正です');
+  likesRevision++;
+  try {
+    const { data, error } = await supabase.rpc('update_song_like', {
+      p_song_id: songId,
+      p_device_id: getDeviceId(),
+      p_delta: isAdding ? 1 : -1,
+    });
+    if (error) throw error;
+    if (!data || typeof data !== 'object' || data.total_count == null || data.device_count == null || !Number.isFinite(Number(data.total_count)) || !Number.isFinite(Number(data.device_count))) {
+      throw new Error('いいねの応答が不正です');
+    }
+    const totals = { ...getLocalSongLikesMap(), [songId]: count(data.total_count) };
+    const devices = { ...getDeviceSongLikesMap(), [songId]: count(data.device_count) };
+    writeJsonStorage(TOTAL_LIKES_CACHE_KEY, totals);
+    writeJsonStorage(DEVICE_LIKES_STORAGE_KEY, devices);
+    return totals;
+  } finally {
+    likesRevision++;
   }
-  const totals = { ...getLocalSongLikesMap(), [songId]: count(data.total_count) };
-  const devices = { ...getDeviceSongLikesMap(), [songId]: count(data.device_count) };
-  writeJsonStorage(TOTAL_LIKES_CACHE_KEY, totals);
-  writeJsonStorage(DEVICE_LIKES_STORAGE_KEY, devices);
-  return totals;
 }

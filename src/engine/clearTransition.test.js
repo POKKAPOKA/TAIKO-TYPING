@@ -52,6 +52,39 @@ describe('楽曲完走からリザルトへの遷移', () => {
     const rank = getRank(testState.current);
     expect(rank).toBe('CLEAR');
   });
+
+  it('曲終了時に追加したMISSを最終統計にも反映する', () => {
+    // Zustandの更新では、それまでに取得したスナップショットは更新されない。
+    testState.current.addDroppedCount = () => {
+      testState.current = { ...testState.current, droppedCount: testState.current.droppedCount + 1 };
+    };
+    testState.current.addMissCount = () => {
+      testState.current = { ...testState.current, missCount: testState.current.missCount + 1 };
+    };
+    testState.current.setStatsData = data => { testState.current = { ...testState.current, statsData: data }; };
+    engine.currentTarget = { word: 'ことば' };
+    engine.romajiParser = { isComplete: () => false };
+    engine.currentTargetJudged = false;
+
+    engine.stop();
+
+    expect(testState.current.missCount).toBe(1);
+    expect(testState.current.statsData.stats.missCount).toBe(1);
+  });
+
+  it('前のプレイの音源エラーが次のプレイを無音モードにしない', async () => {
+    let rejectOldPlay;
+    engine.audio = { play: () => new Promise((_, reject) => { rejectOldPlay = reject; }), pause: vi.fn() };
+    engine.startAudio();
+    engine.stop(false);
+    engine.audio = { play: () => Promise.resolve(), pause: vi.fn() };
+    engine.startAudio();
+
+    rejectOldPlay(new Error('old play interrupted'));
+    await Promise.resolve();
+
+    expect(engine.isFallbackMode).toBe(false);
+  });
 });
 
 import { getAchievementRank as getRank } from '../utils/achievementRank';

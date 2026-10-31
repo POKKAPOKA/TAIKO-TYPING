@@ -43,4 +43,31 @@ describe('いいね RPC', () => {
     expect(await getSongLikeStatus('song')).toMatchObject({ liked: true });
     expect(rpc).toHaveBeenCalledWith('get_song_like_status', { p_song_id: 'song', p_device_id: 'my-device' });
   });
+
+  it('登録より前の一覧応答が遅れても、新しいいいね数を維持する', async () => {
+    let resolveOldList;
+    rpc.mockReturnValueOnce(new Promise(resolve => { resolveOldList = resolve; }))
+      .mockResolvedValueOnce({ data: { total_count: 5, device_count: 1 }, error: null });
+    const oldList = fetchGlobalSongLikes();
+    await updateSongLikeCount('song', true);
+    resolveOldList({ data: { song: 4 }, error: null });
+    expect(await oldList).toEqual({ song: 5 });
+    expect(getLocalSongLikesMap()).toEqual({ song: 5 });
+  });
+
+  it('新しい一覧取得が先に完了したときは古い応答を無視する', async () => {
+    let resolveOldList;
+    rpc.mockReturnValueOnce(new Promise(resolve => { resolveOldList = resolve; }))
+      .mockResolvedValueOnce({ data: { song: 8 }, error: null });
+    const oldList = fetchGlobalSongLikes();
+    await fetchGlobalSongLikes();
+    resolveOldList({ data: { song: 7 }, error: null });
+    expect(await oldList).toEqual({ song: 8 });
+  });
+
+  it('集計値が欠落した応答を成功として保存しない', async () => {
+    rpc.mockResolvedValue({ data: { total_count: null, device_count: 1 }, error: null });
+    await expect(updateSongLikeCount('song', true)).rejects.toThrow('いいねの応答が不正です');
+    expect(getLocalSongLikesMap()).toEqual({});
+  });
 });

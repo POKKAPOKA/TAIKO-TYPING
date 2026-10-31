@@ -426,9 +426,10 @@ export const useGameStore = create((set, get) => ({
   refreshSongLikes: async () => {
     try {
       const updatedMap = await fetchGlobalSongLikes();
-      set({ songLikesMap: { ...updatedMap } });
+      // 送信中は楽観表示を優先し、古い一覧で操作中の数を戻さない。
+      if (!get().isLikingSong) set({ songLikesMap: { ...updatedMap } });
     } catch {
-      set({ songLikesMap: getLocalSongLikesMap() });
+      if (!get().isLikingSong) set({ songLikesMap: getLocalSongLikesMap() });
     }
   },
   toggleCurrentSongLike: async () => {

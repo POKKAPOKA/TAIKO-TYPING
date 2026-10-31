@@ -143,10 +143,12 @@ export async function loadEditorAudio(file) {
 
   const state = useEditorStore.getState();
   const url = URL.createObjectURL(file);
-  state.setAudioUrl(url);
   if (state.isPlaying) {
     state.setIsPlaying(false);
   }
+  state.setAudioUrl(url);
+  state.setAudioPeaks([]);
+  if (state.audioUrl?.startsWith('blob:')) URL.revokeObjectURL(state.audioUrl);
   state.setCurrentTime(0);
   state.setScrollTimeOffset(0);
   if (viewportEl) {
@@ -154,14 +156,17 @@ export async function loadEditorAudio(file) {
   }
 
   // 波形解析 (Web Audio API)
+  let audioContext;
   try {
     const arrayBuffer = await file.arrayBuffer();
-    const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+    if (useEditorStore.getState().audioUrl !== url) return;
+    audioContext = new (window.AudioContext || window.webkitAudioContext)();
     const audioBuffer = await audioContext.decodeAudioData(arrayBuffer);
+    if (useEditorStore.getState().audioUrl !== url) return;
 
     // 簡易的なPeak抽出 (チャンネル0のみ、50msごとに最大値を取得)
     const channelData = audioBuffer.getChannelData(0);
-    const samplesPerPixel = Math.floor(audioBuffer.sampleRate * 0.05);
+    const samplesPerPixel = Math.max(1, Math.floor(audioBuffer.sampleRate * 0.05));
     const peaks = [];
     for (let i = 0; i < channelData.length; i += samplesPerPixel) {
       let max = 0;
@@ -174,6 +179,8 @@ export async function loadEditorAudio(file) {
     useEditorStore.getState().setAudioPeaks(peaks);
   } catch (err) {
     console.error("Waveform generation failed:", err);
+  } finally {
+    if (audioContext) await audioContext.close().catch(() => {});
   }
 }
 

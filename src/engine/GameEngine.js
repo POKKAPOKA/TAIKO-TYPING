@@ -55,6 +55,7 @@ export class GameEngine {
     this.absorbTrailingN = false;
     this.isFallbackMode = false;
     this.audioStarted = false;
+    this.audioAttempt = null;
     this.leadInTime = 0;
     this.fallbackEndTime = 0;
     this.realStartTime = 0;
@@ -129,6 +130,7 @@ export class GameEngine {
       this.animationFrameId = requestAnimationFrame(this.update);
     } else {
       // Pause
+      this.audioAttempt = null;
       store.setIsPaused(true);
       if (this.audio) {
         this.audio.pause();
@@ -227,8 +229,13 @@ export class GameEngine {
   startAudio() {
     this.audioStarted = true;
     if (this.audio) {
-      this.audio.volume = 0.5 * useGameStore.getState().musicVolume;
-      this.audio.play().catch(e => {
+      const audio = this.audio;
+      const attempt = Symbol('audio-play');
+      this.audioAttempt = attempt;
+      audio.volume = 0.5 * useGameStore.getState().musicVolume;
+      audio.play().catch(e => {
+        // 停止・ポーズや次のプレイ開始後に届いた失敗は現在の再生へ反映しない。
+        if (this.audio !== audio || this.audioAttempt !== attempt) return;
         console.warn("Audio play failed, switching to fallback mode:", e);
         this.isFallbackMode = true;
         this.mockStartTime = performance.now();
@@ -237,6 +244,7 @@ export class GameEngine {
   }
 
   stop(finishToResult = true) {
+    this.audioAttempt = null;
     if (this.animationFrameId) {
       cancelAnimationFrame(this.animationFrameId);
       this.animationFrameId = null;
@@ -277,20 +285,22 @@ export class GameEngine {
       .slice(0, 3)
       .map(entry => ({ char: entry[0], count: entry[1] }));
 
-    const clearRate = store.completedCount > 0
-      ? (store.completedCount / this.stats.totalNotes) * 100
+    // 判定の追加後はZustandの新しいスナップショットを読む。
+    const finalState = useGameStore.getState();
+    const clearRate = finalState.completedCount > 0
+      ? (finalState.completedCount / this.stats.totalNotes) * 100
       : 0;
 
     store.setStatsData({
       worstKeys: sortedWorst,
       mistakeLog: this.stats.mistakeLog,
       stats: {
-        maxKps: store.maxKps,
+        maxKps: finalState.maxKps,
         clearRate: clearRate.toFixed(2),
         totalNotes: this.stats.totalNotes,
-        perfectCount: store.perfectCount,
-        goodCount: store.goodCount,
-        missCount: store.missCount
+        perfectCount: finalState.perfectCount,
+        goodCount: finalState.goodCount,
+        missCount: finalState.missCount
       }
     });
 
