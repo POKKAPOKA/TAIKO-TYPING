@@ -674,18 +674,8 @@ textarea {
   animation: judgment-pop-anim 0.16s cubic-bezier(0.22, 1, 0.36, 1) forwards;
 }
 
-/* ボーカリストのリズムバウンス演出（通常歌唱時） */
-@keyframes vocalist-bounce {
-  0%, 100% {
-    transform: translateY(0px) scale(1);
-  }
-  50% {
-    transform: translateY(-7px) scale(1.012);
-  }
-}
-
+/* キャラクターの位置は譜面と音源の再生時刻に同期する。 */
 .vocalist-sing {
-  animation: vocalist-bounce 0.4s ease-in-out infinite;
   will-change: transform;
 }
 
@@ -713,25 +703,7 @@ textarea {
   will-change: transform;
 }
 
-/* PCモード限定：ゆっくり揺れるネオンレーザー光 */
-@keyframes laser-sway-left {
-  0%, 100% {
-    transform: rotate(-26deg);
-  }
-  50% {
-    transform: rotate(-8deg);
-  }
-}
-
-@keyframes laser-sway-right {
-  0%, 100% {
-    transform: rotate(26deg);
-  }
-  50% {
-    transform: rotate(8deg);
-  }
-}
-
+/* ステージ照明の向きと明るさは拍に同期して変化する。 */
 .stage-laser-beam {
   position: absolute;
   top: -10%;
@@ -747,28 +719,36 @@ textarea {
   left: 18%;
   background: linear-gradient(180deg, rgba(0, 245, 255, 0.42) 0%, rgba(0, 245, 255, 0.08) 65%, transparent 100%);
   clip-path: polygon(46% 0%, 54% 0%, 100% 100%, 0% 100%);
-  animation: laser-sway-left 6.5s ease-in-out infinite;
+  transform: rotate(-17deg);
 }
 
 .stage-laser-beam.laser-left-2 {
   left: 32%;
   background: linear-gradient(180deg, rgba(244, 114, 182, 0.38) 0%, rgba(217, 70, 239, 0.08) 65%, transparent 100%);
   clip-path: polygon(46% 0%, 54% 0%, 100% 100%, 0% 100%);
-  animation: laser-sway-right 7.8s ease-in-out infinite reverse;
+  transform: rotate(17deg);
 }
 
 .stage-laser-beam.laser-right-1 {
   right: 32%;
   background: linear-gradient(180deg, rgba(52, 211, 153, 0.34) 0%, rgba(0, 245, 255, 0.07) 65%, transparent 100%);
   clip-path: polygon(46% 0%, 54% 0%, 100% 100%, 0% 100%);
-  animation: laser-sway-left 8.2s ease-in-out infinite reverse;
+  transform: rotate(-17deg);
 }
 
 .stage-laser-beam.laser-right-2 {
   right: 18%;
   background: linear-gradient(180deg, rgba(0, 245, 255, 0.42) 0%, rgba(168, 85, 247, 0.08) 65%, transparent 100%);
   clip-path: polygon(46% 0%, 54% 0%, 100% 100%, 0% 100%);
-  animation: laser-sway-right 6.8s ease-in-out infinite;
+  transform: rotate(17deg);
+}
+
+.stage-mobile .stage-laser-beam { width: 60px; }
+.stage-paused .vocalist-miss, .stage-paused .sakura-petal { animation-play-state: paused; }
+
+@media (prefers-reduced-motion: reduce) {
+  .vocalist-sing, .vocalist-miss { animation: none !important; transform: none !important; }
+  .stage-laser-beam { transform: none !important; opacity: 0.6 !important; }
 }
 
 /* PCモード限定：舞い散る桜の花びら（15個の軽量CSSパーティクル） */

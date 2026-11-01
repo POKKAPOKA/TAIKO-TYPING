@@ -15,14 +15,14 @@ const ActiveWordDisplay = () => {
     const remainingPart = displayStr.substring(typedIndex + 1);
 
     return (
-      <div className="flex flex-col items-center justify-center select-none">
+      <div className="flex w-full min-w-0 flex-col items-center justify-center select-none">
         {currentTarget?.word && (
-          <div className="text-xs sm:text-sm font-bold text-cyan-200/85 tracking-widest mb-0.5">
+          <div className="max-w-full break-words text-center text-xs sm:text-sm font-bold text-cyan-200/85 tracking-widest mb-0.5">
             {currentTarget.word}
           </div>
         )}
         <div
-          className="text-3xl sm:text-5xl md:text-6xl font-black tracking-[0.28em] text-center flex items-baseline justify-center"
+          className={`max-w-full break-all text-center uppercase font-black leading-tight ${displayStr.length > 12 ? 'text-xl sm:text-3xl md:text-4xl tracking-[0.08em]' : 'text-3xl sm:text-5xl md:text-6xl tracking-[0.28em]'}`}
           style={{ fontFamily: "'Orbitron', 'DotGothic16', monospace" }}
         >
           {typedPart && (

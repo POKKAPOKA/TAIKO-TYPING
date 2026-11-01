@@ -233,9 +233,8 @@ export const useGameStore = create((set, get) => ({
       clearTimeout(vocalMissTimer);
       vocalMissTimer = null;
     }
-    set((state) => ({
-      vocalState: state.vocalState === 'sing_1' ? 'sing_2' : 'sing_1'
-    }));
+    // 正しい入力でミス表示から復帰し、通常時の表情は曲の拍に任せる。
+    set((state) => state.vocalState === 'miss' ? { vocalState: 'sing_1' } : state);
   },
   triggerVocalMiss: () => {
     if (vocalMissTimer) {

@@ -49,6 +49,11 @@ export function toHiragana(str) {
   return str.replace(/[\u30a1-\u30f6]/g, match => String.fromCharCode(match.charCodeAt(0) - 0x60));
 }
 
+// 記号と空白は入力対象にしない。日本語の長音「ー」は文字として残す。
+export function normalizePlayableReading(value) {
+  return String(value ?? '').normalize('NFKC').replace(/[\p{P}\p{S}\s]/gu, '');
+}
+
 // 濁音・半濁音・小文字（促音・拗音・小母音）から基本の清音への変換マップ
 const BASE_KANA_MAP = {
   // 濁音 → 清音
@@ -77,7 +82,7 @@ const BASE_KANA_MAP = {
  */
 export function toBaseKana(str) {
   if (!str) return "";
-  const hiragana = toHiragana(String(str)).replace(/[\u3099\u309a゛゜]/g, "");
+  const hiragana = toHiragana(normalizePlayableReading(str)).replace(/[\u3099\u309a゛゜]/g, "").toLowerCase();
   let result = "";
   for (const ch of hiragana) {
     result += BASE_KANA_MAP[ch] || ch;
@@ -90,7 +95,7 @@ export function canUseSingleN(nextHiraganaChar) {
   if (!nextHiraganaChar) return false; // 最後が「ん」の場合は "nn" が必要
   // 母音、な行、や行 が次に来る場合は単独nは不可
   const invalidNextChars = "あいうえおなにぬねのやゆよんぁぃぅぇぉゃゅょ";
-  return !invalidNextChars.includes(nextHiraganaChar);
+  return !invalidNextChars.includes(nextHiraganaChar) && !/^[aiueony]$/i.test(nextHiraganaChar);
 }
 
 // 読みをひらがなトークン（辞書のキー単位）に分割する
@@ -114,7 +119,7 @@ export function tokenizeReading(reading) {
 // そのままだとゲーム中に絶対に打てないノーツになるため、エディタの入力チェックに使う。
 export function findUntypableChars(reading) {
   if (!reading) return [];
-  return tokenizeReading(toHiragana(reading)).filter(
+  return tokenizeReading(toHiragana(normalizePlayableReading(reading))).filter(
     token => !ROMAJI_DICT[token] && !/^[a-z0-9\-]+$/i.test(token)
   );
 }
@@ -124,9 +129,9 @@ export class RomajiParser {
     this.nextReading = nextReading;
     this.reading = reading || "";
     // カタカナをひらがなに変換（入力されるreadingのみ）
-    this.normalizedReading = toHiragana(this.reading);
+    this.normalizedReading = toHiragana(normalizePlayableReading(this.reading));
     this.tokens = tokenizeReading(this.normalizedReading);
-    const nextTokens = this.nextReading ? tokenizeReading(toHiragana(this.nextReading)) : [];
+    const nextTokens = this.nextReading ? tokenizeReading(toHiragana(normalizePlayableReading(this.nextReading))) : [];
     const lookaheadToken = nextTokens.length > 0 ? nextTokens[0] : null;
     this.tokenOptions = this._buildTokenOptions(this.tokens, lookaheadToken);
 
@@ -157,7 +162,7 @@ export class RomajiParser {
       if (token === "っ") {
         const nextToken = tokens[i+1] || lookaheadToken;
         if (nextToken && ROMAJI_DICT[nextToken]) {
-          const nextOptions = ROMAJI_DICT[nextToken];
+          const nextOptions = [...ROMAJI_DICT[nextToken]].sort((a, b) => a.length - b.length);
           [...nextOptions].reverse().forEach(opt => {
             const firstChar = opt[0];
             if (!"aiueo".includes(firstChar)) {
@@ -167,7 +172,8 @@ export class RomajiParser {
         }
       }
 
-      options = [...new Set(options)];
+      // 入力候補はすべて残しつつ、ガイドには最短の候補を優先する。
+      options = [...new Set(options)].sort((a, b) => a.length - b.length);
       tokenOptions.push(options);
     }
     return tokenOptions;
@@ -184,6 +190,9 @@ export class RomajiParser {
         if (node.charIndex + 1 === opt.length) {
           if (node.tokenIndex + 1 < this.tokenOptions.length) {
             for (let nextOptIdx = 0; nextOptIdx < this.tokenOptions[node.tokenIndex + 1].length; nextOptIdx++) {
+              // 促音の子音重ねは、次の候補の先頭と同じ文字に限る。
+              if (this.tokens[node.tokenIndex] === 'っ' && opt.length === 1 &&
+                  this.tokenOptions[node.tokenIndex + 1][nextOptIdx][0] !== key) continue;
               nextNodes.push({ tokenIndex: node.tokenIndex + 1, optionIndex: nextOptIdx, charIndex: 0 });
             }
           } else {
@@ -262,7 +271,7 @@ function minLenAfterSingleN(options) {
 export function calculateMinKeystrokes(text) {
   if (!text) return 0;
 
-  const tokens = tokenizeReading(toHiragana(text));
+  const tokens = tokenizeReading(toHiragana(normalizePlayableReading(text)));
   const n = tokens.length;
   if (n === 0) return 0;
 

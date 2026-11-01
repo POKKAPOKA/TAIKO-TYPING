@@ -1,14 +1,23 @@
 import { useGameStore } from '../store/gameStore';
 import { createPlaySessionId } from '../lib/deviceId';
-import { RomajiParser, calculateMinKeystrokes, toBaseKana } from './RomajiParser';
+import { RomajiParser, calculateMinKeystrokes, normalizePlayableReading, toBaseKana } from './RomajiParser';
 import { playPerfect, playGood, playMiss } from '../hooks/useSystemSE';
 import { getAchievementRank } from '../utils/achievementRank';
+import { stageRhythm } from './stageRhythm';
 
 const JUDGE_WINDOW = {
   PERFECT: 50,
   GOOD: 100,
   MISS: 150
 };
+
+// 記号だけのノーツは判定・スコア・入力抜けのいずれにも含めない。
+export function preparePlayableNotes(notes) {
+  return (Array.isArray(notes) ? notes : [])
+    .filter(note => note && normalizePlayableReading(note.reading || note.word || '').length > 0)
+    .sort((a, b) => a.time - b.time)
+    .map(note => ({ ...note }));
+}
 
 export class GameEngine {
   constructor() {
@@ -25,7 +34,7 @@ export class GameEngine {
     const rawReading = note.reading || note.word || '';
     if (isMobileMode) {
       const base = toBaseKana(rawReading);
-      return base.length > 0 ? base.length : 1;
+      return base.length;
     }
     return calculateMinKeystrokes(rawReading);
   }
@@ -35,6 +44,7 @@ export class GameEngine {
   // このインスタンスの内部変数は生き残り続ける。start() の先頭で必ず呼び、
   // 「1曲目プレイ→リザルト→2曲目プレイ」で前回の状態が残るバグを防ぐ。
   reset() {
+    stageRhythm.reset();
     if (this.animationFrameId) {
       cancelAnimationFrame(this.animationFrameId);
       this.animationFrameId = null;
@@ -154,15 +164,13 @@ export class GameEngine {
     // 前回プレイの内部状態（アニメーションループ・キー監視・音声・タイマー類）を
     // 必ず初期化してから開始する（連続プレイ時の状態持ち越し防止）
     this.reset();
+    stageRhythm.start(loadedScore);
 
     store.resetPlayState();
     useGameStore.setState({ currentPlaySessionId: createPlaySessionId(), playBoothMode: store.isBoothMode, playBoothRecordByName: store.boothRecordByName });
     store.setStatus('playing');
 
-    this.queue = [...loadedScore.notes]
-      .filter(note => note && String(note.word || note.reading || '').trim().length > 0)
-      .sort((a, b) => a.time - b.time)
-      .map(note => ({ ...note }));
+    this.queue = preparePlayableNotes(loadedScore.notes);
 
     // スコア配点: 全ノーツの基準打鍵数の合計で 1,010,000 点を按分し、
     // 全 PERFECT でちょうど理論値 1,010,000 点になるようにする
@@ -268,6 +276,7 @@ export class GameEngine {
   }
 
   stop(finishToResult = true) {
+    stageRhythm.reset();
     this.audioAttempt = null;
     if (this.animationFrameId) {
       cancelAnimationFrame(this.animationFrameId);
@@ -368,6 +377,16 @@ export class GameEngine {
       }
     }
 
+    // 音声と同じ時刻を使い、拍ごとに表情を切り替える。ミス表示は優先する。
+    const beat = stageRhythm.update(this.currentTime);
+    if (beat !== null) {
+      const state = useGameStore.getState();
+      const pose = ((beat % 2) + 2) % 2 === 0 ? 'sing_1' : 'sing_2';
+      if (state.status === 'playing' && !state.isPaused && state.vocalState !== 'miss' && state.vocalState !== pose) {
+        state.setVocalState(pose);
+      }
+    }
+
     this.checkForceTransition();
 
     let shouldEnd = false;
@@ -452,6 +471,7 @@ export class GameEngine {
     }
 
     const normalizedInput = toBaseKana(inputKana);
+    if (!normalizedInput) return;
     const expectedChar = this.mobileTargetKana[this.mobileTypedIndex] || "?";
     const isFirstHit = this.mobileTypedIndex === 0;
 
@@ -509,6 +529,8 @@ export class GameEngine {
     if (store.status !== 'playing' || store.isPaused) return;
     if (!/^[a-zA-Z0-9\-]$/.test(e.key)) return;
     if (!this.currentTarget || !this.romajiParser) return;
+    // ハイフンは日本語の長音「ー」を打つときだけ使う。
+    if (e.key === '-' && this.romajiParser.getDisplayState().next !== '-') return;
 
     const currentTimeMs = this.currentTime - store.offsetMs;
     const timeLimit = this._getTimeLimit(store);

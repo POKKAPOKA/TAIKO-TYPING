@@ -44,7 +44,7 @@ export default function EditorNote({ note, beatWidth, msPerBeat }) {
   // 編集保存時
   const handleSave = () => {
     setIsEditing(false);
-    // 読みにタイピング不可能な文字（漢字・記号など）が含まれていたら警告する
+    // 読みにタイピング不可能な文字（漢字など）が含まれていたら警告する。記号は入力時に除外される。
     // （そのままだとゲーム中に絶対に打てないノーツになるため）
     const untypableChars = findUntypableChars(readingText);
     if (untypableChars.length > 0) {

@@ -1,5 +1,39 @@
 import { describe, it, expect } from 'vitest';
-import { RomajiParser, calculateMinKeystrokes, toBaseKana, canUseSingleN } from './RomajiParser';
+import { RomajiParser, calculateMinKeystrokes, toBaseKana, canUseSingleN, findUntypableChars, normalizePlayableReading } from './RomajiParser';
+
+describe('記号の除外と最短の入力ガイド', () => {
+  it('記号・空白を除外し、英数字と日本語の長音を残す', () => {
+    expect(normalizePlayableReading('ＡＢＣ、。!"#$%&\'()=~|`{+*}<>?_ - １２３・ー')).toBe('ABC123ー');
+    expect(toBaseKana('Ｈｅｌｌｏ、ガー！')).toBe('helloかー');
+    expect(findUntypableChars('abc、。！？')).toEqual([]);
+    expect(calculateMinKeystrokes('a-b、ち！')).toBe(4);
+  });
+
+  it.each([['ち', 'TI'], ['し', 'SI'], ['つ', 'TU'], ['じゃ', 'JA'], ['っち', 'TTI']])(
+    '「%s」は最短候補 %s を表示する', (reading, expected) => {
+      const display = new RomajiParser(reading).getDisplayState();
+      expect(display.typed + display.next + display.remaining).toBe(expected);
+    },
+  );
+
+  it('長い別候補を選んだ場合も、入力に合わせた残りを表示する', () => {
+    const parser = new RomajiParser('ち');
+    expect(parser.input('c')).toBe(true);
+    expect(parser.getDisplayState()).toEqual({ typed: 'C', next: 'H', remaining: 'I' });
+    expect(parser.input('h')).toBe(true);
+    expect(parser.input('i')).toBe(true);
+    expect(parser.isComplete()).toBe(true);
+  });
+
+  it('促音の後には同じ子音の候補を表示し、別の子音は受け付けない', () => {
+    const parser = new RomajiParser('っち');
+    expect(parser.input('c')).toBe(true);
+    expect(parser.getDisplayState()).toEqual({ typed: 'C', next: 'C', remaining: 'HI' });
+    expect(parser.input('t')).toBe(false);
+    for (const key of 'chi') expect(parser.input(key)).toBe(true);
+    expect(parser.isComplete()).toBe(true);
+  });
+});
 
 describe('toBaseKana', () => {
   it('濁音を基本の清音に変換する（が→か、ざ→さ、だ→た、ば→は、ヴ/ゔ→う）', () => {

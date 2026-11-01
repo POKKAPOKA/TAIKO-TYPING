@@ -4,6 +4,7 @@ import titleLogo2 from './assets/title_logo2.png';
 import { useGameStore } from './store/gameStore';
 import { gameEngine } from './engine/GameEngine';
 import { backgroundMusic } from './engine/backgroundMusic';
+import { stageRhythm } from './engine/stageRhythm';
 import NotesArea from './components/NotesArea';
 import EditorView from './components/editor/EditorView';
 import ActiveWordDisplay from './components/ActiveWordDisplay';
@@ -90,6 +91,7 @@ if (typeof window !== 'undefined') {
 
 function App() {
   const { playDecide } = useSystemSE();
+  const registerRhythmStage = useCallback(node => stageRhythm.attach(node), []);
 
   const [appMode, setAppModeState] = useState('menu'); // 'menu' | 'setup' | 'game' | 'editor' | 'songSelect'
   const setAppMode = (mode) => {
@@ -647,12 +649,14 @@ function App() {
           /* =========================================================
              スマホモード：和風サイバーライブステージ＆下部レーン＋テンキードッキング
              ========================================================= */
-          <div className="w-full h-full flex flex-col justify-between items-center min-h-0 max-w-lg relative overflow-hidden rounded-2xl border border-cyan-500/40 bg-[#08051a]">
+          <div key="stage-mobile" ref={registerRhythmStage} className={`stage-mobile w-full h-full flex flex-col justify-between items-center min-h-0 max-w-lg relative overflow-hidden rounded-2xl border border-cyan-500/40 bg-[#08051a] ${isPaused ? 'stage-paused' : ''}`}>
             {/* 背景ライブステージ層（ミス発生時は .is-miss で暗転） */}
             <div
               className={`game-stage-bg absolute inset-0 pointer-events-none z-0 ${isMissState ? 'is-miss' : ''}`}
             >
               <div className="absolute inset-0 bg-gradient-to-b from-[#090418]/75 via-[#12072b]/35 to-[#060312]/90" />
+              <div className="stage-laser-beam laser-left-1" data-beat-light />
+              <div className="stage-laser-beam laser-right-1" data-beat-light />
             </div>
 
             {/* 1. 【上部】コンパクトヘッダー（曲名・★・クリアゲージ・SCORE・ポーズを省スペース集約、MAX KPS＆判定内訳は非表示） */}
@@ -734,7 +738,7 @@ function App() {
             <div className="flex-1 w-full flex flex-col justify-between items-center min-h-0 relative z-10 px-1 pt-1">
               {/* 中央ボーカリストキャラクター立ち絵（3表情をプリマウント切替で0ms即応・4倍面積表示） */}
               <div className="flex-1 w-full flex items-start justify-center min-h-0 relative overflow-hidden">
-                <div className={`relative h-[195%] max-h-[480px] aspect-[420/520] -mt-1 flex items-center justify-center shrink-0 ${isMissState ? 'vocalist-miss' : 'vocalist-sing'}`}>
+                <div data-beat-character className={`relative h-[195%] max-h-[480px] aspect-[420/520] -mt-1 flex items-center justify-center shrink-0 ${isMissState ? 'vocalist-miss' : 'vocalist-sing'}`}>
                   <img
                     src={activeCharacter.sprites.sing_1}
                     alt={`${activeCharacter.name} sing_1`}
@@ -776,7 +780,7 @@ function App() {
           /* =========================================================
              PCモード：和風サイバーネオン・ライブステージ＆下部レーン型（候補A）
              ========================================================= */
-          <div className="w-full max-w-6xl h-full max-h-[820px] relative flex flex-col justify-between p-4 sm:p-6 md:p-7 rounded-3xl border-2 border-cyan-400/70 overflow-hidden my-auto bg-[#070417]"
+          <div key="stage-pc" ref={registerRhythmStage} className={`w-full max-w-6xl h-full max-h-[820px] relative flex flex-col justify-between p-4 sm:p-6 md:p-7 rounded-3xl border-2 border-cyan-400/70 overflow-hidden my-auto bg-[#070417] ${isPaused ? 'stage-paused' : ''}`}
             style={{
               boxShadow: '0 0 28px rgba(0, 245, 255, 0.25), inset 0 0 32px rgba(217, 70, 239, 0.18)'
             }}
@@ -788,11 +792,11 @@ function App() {
               {/* ステージ照明グラデーションオーバーレイ */}
               <div className="absolute inset-0 bg-gradient-to-b from-[#09041a]/65 via-[#13072e]/25 to-[#060312]/90" />
 
-              {/* PCモード限定：ゆっくり揺れるネオンレーザー光 */}
-              <div className="stage-laser-beam laser-left-1" />
-              <div className="stage-laser-beam laser-left-2" />
-              <div className="stage-laser-beam laser-right-1" />
-              <div className="stage-laser-beam laser-right-2" />
+              {/* 譜面の拍と再生位置に同期するステージ照明 */}
+              <div className="stage-laser-beam laser-left-1" data-beat-light />
+              <div className="stage-laser-beam laser-left-2" data-beat-light />
+              <div className="stage-laser-beam laser-right-1" data-beat-light />
+              <div className="stage-laser-beam laser-right-2" data-beat-light />
 
               {/* PCモード限定：舞い散る15枚の桜の花びらパーティクル */}
               {SAKURA_PETALS.map((petal) => (
@@ -927,7 +931,7 @@ function App() {
               </div>
 
               {/* 中央ボーカリストキャラクター（sing_1 / sing_2 / miss 即時切替・縦横2倍＝面積4倍でステージ中央に大きく配置） */}
-              <div className={`relative h-[200%] max-h-[720px] aspect-[420/520] -mt-20 sm:-mt-24 md:-mt-28 flex items-center justify-center shrink-0 ${isMissState ? 'vocalist-miss' : 'vocalist-sing'}`}>
+              <div data-beat-character className={`relative h-[200%] max-h-[720px] aspect-[420/520] -mt-20 sm:-mt-24 md:-mt-28 flex items-center justify-center shrink-0 ${isMissState ? 'vocalist-miss' : 'vocalist-sing'}`}>
                 <img
                   src={activeCharacter.sprites.sing_1}
                   alt={`${activeCharacter.name} sing_1`}
@@ -1177,6 +1181,9 @@ function App() {
                         <p className="text-sm sm:text-base font-bold text-white leading-relaxed">
                           画面下部のテンキーをタップ・フリックして文字を入力します。
                         </p>
+                        <p className="text-xs sm:text-sm font-bold text-cyan-200 leading-relaxed">
+                          左下の「英字・数字」で切り替えられます。中央の文字はタップ、矢印の文字はその方向へフリックしてください。
+                        </p>
                         <div className="text-xs sm:text-sm font-bold text-neutral-300 leading-relaxed bg-[#08060e] border-2 border-[#251e38] rounded-xl p-3.5 mt-0.5">
                           濁点（゛）・半濁点（゜）・小文字への
                           <span className="inline-block bg-rose-500/20 text-rose-200 border border-rose-400/70 px-1.5 py-0.5 rounded-md font-dotgothic font-black mx-1">
@@ -1223,7 +1230,7 @@ function App() {
                           </div>
                           <div className="bg-[#08060e] border border-[#251e38] rounded-xl p-3 flex items-start gap-2.5">
                             <span className="font-dotgothic text-amber-400 font-black shrink-0">STEP 3</span>
-                            <span>「し (`shi`/`si`)」「つ (`tsu`/`tu`)」「ん (`n`/`nn`/`xn`)」など、複数のローマ字入力に対応しています。</span>
+                            <span>「ち（TI / CHI）」「し（SI / SHI）」など複数の入力に対応し、ガイドは最短の候補を表示します。記号と空白は飛ばして入力します。</span>
                           </div>
                         </div>
                       </div>
