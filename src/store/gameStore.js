@@ -271,49 +271,55 @@ export const useGameStore = create((set, get) => ({
   setShowGuide: (showGuide) => set({ showGuide }),
   toggleFullscreen: () => {
     if (typeof document === 'undefined') return;
-    if (isStandaloneMode()) {
-      get().showToast('ホーム画面アプリとして表示中です');
-      return;
-    }
     const docEl = document.documentElement;
     const fsElement = document.fullscreenElement || document.webkitFullscreenElement;
     const requestFs = docEl.requestFullscreen || docEl.webkitRequestFullscreen;
     const exitFs = document.exitFullscreen || document.webkitExitFullscreen;
 
-    if (!fsElement) {
-      // iOS Safari 等で Fullscreen API が未対応の場合（かつスタンドアロン起動ではない状態）
-      if (typeof requestFs !== 'function') {
-        if (isStandaloneMode()) {
-          get().showToast('すでにホーム画面アプリとして全画面表示中です');
-        } else {
-          set({ showPwaGuideModal: true });
-          get().showToast('スマホで全画面プレイするには、ブラウザの共有メニューから「ホーム画面に追加」して起動してください');
-        }
+    // Fullscreen API の表示中も display-mode: fullscreen に一致するため、
+    // ホーム画面アプリの判定より先に終了処理を行う。
+    if (fsElement) {
+      const handleExitError = () => get().showToast('縮小表示に失敗しました');
+      if (typeof exitFs !== 'function') {
+        handleExitError();
         return;
       }
-
       try {
-        const res = requestFs.call(docEl);
-        if (res && typeof res.catch === 'function') {
-          res.catch(() => {
-            if (get().isMobileMode || /iPhone|iPad|iPod/i.test(navigator.userAgent)) {
-              set({ showPwaGuideModal: true });
-              get().showToast('スマホで全画面プレイするには、ブラウザの共有メニューから「ホーム画面に追加」して起動してください');
-            } else {
-              get().showToast('全画面表示に失敗しました');
-            }
-          });
-        }
+        const result = exitFs.call(document);
+        if (result && typeof result.catch === 'function') result.catch(handleExitError);
       } catch {
-        if (!isStandaloneMode()) {
-          set({ showPwaGuideModal: true });
-          get().showToast('スマホで全画面プレイするには、ブラウザの共有メニューから「ホーム画面に追加」して起動してください');
-        } else {
-          get().showToast('全画面表示に失敗しました');
-        }
+        handleExitError();
       }
-    } else if (typeof exitFs === 'function') {
-      exitFs.call(document);
+      return;
+    }
+
+    if (isStandaloneMode()) {
+      get().showToast('ホーム画面アプリとして表示中です');
+      return;
+    }
+
+    // iOS Safari 等で Fullscreen API が未対応の場合。
+    if (typeof requestFs !== 'function') {
+      set({ showPwaGuideModal: true });
+      get().showToast('スマホで全画面プレイするには、ブラウザの共有メニューから「ホーム画面に追加」して起動してください');
+      return;
+    }
+
+    try {
+      const res = requestFs.call(docEl);
+      if (res && typeof res.catch === 'function') {
+        res.catch(() => {
+          if (get().isMobileMode || /iPhone|iPad|iPod/i.test(navigator.userAgent)) {
+            set({ showPwaGuideModal: true });
+            get().showToast('スマホで全画面プレイするには、ブラウザの共有メニューから「ホーム画面に追加」して起動してください');
+          } else {
+            get().showToast('全画面表示に失敗しました');
+          }
+        });
+      }
+    } catch {
+      set({ showPwaGuideModal: true });
+      get().showToast('スマホで全画面プレイするには、ブラウザの共有メニューから「ホーム画面に追加」して起動してください');
     }
   },
   // 設定変更時はlocalStorageにも保存する
