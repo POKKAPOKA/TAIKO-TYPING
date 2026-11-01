@@ -72,7 +72,7 @@ export class BackgroundMusicController {
 
   setVolume(track) {
     const setting = this.store.getState().musicVolume;
-    const volume = Math.max(0, Math.min(1, Number.isFinite(setting) ? setting : 1)) * 0.5;
+    const volume = Math.max(0, Math.min(1, Number.isFinite(setting) ? setting : 1)) * 0.3;
     if (track.gain) {
       track.audio.volume = 1;
       track.gain.gain.value = volume;

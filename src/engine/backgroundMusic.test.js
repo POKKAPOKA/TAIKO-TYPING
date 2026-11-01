@@ -84,10 +84,10 @@ describe('待機・リザルトBGM', () => {
     const { controller, store, gains } = createHarness();
     controller.start();
     store.update({ musicVolume: 0.4 });
-    expect(gains[0].gain.value).toBe(0.2);
+    expect(gains[0].gain.value).toBeCloseTo(0.12);
     controller.setScreen('game');
     store.update({ status: 'result' });
-    expect(gains[1].gain.value).toBe(0.2);
+    expect(gains[1].gain.value).toBeCloseTo(0.12);
     store.update({ musicVolume: 0 });
     expect(gains[1].gain.value).toBe(0);
     controller.reset();
@@ -95,7 +95,7 @@ describe('待機・リザルトBGM', () => {
     const fallback = createHarness({ webAudio: false });
     fallback.controller.start();
     fallback.store.update({ musicVolume: 0.4 });
-    expect(fallback.audios[0].volume).toBe(0.2);
+    expect(fallback.audios[0].volume).toBeCloseTo(0.12);
     fallback.controller.reset();
   });
 
