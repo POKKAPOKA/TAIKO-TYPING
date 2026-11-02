@@ -140,7 +140,13 @@ REVOKE ALL ON FUNCTION public.submit_ranking_score(text, text, text, numeric, in
 REVOKE ALL ON FUNCTION public.update_song_like(text, text, integer) FROM PUBLIC, anon, authenticated;
 REVOKE ALL ON FUNCTION public.get_song_like_status(text, text) FROM PUBLIC, anon, authenticated;
 REVOKE ALL ON FUNCTION public.get_song_like_totals() FROM PUBLIC, anon, authenticated;
-GRANT EXECUTE ON FUNCTION public.submit_ranking_score(text, text, text, numeric, integer, integer, integer, numeric, numeric) TO anon, authenticated;
+-- セッション方式導入後にこの旧 SQL を再実行しても、旧登録口を再公開しない。
+DO $$
+BEGIN
+  IF to_regprocedure('public.finish_ranked_play(uuid,text,text,numeric,integer,integer,integer,numeric,numeric)') IS NULL THEN
+    GRANT EXECUTE ON FUNCTION public.submit_ranking_score(text, text, text, numeric, integer, integer, integer, numeric, numeric) TO anon, authenticated;
+  END IF;
+END $$;
 GRANT EXECUTE ON FUNCTION public.update_song_like(text, text, integer) TO anon, authenticated;
 GRANT EXECUTE ON FUNCTION public.get_song_like_status(text, text) TO anon, authenticated;
 GRANT EXECUTE ON FUNCTION public.get_song_like_totals() TO anon, authenticated;

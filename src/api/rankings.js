@@ -1,5 +1,6 @@
 import { supabase } from '../lib/supabase';
 import { getDeviceId } from '../lib/deviceId';
+import { getRankedSession, rankingSessionError } from './rankedSession';
 
 // 自動送信と手動送信が重なった場合に順番に処理するための直列化キュー
 let submitQueue = Promise.resolve();
@@ -73,7 +74,7 @@ export const fetchRankingsResult = (songId) =>
  * @param {Object} payload
  * @returns {Promise<Object>}
  */
-const executeSubmitScore = async (payload) => {
+const executeSubmitScore = async (payload, session) => {
   try {
     const {
       songId,
@@ -111,9 +112,17 @@ const executeSubmitScore = async (payload) => {
     const normalizedGood = Math.max(0, Math.round(Number(goodCount) || 0));
     const normalizedMiss = Math.max(0, Math.round(Number(missCount) || 0));
 
-    const { data, error } = await supabase.rpc('submit_ranking_score', {
-      p_song_id: songId,
-      p_device_id: deviceId,
+    if (!session) throw rankingSessionError('ランキングのプレイ開始情報を確認できません。もう一度プレイしてください。');
+    const started = await session.promise;
+    if (started.error) {
+      console.error('Failed to start ranking session:', started.error);
+      throw rankingSessionError('ランキングの準備に失敗しました。通信状況を確認し、もう一度プレイしてください。');
+    }
+    // 同じプレイの名前変更は、最初の登録と同じ記録だけを更新する。
+    if (session.deviceId === null) session.deviceId = deviceId;
+    const { data, error } = await supabase.rpc('finish_ranked_play', {
+      p_session_id: started.sessionId,
+      p_device_id: session.deviceId,
       p_player_name: finalPlayerName,
       p_score: normalizedScore,
       p_max_combo: normalizedMaxCombo,
@@ -124,6 +133,15 @@ const executeSubmitScore = async (payload) => {
     });
 
     if (error) {
+      if (error.message?.includes('RANKING_SESSION_TOO_EARLY')) {
+        throw rankingSessionError('ランキングの受付まで少し時間が必要です。しばらくしてから「登録する」を押してください。');
+      }
+      if (error.message?.includes('RANKING_SESSION_EXPIRED') || error.message?.includes('RANKING_SESSION_INVALID') || error.message?.includes('RANKING_SESSION_PAYLOAD_CHANGED')) {
+        throw rankingSessionError('ランキングのプレイ情報を確認できません。もう一度プレイしてください。');
+      }
+      if (error.message?.includes('RANKING_SONG_NOT_CONFIGURED')) {
+        throw rankingSessionError('この曲は現在ランキングに登録できません。');
+      }
       if (error.message?.includes('RANKING_ZERO_KPS_WITH_COMBO')) {
         throw invalidKpsError('警告：最大コンボが1以上でMAX KPSが0の記録は登録できません。同じ端末の過去ベストがこの条件に当てはまる場合も更新できません。');
       }
@@ -159,7 +177,9 @@ const executeSubmitScore = async (payload) => {
  * @returns {Promise<Object>}
  */
 export const submitScore = (payload) => {
-  const next = submitQueue.then(() => executeSubmitScore(payload));
+  // 次のプレイが先に始まっても、送信を要求した時点のセッションを使う。
+  const session = getRankedSession(payload.playSessionId, payload.songId);
+  const next = submitQueue.then(() => executeSubmitScore(payload, session));
   submitQueue = next.catch(() => {});
   return next;
 };

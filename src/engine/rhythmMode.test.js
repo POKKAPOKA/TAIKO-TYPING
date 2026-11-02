@@ -1,7 +1,8 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
-const mocks = vi.hoisted(() => ({ submitScore: vi.fn(), saveLog: vi.fn(() => ({ id: 'test-log' })) }));
+const mocks = vi.hoisted(() => ({ submitScore: vi.fn(), startRankedSession: vi.fn(), saveLog: vi.fn(() => ({ id: 'test-log' })) }));
 vi.mock('../api/rankings', () => ({ submitScore: mocks.submitScore }));
+vi.mock('../api/rankedSession', () => ({ startRankedSession: mocks.startRankedSession }));
 vi.mock('../api/likes', () => ({ getLocalSongLikesMap: () => ({}), fetchGlobalSongLikes: vi.fn(async () => ({})), updateSongLikeCount: vi.fn(), normalizeSongId: value => value }));
 vi.mock('../utils/csvExport', () => ({ getLocalPlayLogs: () => [], savePlayLogToLocal: mocks.saveLog, fetchMergedPlayLogs: vi.fn(async () => ({ logs: [] })), clearPlayLogs: vi.fn() }));
 vi.mock('../hooks/useSystemSE', () => ({ playPerfect: vi.fn(), playGood: vi.fn(), playMiss: vi.fn() }));
@@ -19,6 +20,7 @@ beforeEach(async () => {
   vi.resetModules();
   vi.useFakeTimers();
   mocks.submitScore.mockReset().mockResolvedValue({ updated: true });
+  mocks.startRankedSession.mockReset();
   mocks.saveLog.mockClear();
   storage = new Map();
   vi.stubGlobal('localStorage', { getItem: key => storage.get(key) ?? null, setItem: (key, value) => storage.set(key, value) });
@@ -56,6 +58,7 @@ describe('展示ブースのリズムモード', () => {
   it('どのキーでも1ノーツずつタイミング判定し、結果を自動送信しない', () => {
     engine.start();
     expect(store.getState().playRhythmMode).toBe(true);
+    expect(mocks.startRankedSession).not.toHaveBeenCalled();
     expect(store.getState().activeWord).toBeNull();
     hit(' ', 1000);
     hit('Enter', 1570);
@@ -115,6 +118,7 @@ describe('展示ブースのリズムモード', () => {
   it('通常モードの公式譜面は引き続き自動登録される', () => {
     store.setState({ isRhythmMode: false });
     engine.start();
+    expect(mocks.startRankedSession).toHaveBeenCalledWith('test-play-session', 'song');
     engine.stop();
     expect(store.getState().status).toBe('result');
     expect(mocks.submitScore).toHaveBeenCalledOnce();

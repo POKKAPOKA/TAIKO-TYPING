@@ -42,6 +42,7 @@ useGameStore.subscribe((state, prev) => {
 
       submitScore({
         songId: state.scoreFileName.replace(/\.json$/i, ''),
+        playSessionId: state.currentPlaySessionId,
         playerName: savedPlayerName,
         deviceId: state.playBoothMode ? state.currentPlaySessionId : undefined,
         score: state.score,
@@ -66,7 +67,7 @@ useGameStore.subscribe((state, prev) => {
           console.error('Auto score submit failed:', err);
           const current = useGameStore.getState();
           if (current.status === 'result' && current.currentPlaySessionId === state.currentPlaySessionId) {
-            current.setSubmitSuccessMessage(['RANKING_INVALID_NOTE_COUNT', 'RANKING_INVALID_KPS'].includes(err.code) ? err.message : '自動登録に失敗しました。「登録する」から再試行できます');
+            current.setSubmitSuccessMessage(['RANKING_INVALID_NOTE_COUNT', 'RANKING_INVALID_KPS', 'RANKING_SESSION_ERROR'].includes(err.code) ? err.message : '自動登録に失敗しました。「登録する」から再試行できます');
           }
         })
         .finally(() => {

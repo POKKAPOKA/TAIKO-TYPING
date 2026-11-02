@@ -312,7 +312,7 @@ git push origin main
 ランキングは「Supabase」（スーパベース）という無料のデータベースサービスを使って記録しています。使わなくてもゲームは遊べます。使いたい人だけ、以下を設定してください。
 
 1. [Supabase](https://supabase.com/) で無料アカウントを作り、新しいプロジェクトを作成します。
-2. 新規プロジェクトではSupabaseの「SQL Editor」で [supabase_setup.sql](supabase_setup.sql)、[supabase_update.sql](supabase_update.sql)、[supabase_security_fix.sql](supabase_security_fix.sql)、[supabase_ranking_note_limits.sql](supabase_ranking_note_limits.sql) をこの順に実行します。既存環境ではバックアップと現在の定義を確認し、必要な更新SQLを適用してください。SQLはアプリの更新だけでは反映されません。
+2. 新規プロジェクトではSupabaseの「SQL Editor」で [supabase_setup.sql](supabase_setup.sql)、[supabase_update.sql](supabase_update.sql)、[supabase_security_fix.sql](supabase_security_fix.sql)、[supabase_ranking_note_limits.sql](supabase_ranking_note_limits.sql)、[supabase_ranked_sessions.sql](supabase_ranked_sessions.sql) をこの順に実行します。既存環境ではバックアップと現在の定義を確認し、必要な更新SQLを適用してください。SQLはアプリの更新だけでは反映されません。
 3. 管理画面の「Project Settings」→「API」から **Project URL** と **anon public key** をコピーします。
 4. このプロジェクトのフォルダに `.env.local` という名前のファイルを作り、次のように書いて保存します（[.env.example](.env.example) をコピーして書き換えると簡単です）。
 
@@ -326,6 +326,8 @@ git push origin main
 > `VITE_SUPABASE_ANON_KEY` はブラウザに公開される匿名クライアントキーです。秘密鍵の `service_role` key は設定しないでください。セキュリティ更新SQLの適用後は、カラム権限によって `device_id` の読み取りとテーブルへの直接書き込みを制限し、書き込みはRPCで検証します。ただし匿名RPCは本人認証ではありません。識別子を知る人によるなりすましや、偽のスコア送信を防ぐには認証やサーバー側での検証が別途必要です。
 
 > 匿名の RPC は誰でも呼び出せるため、大量送信や偽のスコア・いいねも防げません。公開運用ではリクエスト制限、監視、認証、およびサーバー側での結果検証を検討してください。SQL ファイルの変更は Supabase に自動反映されないため、バックアップと既存権限を確認してから SQL Editor で適用します。
+
+> `supabase_ranked_sessions.sql` はプレイ開始時のサーバー側セッションと経過時間を確認し、旧スコア登録 RPC の公開を停止します。新しいアプリと SQL の両方が必要です。古い版の `supabase_security_fix.sql` を再実行すると旧 RPC が再公開されるため、最後に必ず最新版の `supabase_ranked_sessions.sql` を再適用してください。既存曲の受付開始時間は SQL 内に設定されています。新曲はノーツ数上限の登録のみで利用できますが、受付開始時間を追加設定するまでは待機時間の検証は行いません。セッションの発行や待機を再現するプログラムによる偽スコアを完全に防ぐことはできません。既存のランキングは変更されません。
 
 > `supabase_ranking_note_limits.sql` は譜面の最大ノーツ数を超えるコンボ・判定数の新規登録を拒否します。公式曲の追加や譜面の更新時には、`public/songs/index.json` と SQL 内の上限値を実際の入力対象ノーツ数に合わせて更新し、SQL を再適用してください。既存のランキングは自動では変更されません。既存ベストが新しい上限を超えている場合、その行の更新も拒否されます。
 

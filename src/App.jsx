@@ -184,6 +184,7 @@ function App() {
     try {
       const res = await submitScore({
         songId: scoreFileName.replace(/\.json$/i, ''),
+        playSessionId: currentPlaySessionId,
         playerName: finalName,
         deviceId: playBoothMode ? (playBoothRecordByName && finalName !== 'Guest' ? `${getDeviceId()}__name__${finalName.slice(0, 20)}` : currentPlaySessionId) : undefined,
         score,
@@ -203,7 +204,7 @@ function App() {
       }
     } catch (err) {
       if (useGameStore.getState().currentPlaySessionId === currentPlaySessionId) {
-        const message = ['RANKING_INVALID_NOTE_COUNT', 'RANKING_INVALID_KPS'].includes(err.code) ? err.message : '送信失敗: ' + (err.message || '不明なエラー');
+        const message = ['RANKING_INVALID_NOTE_COUNT', 'RANKING_INVALID_KPS', 'RANKING_SESSION_ERROR'].includes(err.code) ? err.message : '送信失敗: ' + (err.message || '不明なエラー');
         setSubmitSuccessMessage(message);
         showToast(message);
       }

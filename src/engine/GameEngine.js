@@ -4,6 +4,7 @@ import { RomajiParser, calculateMinKeystrokes, normalizePlayableReading, toBaseK
 import { playPerfect, playGood, playMiss } from '../hooks/useSystemSE';
 import { getAchievementRank } from '../utils/achievementRank';
 import { stageRhythm } from './stageRhythm';
+import { startRankedSession } from '../api/rankedSession';
 
 const JUDGE_WINDOW = {
   PERFECT: 50,
@@ -176,7 +177,11 @@ export class GameEngine {
 
     store.resetPlayState();
     const playRhythmMode = Boolean(store.isBoothMode && !store.isMobileMode && store.isRhythmMode);
-    useGameStore.setState({ currentPlaySessionId: createPlaySessionId(), playBoothMode: store.isBoothMode, playBoothRecordByName: store.boothRecordByName, playRhythmMode });
+    const currentPlaySessionId = createPlaySessionId();
+    useGameStore.setState({ currentPlaySessionId, playBoothMode: store.isBoothMode, playBoothRecordByName: store.boothRecordByName, playRhythmMode });
+    if (!store.isLocalPlay && !playRhythmMode && store.scoreFileName) {
+      startRankedSession(currentPlaySessionId, store.scoreFileName.replace(/\.json$/i, ''));
+    }
     store.setStatus('playing');
 
     this.queue = preparePlayableNotes(loadedScore.notes);
