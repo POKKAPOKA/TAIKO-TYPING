@@ -25,6 +25,7 @@ import HeaderLogo from './components/HeaderLogo';
 import { getAchievementRank } from './utils/achievementRank';
 import { fetchRankingsResult, submitScore } from './api/rankings';
 import { getDeviceId } from './lib/deviceId';
+import { canSubmitRanking } from './lib/rankingEligibility';
 import { loadSongs } from './api/songList';
 import { Maximize, Minimize, Smartphone, Monitor, User, Settings, Pause, Play, RotateCcw, Home, HelpCircle, Info, X } from 'lucide-react';
 
@@ -114,6 +115,7 @@ function App() {
   const scoreFileName = useGameStore(state => state.scoreFileName);
   const audioFileName = useGameStore(state => state.audioFileName);
   const isLocalPlay = useGameStore(state => state.isLocalPlay);
+  const playRhythmMode = useGameStore(state => state.playRhythmMode);
   const vocalState = useGameStore(state => state.vocalState);
   const selectedCharacterId = useGameStore(state => state.selectedCharacterId);
   const setSelectedCharacterId = useGameStore(state => state.setSelectedCharacterId);
@@ -168,7 +170,7 @@ function App() {
   };
 
   const handleScoreSubmit = async () => {
-    if (isLocalPlay || !scoreFileName) return;
+    if (!canSubmitRanking(useGameStore.getState())) return;
     setIsSubmitting(true);
     setSubmitSuccessMessage(null);
     const finalName = playerName.trim() || 'Guest';
@@ -190,6 +192,7 @@ function App() {
         perfectCount: useGameStore.getState().perfectCount,
         goodCount: useGameStore.getState().goodCount,
         missCount: useGameStore.getState().missCount,
+        totalNotes: useGameStore.getState().statsData?.stats?.totalNotes,
         isAuto: false
       });
       if (useGameStore.getState().currentPlaySessionId !== currentPlaySessionId) return;
@@ -199,7 +202,11 @@ function App() {
         setSubmitSuccessMessage(res.message || 'ベストスコア未更新のため登録されませんでした');
       }
     } catch (err) {
-      if (useGameStore.getState().currentPlaySessionId === currentPlaySessionId) showToast('送信失敗: ' + (err.message || '不明なエラー'));
+      if (useGameStore.getState().currentPlaySessionId === currentPlaySessionId) {
+        const message = ['RANKING_INVALID_NOTE_COUNT', 'RANKING_INVALID_KPS'].includes(err.code) ? err.message : '送信失敗: ' + (err.message || '不明なエラー');
+        setSubmitSuccessMessage(message);
+        showToast(message);
+      }
     } finally {
       if (useGameStore.getState().currentPlaySessionId === currentPlaySessionId) setIsSubmitting(false);
     }
@@ -882,7 +889,7 @@ function App() {
                     </span>
                   </div>
                   {/* MAX KPS（スマホ幅 768px 以下では .pc-only-hud により自動非表示） */}
-                  <div className="pc-only-hud flex items-baseline gap-3 border-t border-cyan-500/30 pt-1 w-full justify-end">
+                  {!playRhythmMode && <div className="pc-only-hud flex items-baseline gap-3 border-t border-cyan-500/30 pt-1 w-full justify-end">
                     <span
                       className="text-amber-300 text-xs sm:text-sm font-black tracking-widest"
                       style={{ fontFamily: "'Orbitron', sans-serif" }}
@@ -892,7 +899,7 @@ function App() {
                     <span className="orbitron-digital text-xl sm:text-2xl font-black tracking-wider leading-none">
                       {maxKps.toFixed(2)}
                     </span>
-                  </div>
+                  </div>}
                 </div>
 
                 <button

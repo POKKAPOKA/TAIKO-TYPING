@@ -61,6 +61,7 @@ export default function ResultScreen({ onRetry, onBack, onHome, isLocalPlay, sco
   const songLikesMap = useGameStore(state => state.songLikesMap);
   const hasLikedCurrentResult = useGameStore(state => state.hasLikedCurrentResult);
   const isLikingSong = useGameStore(state => state.isLikingSong);
+  const playRhythmMode = useGameStore(state => state.playRhythmMode);
   const toggleCurrentSongLike = useGameStore(state => state.toggleCurrentSongLike);
   const setShowSurveyModal = useGameStore(state => state.setShowSurveyModal);
 
@@ -122,7 +123,7 @@ export default function ResultScreen({ onRetry, onBack, onHome, isLocalPlay, sco
             </ResultRow>
             <aside className="result-actions" aria-label="スコアの操作">
               <button type="button" className="result-button result-button--primary" onClick={() => setPage(2)}>詳細データ・精度分析を見る (2/2) ▶</button>
-              {!isLocalPlay && scoreFileName ? (
+              {playRhythmMode ? <p className="result-local-message">リズムモードの記録はランキングに登録されません</p> : !isLocalPlay && scoreFileName ? (
                 <div className="result-register">
                   <label htmlFor="result-player-name">ランキング登録</label>
                   <div className="result-register__row">
@@ -150,7 +151,7 @@ export default function ResultScreen({ onRetry, onBack, onHome, isLocalPlay, sco
               <span className="result-row__percent result-number">({percent(late, judged)}%)</span><span className="result-bar" aria-hidden="true"><span style={{ width: `${judged ? late / judged * 100 : 0}%` }} /></span>
             </ResultRow>
             <ResultRow label="入力完了" value={`${completedCount} / ${totalNotes}`} top="43.6%" className="result-row--detail" />
-            <ResultRow label="最高KPS" value={Number(maxKps || 0).toFixed(2)} top="54.2%" className="result-row--detail"><span className="result-row__unit">key/s</span></ResultRow>
+            <ResultRow label="最高KPS" value={playRhythmMode ? '—' : Number(maxKps || 0).toFixed(2)} top="54.2%" className="result-row--detail">{!playRhythmMode && <span className="result-row__unit">key/s</span>}</ResultRow>
             <div className="result-trend"><span>全体の傾向</span><strong>{trend}</strong><div className="result-trend__bar" aria-label={`FAST ${fast}回、LATE ${late}回`}><i style={{ width: `${timed ? fast / timed * 100 : 50}%` }} /><i style={{ width: `${timed ? late / timed * 100 : 50}%` }} /></div><small>PERFECT・GOODの初打鍵（中央ちょうどはFAST／LATEに含めません）</small></div>
             <MistakeHistory entries={history} />
             <aside className="result-detail-actions" aria-label="詳細ページの操作">

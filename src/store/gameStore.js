@@ -49,7 +49,7 @@ function loadInitialMobileMode() {
 function loadSettings() {
   try {
     const raw = localStorage.getItem(SETTINGS_STORAGE_KEY);
-    if (!raw) return { speedMultiplier: 4.0, wallAmount: 0, offsetMs: 0, showCustomModes: false, isBoothMode: true, boothRecordByName: false, ...defaultVolumes };
+    if (!raw) return { speedMultiplier: 4.0, wallAmount: 0, offsetMs: 0, showCustomModes: false, isBoothMode: true, boothRecordByName: false, isRhythmMode: false, ...defaultVolumes };
     const parsed = JSON.parse(raw);
     // 旧スケール（speedScaleVersion !== 2）で初期値 1.0 のまま保存されていた場合は新基準値 4.0 に移行
     const rawSpeed = parsed.speedScaleVersion === 2
@@ -66,12 +66,13 @@ function loadSettings() {
       showCustomModes: typeof parsed.showCustomModes === 'boolean' ? parsed.showCustomModes : false,
       isBoothMode: typeof parsed.isBoothMode === 'boolean' ? parsed.isBoothMode : true,
       boothRecordByName: typeof parsed.boothRecordByName === 'boolean' ? parsed.boothRecordByName : false,
+      isRhythmMode: typeof parsed.isRhythmMode === 'boolean' ? parsed.isRhythmMode : false,
       musicVolume: normalizeVolume(parsed.musicVolume),
       gameplaySeVolume: normalizeVolume(parsed.gameplaySeVolume),
       systemSeVolume: normalizeVolume(parsed.systemSeVolume)
     };
   } catch {
-    return { speedMultiplier: 4.0, wallAmount: 0, offsetMs: 0, showCustomModes: false, isBoothMode: true, boothRecordByName: false, ...defaultVolumes };
+    return { speedMultiplier: 4.0, wallAmount: 0, offsetMs: 0, showCustomModes: false, isBoothMode: true, boothRecordByName: false, isRhythmMode: false, ...defaultVolumes };
   }
 }
 
@@ -113,6 +114,7 @@ const initialPlayState = {
   currentPlaySessionId: null,
   playBoothMode: false,
   playBoothRecordByName: false,
+  playRhythmMode: false,
   vocalState: 'sing_1',
   isSubmittingScore: false,
   submitSuccessMessage: null,
@@ -130,6 +132,9 @@ export function isStandaloneMode() {
   const isIosStandalone = window.navigator?.standalone === true;
   return Boolean(isDisplayStandalone || isIosStandalone);
 }
+
+const initialMobileMode = loadInitialMobileMode();
+const initialSettings = loadSettings();
 
 export const useGameStore = create((set, get) => ({
   score: 0,
@@ -150,7 +155,7 @@ export const useGameStore = create((set, get) => ({
   status: 'idle', // 'idle' | 'playing' | 'clearTransition' | 'result'
   isPaused: false,
   isFullscreen: false,
-  isMobileMode: loadInitialMobileMode(),
+  isMobileMode: initialMobileMode,
   showSettings: false,
   showPwaGuideModal: false,
   showSurveyModal: false,
@@ -162,7 +167,8 @@ export const useGameStore = create((set, get) => ({
 
   // 設定（設定画面で変更。プレイ中に変えた場合はリトライで反映）
   // localStorage に永続化され、リロード後も維持される
-  ...loadSettings(),
+  ...initialSettings,
+  isRhythmMode: initialSettings.isRhythmMode && initialSettings.isBoothMode && !initialMobileMode,
 
   // リザルト画面用の集計データ（プレイ終了時にGameEngineがセットする）
   statsData: null,
@@ -170,6 +176,7 @@ export const useGameStore = create((set, get) => ({
   currentPlaySessionId: null,
   playBoothMode: false,
   playBoothRecordByName: false,
+  playRhythmMode: false,
   playLogsCount: getLocalPlayLogs().length,
   isExportingCsv: false,
 
@@ -263,7 +270,8 @@ export const useGameStore = create((set, get) => ({
     } catch {
       // 保存失敗時は無視
     }
-    set({ isMobileMode });
+    saveSettings({ isRhythmMode: isMobileMode ? false : get().isRhythmMode });
+    set(isMobileMode ? { isMobileMode, isRhythmMode: false } : { isMobileMode });
   },
   setShowSettings: (showSettings) => set({ showSettings }),
   setShowPwaGuideModal: (showPwaGuideModal) => set({ showPwaGuideModal }),
@@ -357,8 +365,15 @@ export const useGameStore = create((set, get) => ({
     }
   },
   setBoothMode: (isBoothMode) => set((state) => {
-    saveSettings({ speedMultiplier: state.speedMultiplier, wallAmount: state.wallAmount, offsetMs: state.offsetMs, showCustomModes: state.showCustomModes, isBoothMode });
-    return { isBoothMode };
+    const isRhythmMode = isBoothMode ? state.isRhythmMode : false;
+    saveSettings({ speedMultiplier: state.speedMultiplier, wallAmount: state.wallAmount, offsetMs: state.offsetMs, showCustomModes: state.showCustomModes, isBoothMode, isRhythmMode });
+    return { isBoothMode, isRhythmMode };
+  }),
+  setRhythmMode: (enabled) => set((state) => {
+    if (!state.isBoothMode || state.isMobileMode) return state;
+    const isRhythmMode = Boolean(enabled);
+    saveSettings({ isRhythmMode });
+    return { isRhythmMode };
   }),
   setBoothRecordByName: (boothRecordByName) => set(() => {
     saveSettings({ boothRecordByName });
@@ -420,6 +435,7 @@ export const useGameStore = create((set, get) => ({
       definedLevel,
       totalNotes,
       isMobileMode: state.isMobileMode,
+      isRhythmMode: state.playRhythmMode,
       score: state.score,
       perfectCount: state.perfectCount,
       goodCount: state.goodCount,

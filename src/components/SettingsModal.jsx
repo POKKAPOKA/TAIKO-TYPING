@@ -81,6 +81,8 @@ export default function SettingsModal({ onClose }) {
   const offsetMs = useGameStore(state => state.offsetMs);
   const showCustomModes = useGameStore(state => state.showCustomModes);
   const isBoothMode = useGameStore(state => state.isBoothMode);
+  const isMobileMode = useGameStore(state => state.isMobileMode);
+  const isRhythmMode = useGameStore(state => state.isRhythmMode);
   const boothRecordByName = useGameStore(state => state.boothRecordByName);
   const musicVolume = useGameStore(state => state.musicVolume);
   const gameplaySeVolume = useGameStore(state => state.gameplaySeVolume);
@@ -93,6 +95,7 @@ export default function SettingsModal({ onClose }) {
   const setOffsetMs = useGameStore(state => state.setOffsetMs);
   const toggleShowCustomModes = useGameStore(state => state.toggleShowCustomModes);
   const setBoothMode = useGameStore(state => state.setBoothMode);
+  const setRhythmMode = useGameStore(state => state.setRhythmMode);
   const setBoothRecordByName = useGameStore(state => state.setBoothRecordByName);
   const setMusicVolume = useGameStore(state => state.setMusicVolume);
   const setGameplaySeVolume = useGameStore(state => state.setGameplaySeVolume);
@@ -679,9 +682,23 @@ export default function SettingsModal({ onClose }) {
                 </div>
 
                 {isBoothMode && (
+                  <div className="rounded-2xl border-2 border-pink-400/60 bg-[#100d1c] p-4 sm:p-5 flex flex-wrap items-center justify-between gap-4">
+                    <div>
+                      <h3 className="text-lg font-black text-pink-200 font-dotgothic">♪ リズムモード</h3>
+                      <p className="text-xs sm:text-sm text-neutral-300 font-bold mt-1">PC限定。好きなキーを1回押して判定します。ランキングには登録されません。</p>
+                      {isMobileMode && <p className="text-xs text-amber-200 font-bold mt-2">スマホモードでは利用できません。PCモードに切り替えてください。</p>}
+                    </div>
+                    <button type="button" role="switch" aria-label="リズムモード" aria-checked={!isMobileMode && isRhythmMode} disabled={isMobileMode} onClick={() => setRhythmMode(!isRhythmMode)} className={`px-5 py-3 rounded-xl font-dotgothic font-black border-2 shadow-none disabled:opacity-50 disabled:cursor-not-allowed ${isRhythmMode && !isMobileMode ? 'bg-emerald-500 text-[#09080f] border-emerald-300 cursor-pointer' : 'bg-[#171326] text-neutral-300 border-neutral-500 cursor-pointer'}`}>
+                      {isRhythmMode && !isMobileMode ? 'ON' : 'OFF'}
+                    </button>
+                  </div>
+                )}
+
+                {isBoothMode && (
                   <fieldset className="rounded-2xl border-2 border-cyan-500/60 bg-[#100d1c] p-4 sm:p-5 text-neutral-200">
                     <legend className="px-2 font-black text-cyan-300">展示ブースの記録方法</legend>
                     <div className="flex flex-col gap-3 text-sm font-bold">
+                      {isRhythmMode && <p className="text-xs text-amber-200">この設定は通常のタイピングプレイに適用されます。</p>}
                       <label className="flex items-center gap-2 cursor-pointer">
                         <input type="radio" name="booth-record-mode" checked={!boothRecordByName} onChange={() => setBoothRecordByName(false)} />
                         1プレイごとに別記録（おすすめ）

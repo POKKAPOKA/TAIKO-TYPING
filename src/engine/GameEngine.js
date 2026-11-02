@@ -29,8 +29,9 @@ export class GameEngine {
   }
 
   // ノーツごとの基準打鍵数を返す（スマホモード時は清音化された文字数＝1フリック1打鍵、PCモード時は最短ローマ字打鍵数）
-  _getNoteKeystrokes(note, isMobileMode) {
+  _getNoteKeystrokes(note, isMobileMode, isRhythmMode = false) {
     if (!note) return 0;
+    if (isRhythmMode) return 1;
     const rawReading = note.reading || note.word || '';
     if (isMobileMode) {
       const base = toBaseKana(rawReading);
@@ -81,6 +82,13 @@ export class GameEngine {
     this.currentTargetJudged = false;
     this.absorbTrailingN = false;
     if (this.currentTarget) {
+      if (store.playRhythmMode) {
+        this.romajiParser = null;
+        this.mobileTargetKana = '';
+        this.mobileTypedIndex = 0;
+        store.setTargetState(this.currentTarget, null, 0);
+        return;
+      }
       const rawReading = this.currentTarget.reading || this.currentTarget.word || "";
       const reading = store.isMobileMode ? toBaseKana(rawReading) : rawReading;
       let nextReading = "";
@@ -167,7 +175,8 @@ export class GameEngine {
     stageRhythm.start(loadedScore);
 
     store.resetPlayState();
-    useGameStore.setState({ currentPlaySessionId: createPlaySessionId(), playBoothMode: store.isBoothMode, playBoothRecordByName: store.boothRecordByName });
+    const playRhythmMode = Boolean(store.isBoothMode && !store.isMobileMode && store.isRhythmMode);
+    useGameStore.setState({ currentPlaySessionId: createPlaySessionId(), playBoothMode: store.isBoothMode, playBoothRecordByName: store.boothRecordByName, playRhythmMode });
     store.setStatus('playing');
 
     this.queue = preparePlayableNotes(loadedScore.notes);
@@ -177,7 +186,7 @@ export class GameEngine {
     // （PCモードは最短ローマ字打鍵数、スマホモードは清音化された文字数＝1フリック1打鍵）
     let totalChars = 0;
     for (const note of this.queue) {
-      totalChars += this._getNoteKeystrokes(note, store.isMobileMode);
+      totalChars += this._getNoteKeystrokes(note, store.isMobileMode, playRhythmMode);
     }
     this.totalNotesChars = totalChars > 0 ? totalChars : 1;
     this.accumulatedChars = 0;
@@ -192,7 +201,7 @@ export class GameEngine {
       totalNotes: this.queue.length
     };
 
-    this.updateCurrentTarget(store, this.queue.shift() || null);
+    this.updateCurrentTarget(useGameStore.getState(), this.queue.shift() || null);
     store.setWordQueue([...this.queue]);
 
     // リードイン（待機時間）の計算
@@ -295,7 +304,9 @@ export class GameEngine {
     }
 
     // 打ち残し判定（曲終了時点で未完了ノーツが残っていた場合は統計のみ記録し、余計な最終判定ポップアップは出さない）
-    const isCurrentIncomplete = store.isMobileMode
+    const isCurrentIncomplete = store.playRhythmMode
+      ? !this.currentTargetJudged
+      : store.isMobileMode
       ? Boolean(this.mobileTargetKana && this.mobileTypedIndex < this.mobileTargetKana.length)
       : Boolean(this.romajiParser && !this.romajiParser.isComplete());
 
@@ -527,6 +538,29 @@ export class GameEngine {
     }
     const store = useGameStore.getState();
     if (store.status !== 'playing' || store.isPaused) return;
+    if (store.playRhythmMode) {
+      // ブラウザのショートカットやテキスト欄での操作は判定しない。
+      if (e.ctrlKey || e.metaKey || e.altKey || e.isComposing || !e.key || e.key === 'Dead' || e.key === 'Unidentified' ||
+          e.target?.closest?.('input, textarea, select, [contenteditable="true"]')) return;
+      e.preventDefault?.();
+      if (!this.currentTarget) return;
+      const currentTimeMs = this.currentTime - store.offsetMs;
+      if (currentTimeMs >= this._getTimeLimit()) return;
+      const timingOffset = currentTimeMs - this.currentTarget.time;
+      const diff = Math.abs(timingOffset);
+      if (diff > JUDGE_WINDOW.MISS) return;
+      if (diff <= JUDGE_WINDOW.PERFECT) {
+        this.applyJudgment('PERFECT', timingOffset);
+      } else if (diff <= JUDGE_WINDOW.GOOD) {
+        this.applyJudgment('GOOD', timingOffset);
+      } else {
+        this.applyJudgment('MISS');
+        this.firstHitMiss = true;
+        this.recordTimingMiss(currentTimeMs, '', e.key);
+      }
+      this.completeCurrentTarget();
+      return;
+    }
     if (!/^[a-zA-Z0-9\-]$/.test(e.key)) return;
     if (!this.currentTarget || !this.romajiParser) return;
     // ハイフンは日本語の長音「ー」を打つときだけ使う。
@@ -624,7 +658,7 @@ export class GameEngine {
       if (timingOffset < 0) store.addFastCount();
       else if (timingOffset > 0) store.addLateCount();
     }
-    const noteChars = this._getNoteKeystrokes(this.currentTarget, store.isMobileMode);
+    const noteChars = this._getNoteKeystrokes(this.currentTarget, store.isMobileMode, store.playRhythmMode);
 
     this.accumulatedChars += noteChars;
     const targetScore = Math.floor((1010000 * this.accumulatedChars) / this.totalNotesChars);
@@ -655,7 +689,7 @@ export class GameEngine {
     const store = useGameStore.getState();
 
     const completedWithSingleN = Boolean(
-      !store.isMobileMode &&
+      !store.isMobileMode && !store.playRhythmMode &&
       this.romajiParser &&
       this.romajiParser.tokens.length > 0 &&
       this.romajiParser.tokens[this.romajiParser.tokens.length - 1] === 'ん' &&
@@ -671,7 +705,7 @@ export class GameEngine {
     }
 
     const durationSec = (this.currentTarget.endTime - this.currentTarget.time) / 1000;
-    if (durationSec > 0) {
+    if (durationSec > 0 && !store.playRhythmMode) {
       const strokeCount = this._getNoteKeystrokes(this.currentTarget, store.isMobileMode);
       const kps = Math.min(30, strokeCount / durationSec);
       store.updateMaxKps(kps);

@@ -7,6 +7,16 @@ const ActiveWordDisplay = () => {
   const status = useGameStore(state => state.status);
   const isMobileMode = useGameStore(state => state.isMobileMode);
   const currentTarget = useGameStore(state => state.currentTarget);
+  const playRhythmMode = useGameStore(state => state.playRhythmMode);
+
+  if (playRhythmMode && status === 'playing') {
+    return (
+      <div className="flex flex-col items-center gap-1 text-center font-dotgothic">
+        <span className="text-xs font-bold text-amber-300">リズムモード・ランキング対象外</span>
+        <span className="text-base sm:text-xl font-bold text-cyan-100">好きなキーでリズムを刻もう！</span>
+      </div>
+    );
+  }
 
   if (activeWord) {
     const displayStr = isMobileMode ? activeWord : activeWord.toUpperCase();

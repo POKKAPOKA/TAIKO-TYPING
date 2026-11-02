@@ -208,6 +208,7 @@ function SongListContent({ songsPromise, onBack, onStartGame }) {
   const showSettings = useGameStore(state => state.showSettings);
   const setShowSettings = useGameStore(state => state.setShowSettings);
   const isMobileMode = useGameStore(state => state.isMobileMode);
+  const isRhythmMode = useGameStore(state => state.isBoothMode && !state.isMobileMode && state.isRhythmMode);
   const isFullscreen = useGameStore(state => state.isFullscreen);
   const toggleFullscreen = useGameStore(state => state.toggleFullscreen);
   const showCustomModes = useGameStore(state => state.showCustomModes);
@@ -778,6 +779,10 @@ function SongListContent({ songsPromise, onBack, onStartGame }) {
             遊び方：ノーツが判定枠に重なる<span className="text-amber-300 font-black">【指を離した瞬間】</span>にタイミング判定されます！
             <br className="hidden sm:inline" />
             濁点・小文字の<span className="text-pink-300 font-black">変換は不要</span>で、すべて<span className="text-cyan-300 font-black">元の清音</span>で入力できます（<span className="text-emerald-300 font-black">700,000点以上でクリア！</span>）。
+          </div>
+        ) : isRhythmMode ? (
+          <div className="info-banner w-full max-w-4xl font-bold tracking-wide text-xs md:text-sm text-center p-4 mb-6">
+            リズムモード：ノーツが判定枠に重なったら好きなキーを1回押してください（Escキーはポーズ）。<span className="text-amber-300">ランキングには登録されません。</span>
           </div>
         ) : (
           <div className="info-banner w-full max-w-4xl font-bold tracking-widest text-xs md:text-sm text-center p-4 mb-6">

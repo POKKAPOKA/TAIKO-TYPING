@@ -6,7 +6,7 @@
     "difficulty": 1,
     "scorePath": "./songs/kimigayo/kimigayo.json",
     "audioPath": "./songs/kimigayo/kimigayo.mp3",
-    "notesCount": 61,
+    "notesCount": 32,
     "durationMs": 64950
   },
   {
@@ -16,7 +16,7 @@
     "difficulty": 9,
     "scorePath": "./songs/senrohatudukuyodokomademo/senrohatudukuyodokomademo.json",
     "audioPath": "./songs/senrohatudukuyodokomademo/senrohatudukuyodokomademo.mp3",
-    "notesCount": 167,
+    "notesCount": 38,
     "durationMs": 39500
   },
   {
@@ -26,7 +26,7 @@
     "difficulty": 4,
     "scorePath": "./songs/harugakita/harugakita.json",
     "audioPath": "./songs/harugakita/harugakita.mp3",
-    "notesCount": 180,
+    "notesCount": 90,
     "durationMs": 55547.750185607576
   },
   {
@@ -36,7 +36,7 @@
     "difficulty": 3,
     "scorePath": "./songs/koinobori/koinobori.json",
     "audioPath": "./songs/koinobori/koinobori.mp3",
-    "notesCount": 85,
+    "notesCount": 50,
     "durationMs": 26094.908903115225
   },
   {
@@ -46,7 +46,7 @@
     "difficulty": 8,
     "scorePath": "./songs/usagitokame/usagitokame.json",
     "audioPath": "./songs/usagitokame/usagitokame.mp3",
-    "notesCount": 385,
+    "notesCount": 194,
     "durationMs": 62835
   },
   {
@@ -56,7 +56,7 @@
     "difficulty": 2,
     "scorePath": "./songs/sakura/sakura.json",
     "audioPath": "./songs/sakura/sakura.mp3",
-    "notesCount": 87,
+    "notesCount": 45,
     "durationMs": 53250
   },
   {
@@ -66,7 +66,7 @@
     "difficulty": 6,
     "scorePath": "./songs/alps/alps.json",
     "audioPath": "./songs/alps/alps.mp3",
-    "notesCount": 226,
+    "notesCount": 73,
     "durationMs": 39625
   },
   {
@@ -76,7 +76,7 @@
     "difficulty": 2,
     "scorePath": "./songs/hotarunohikari/hotarunohikari.json",
     "audioPath": "./songs/hotarunohikari/hotarunohikari.mp3",
-    "notesCount": 374,
+    "notesCount": 192,
     "durationMs": 221092.85714285713
   },
   {
@@ -86,7 +86,7 @@
     "difficulty": 5,
     "scorePath": "./songs/kirakira/kirakira.json",
     "audioPath": "./songs/kirakira/kirakira.mp3",
-    "notesCount": 129,
+    "notesCount": 36,
     "durationMs": 36000
   },
   {
@@ -97,7 +97,7 @@
     "difficulty": 7,
     "scorePath": "./songs/shiningstar/shiningstar.json",
     "audioPath": "./songs/shiningstar/shiningstar.mp3",
-    "notesCount": 388,
+    "notesCount": 182,
     "durationMs": 87341.77215189874
   },
   {
@@ -107,7 +107,7 @@
     "difficulty": 7,
     "scorePath": "./songs/donguri/donguri.json",
     "audioPath": "./songs/donguri/donguri.mp3",
-    "notesCount": 206,
+    "notesCount": 106,
     "durationMs": 38454.545454545456
   },
   {

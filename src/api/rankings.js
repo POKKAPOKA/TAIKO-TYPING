@@ -4,6 +4,18 @@ import { getDeviceId } from '../lib/deviceId';
 // 自動送信と手動送信が重なった場合に順番に処理するための直列化キュー
 let submitQueue = Promise.resolve();
 
+function noteLimitError(message) {
+  const error = new Error(message);
+  error.code = 'RANKING_INVALID_NOTE_COUNT';
+  return error;
+}
+
+function invalidKpsError(message = '警告：最大コンボが1以上なのにMAX KPSが0のため、ランキングに登録できません。') {
+  const error = new Error(message);
+  error.code = 'RANKING_INVALID_KPS';
+  return error;
+}
+
 /**
  * 指定した楽曲のランキング上位10件を取得する
  * @param {string} songId
@@ -18,6 +30,7 @@ export const fetchRankings = async (songId) => {
       .from('rankings')
       .select('id, song_id, player_name, score, max_combo, peak_kps, perfect_count, good_count, miss_count, created_at')
       .eq('song_id', songId)
+      .or('max_combo.lt.1,peak_kps.neq.0')
       .order('score', { ascending: false })
       .limit(10);
 
@@ -28,7 +41,7 @@ export const fetchRankings = async (songId) => {
 
     // SupabaseのNUMERIC型は文字列で返る場合があるため数値に変換する
     // 順位(rank)とキャメルケースへのマッピングもここで行う
-    return (data || []).map((entry, index) => ({
+    return (data || []).filter(entry => !(Number(entry.max_combo) >= 1 && Number(entry.peak_kps) === 0)).map((entry, index) => ({
       ...entry,
       rank: index + 1,
       playerName: entry.player_name,
@@ -71,8 +84,19 @@ const executeSubmitScore = async (payload) => {
       perfectCount,
       goodCount,
       missCount,
+      totalNotes,
       deviceId = getDeviceId()
     } = payload;
+
+    // 曲一覧の古い表示値ではなく、実際に演奏した譜面のノーツ数を上限にする。
+    const limit = Number(totalNotes);
+    const counts = [maxCombo, perfectCount, goodCount, missCount].map(value => Number(value ?? 0));
+    if (!Number.isInteger(limit) || limit <= 0 || counts.some(value => !Number.isInteger(value) || value < 0) ||
+        counts[0] > limit || counts[1] + counts[2] + counts[3] > limit) {
+      throw noteLimitError(Number.isInteger(limit) && limit > 0
+        ? `警告：最大コンボまたは判定数が譜面のノーツ数（${limit}）を超えているか、記録が不正なためランキングに登録できません。`
+        : '警告：譜面のノーツ数を確認できないためランキングに登録できません。');
+    }
 
     // 名前のバリデーション（1〜20文字制限に合わせる）
     const trimmedName = (playerName && playerName.trim()) ? playerName.trim() : 'Guest';
@@ -82,6 +106,7 @@ const executeSubmitScore = async (payload) => {
     const normalizedScore = Math.min(1010000, Math.max(0, Math.round(Number(score) || 0)));
     const normalizedMaxCombo = Math.min(10000, Math.max(0, Math.round(Number(maxCombo) || 0)));
     const normalizedMaxKps = Math.min(30, Math.max(0, Number((Number(maxKps) || 0).toFixed(2))));
+    if (normalizedMaxCombo >= 1 && normalizedMaxKps === 0) throw invalidKpsError();
     const normalizedPerfect = Math.max(0, Math.round(Number(perfectCount) || 0));
     const normalizedGood = Math.max(0, Math.round(Number(goodCount) || 0));
     const normalizedMiss = Math.max(0, Math.round(Number(missCount) || 0));
@@ -99,6 +124,15 @@ const executeSubmitScore = async (payload) => {
     });
 
     if (error) {
+      if (error.message?.includes('RANKING_ZERO_KPS_WITH_COMBO')) {
+        throw invalidKpsError('警告：最大コンボが1以上でMAX KPSが0の記録は登録できません。同じ端末の過去ベストがこの条件に当てはまる場合も更新できません。');
+      }
+      if (error.message?.includes('RANKING_NOTE_LIMIT_EXCEEDED')) {
+        throw noteLimitError('警告：最大コンボまたは判定数がデータベースに登録された譜面のノーツ数を超えています。既存の自己ベストが上限を超えている場合も更新できません。');
+      }
+      if (error.message?.includes('RANKING_SONG_LIMIT_NOT_CONFIGURED')) {
+        throw noteLimitError('警告：この曲のノーツ数上限がデータベースに設定されていないためランキングに登録できません。');
+      }
       console.error('Failed to submit score:', error);
       throw error;
     }

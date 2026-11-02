@@ -96,6 +96,7 @@ const NotesArea = React.memo(() => {
   const status = useGameStore(state => state.status);
   const loadedScore = useGameStore(state => state.loadedScore);
   const wallAmount = useGameStore(state => state.wallAmount);
+  const playRhythmMode = useGameStore(state => state.playRhythmMode);
 
   const [visibleRange, setVisibleRange] = React.useState({ start: -2000, end: 8000 });
   const [scale, setScale] = React.useState(1);
@@ -307,7 +308,8 @@ const NotesArea = React.memo(() => {
 
             {allNotes.map((note) => {
               const isCurrent = currentTarget?.id === note.id;
-              const displayWord = note.word.length > 4 ? note.word.substring(0, 4) : note.word;
+              const word = note.word || note.reading || '';
+              const displayWord = playRhythmMode ? '♪' : word.length > 4 ? word.substring(0, 4) : word;
               return (
                 <div
                   key={note.id}

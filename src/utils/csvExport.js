@@ -98,6 +98,7 @@ export function savePlayLogToLocal(params) {
     definedLevel,
     totalNotes,
     isMobileMode,
+    isRhythmMode,
     score,
     perfectCount,
     goodCount,
@@ -155,7 +156,7 @@ export function savePlayLogToLocal(params) {
     creator: String(creator || '不明'),
     defined_level: Math.min(10, Math.max(1, Number(definedLevel) || 1)),
     total_notes: notesTotal,
-    input_mode: isMobileMode ? 'モバイル/フリック' : 'PC',
+    input_mode: isRhythmMode ? 'リズム' : isMobileMode ? 'モバイル/フリック' : 'PC',
     score: roundedScore,
     is_clear: roundedScore >= 700000 ? 'CLEAR' : 'FAILED',
     perfect_count: perf,
@@ -226,7 +227,7 @@ export async function fetchMergedPlayLogs() {
 
   // ローカルログとの重複判定用シグネチャセット
   const seenSignatures = new Set(
-    localLogs.map(
+    localLogs.filter((l) => l.input_mode !== 'リズム').map(
       (l) =>
         `${l.song_id}|${l.score}|${l.max_combo}|${l.perfect_count}|${l.good_count}|${l.miss_count}`
     )

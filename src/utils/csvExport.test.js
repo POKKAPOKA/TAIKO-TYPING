@@ -1,5 +1,14 @@
-import { describe, expect, it } from 'vitest';
-import { escapeCsvCell } from './csvExport';
+import { afterEach, describe, expect, it, vi } from 'vitest';
+import { escapeCsvCell, savePlayLogToLocal } from './csvExport';
+
+afterEach(() => vi.unstubAllGlobals());
+
+it('リズムモードのプレイ履歴をPCタイピングと区別する', () => {
+  vi.stubGlobal('window', {});
+  vi.stubGlobal('localStorage', { getItem: () => null, setItem: vi.fn() });
+  expect(savePlayLogToLocal({ songId: 'song', isRhythmMode: true }).input_mode).toBe('リズム');
+  expect(savePlayLogToLocal({ songId: 'song', isRhythmMode: false }).input_mode).toBe('PC');
+});
 
 describe('CSV セルの安全な出力', () => {
   it.each(['=1+1', '+1', '-1', '@SUM(A1)', ' \t=1+1', '\n@SUM(A1)'])(

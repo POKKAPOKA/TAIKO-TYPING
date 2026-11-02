@@ -2,6 +2,7 @@
 // ReactのuseEffectではなく、Zustandストアの購読（subscribe）で状態遷移に反応する。
 import { useGameStore } from '../store/gameStore';
 import { submitScore } from '../api/rankings';
+import { canSubmitRanking } from '../lib/rankingEligibility';
 
 let guideTimer = null;
 useGameStore.subscribe((state, prev) => {
@@ -26,7 +27,7 @@ useGameStore.subscribe((state, prev) => {
   // --- 曲終了（リザルト画面遷移）時：公式譜面ならランキングへ自動登録 ---
   if (state.status === 'result' && prev.status !== 'result') {
     // 名前別の記録では、Guestの重複レコードを作らず手動登録時に名前を確定する。
-    if (!state.isLocalPlay && state.scoreFileName && !(state.playBoothMode && state.playBoothRecordByName)) {
+    if (canSubmitRanking(state) && !(state.playBoothMode && state.playBoothRecordByName)) {
       let savedPlayerName = 'Guest';
       if (!state.playBoothMode) {
         try {
@@ -49,6 +50,7 @@ useGameStore.subscribe((state, prev) => {
         perfectCount: state.perfectCount,
         goodCount: state.goodCount,
         missCount: state.missCount,
+        totalNotes: state.statsData?.stats?.totalNotes,
         isAuto: true
       })
         .then((res) => {
@@ -64,7 +66,7 @@ useGameStore.subscribe((state, prev) => {
           console.error('Auto score submit failed:', err);
           const current = useGameStore.getState();
           if (current.status === 'result' && current.currentPlaySessionId === state.currentPlaySessionId) {
-            current.setSubmitSuccessMessage('自動登録に失敗しました。「登録する」から再試行できます');
+            current.setSubmitSuccessMessage(['RANKING_INVALID_NOTE_COUNT', 'RANKING_INVALID_KPS'].includes(err.code) ? err.message : '自動登録に失敗しました。「登録する」から再試行できます');
           }
         })
         .finally(() => {
