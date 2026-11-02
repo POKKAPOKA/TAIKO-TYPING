@@ -15,6 +15,17 @@ export const CHARACTERS = [
     },
   },
   {
+    id: 'oboro',
+    name: '朧 (おぼろ)',
+    description: '蝶の髪飾りと浅葱色の和装を纏う可憐なボーカリスト。澄んだ歌声と表情豊かなパフォーマンスでステージを華やかに彩る。draw by はーばー',
+    chibi: './assets/characters/oboro/chibi.png',
+    sprites: {
+      sing_1: './assets/characters/oboro/sing_1.png',
+      sing_2: './assets/characters/oboro/sing_2.png',
+      miss: './assets/characters/oboro/miss.png',
+    },
+  },
+  {
     id: 'char_test',
     name: '桜音 ネオン (テスト用)',
     description: '和風サイバーライブステージのテスト用ボーカリスト。軽快な歌声とネオン振袖でステージを彩る。',

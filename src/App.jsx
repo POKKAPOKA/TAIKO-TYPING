@@ -68,7 +68,11 @@ if (typeof window !== 'undefined') {
       './assets/characters/shinpei/chibi.png',
       './assets/characters/shinpei/sing_1.png',
       './assets/characters/shinpei/sing_2.png',
-      './assets/characters/shinpei/miss.png'
+      './assets/characters/shinpei/miss.png',
+      './assets/characters/oboro/chibi.png',
+      './assets/characters/oboro/sing_1.png',
+      './assets/characters/oboro/sing_2.png',
+      './assets/characters/oboro/miss.png'
     ];
     const runPreload = () => {
       preloadAssets.forEach((src) => {
