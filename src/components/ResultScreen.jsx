@@ -5,6 +5,8 @@ import { fetchRankingsResult } from '../api/rankings';
 import { useSystemSE } from '../hooks/useSystemSE';
 import { getAchievementRank } from '../utils/achievementRank';
 import HeaderLogo from './HeaderLogo';
+import RankingTurnstile from './RankingTurnstile';
+import { classifyRankingTiming } from '../lib/rankingTiming';
 import resultPage1 from '../assets/result_page1.png';
 import resultPage2 from '../assets/result_page2.png';
 import resultBg from '../assets/result_bg.png';
@@ -46,6 +48,8 @@ function MistakeHistory({ entries }) {
 
 export default function ResultScreen({ onRetry, onBack, onHome, isLocalPlay, scoreFileName, playerName, handleNameChange, handleScoreSubmit, isSubmitting, submitSuccessMessage, setLeaderboardData }) {
   const [page, setPage] = useState(1);
+  const [verificationToken, setVerificationToken] = useState('');
+  const [verificationAttempt, setVerificationAttempt] = useState(0);
   const mountRef = useRef(false);
   const { playDecide } = useSystemSE();
   const score = useGameStore(state => state.score);
@@ -84,6 +88,10 @@ export default function ResultScreen({ onRetry, onBack, onHome, isLocalPlay, sco
   const late = statsData?.stats?.lateCount ?? 0;
   const judged = perfectCount + goodCount;
   const timed = fast + late;
+  const timingStatus = classifyRankingTiming(statsData?.stats);
+  const submitResult = async () => {
+    try { await handleScoreSubmit(verificationToken); } finally { setVerificationToken(''); setVerificationAttempt(value => value + 1); }
+  };
   const trend = timed === 0 ? '判定データなし' : Math.abs(fast - late) / timed < 0.2 ? 'バランス良好' : fast > late ? 'やや早め（FAST傾向）' : 'やや遅め（LATE傾向）';
   const totalNotes = statsData?.stats?.totalNotes ?? loadedScore?.notes?.length ?? 0;
   const worstKeys = statsData?.worstKeys || [];
@@ -121,15 +129,17 @@ export default function ResultScreen({ onRetry, onBack, onHome, isLocalPlay, sco
                 {worstKeys.length ? worstKeys.slice(0, 3).map(({ char, count }) => <span className="result-key" key={char}>{char.toUpperCase()} <span className="result-number">({count}回)</span></span>) : <span className="result-worst__empty">なし</span>}
               </span>
             </ResultRow>
-            <aside className="result-actions" aria-label="スコアの操作">
+            <aside className={`result-actions${timingStatus === 'verification' ? ' result-actions--verification' : ''}`} aria-label="スコアの操作">
               <button type="button" className="result-button result-button--primary" onClick={() => setPage(2)}>詳細データ・精度分析を見る (2/2) ▶</button>
               {playRhythmMode ? <p className="result-local-message">リズムモードの記録はランキングに登録されません</p> : !isLocalPlay && scoreFileName ? (
                 <div className="result-register">
                   <label htmlFor="result-player-name">ランキング登録</label>
                   <div className="result-register__row">
                     <input id="result-player-name" type="text" placeholder="Guest" value={playerName} onChange={handleNameChange} maxLength={20} />
-                    <button type="button" className="result-button result-button--cyan" onClick={handleScoreSubmit} disabled={isSubmitting}>{isSubmitting ? '送信中...' : '登録する'}</button>
+                    <button type="button" className="result-button result-button--cyan" onClick={submitResult} disabled={isSubmitting || timingStatus === 'ineligible' || timingStatus === 'unavailable' || (timingStatus === 'verification' && !verificationToken)}>{isSubmitting ? '送信中...' : '登録する'}</button>
                   </div>
+                  {timingStatus === 'verification' && <><p>ランキング登録前に本人確認が必要です。</p><RankingTurnstile key={verificationAttempt} onToken={setVerificationToken} /></>}
+                  {(timingStatus === 'ineligible' || timingStatus === 'unavailable') && <p>内部精度が記録されていないため、ランキングに登録できません。</p>}
                   {submitSuccessMessage && <p className="result-register__message" role="status">{submitSuccessMessage}</p>}
                 </div>
               ) : isLocalPlay ? <p className="result-local-message">創作譜面の記録はランキングに送信されません</p> : null}

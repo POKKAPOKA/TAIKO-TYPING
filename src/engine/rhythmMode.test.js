@@ -115,13 +115,24 @@ describe('展示ブースのリズムモード', () => {
     expect(mocks.submitScore).not.toHaveBeenCalled();
   });
 
-  it('別記録を選んだ通常モードの公式譜面は自動登録される', () => {
+  it('内部精度が0の公式譜面は自動登録されない', () => {
     store.setState({ isRhythmMode: false, boothRecordByName: false });
     engine.start();
     expect(mocks.startRankedSession).toHaveBeenCalledWith('test-play-session', 'song');
     engine.stop();
     expect(store.getState().status).toBe('result');
+    expect(mocks.submitScore).not.toHaveBeenCalled();
+  });
+
+  it('内部精度が30以下では自動送信せず、31以上では送信する', async () => {
+    store.setState({ isRhythmMode: false, playRhythmMode: false, playBoothMode: true, playBoothRecordByName: false, statsData: { stats: { fastCount: 20, lateCount: 10, totalNotes: 40 } }, status: 'playing' });
+    store.getState().setStatus('result');
+    expect(mocks.submitScore).not.toHaveBeenCalled();
+    expect(store.getState().submitSuccessMessage).toContain('本人確認');
+    store.setState({ statsData: { stats: { fastCount: 21, lateCount: 10, totalNotes: 40 } }, status: 'playing' });
+    store.getState().setStatus('result');
     expect(mocks.submitScore).toHaveBeenCalledOnce();
+    expect(mocks.submitScore).toHaveBeenCalledWith(expect.objectContaining({ fastCount: 21, lateCount: 10 }));
   });
 
   it('リズムモードのプレイ中フラグは手動登録の対象にもならない', async () => {

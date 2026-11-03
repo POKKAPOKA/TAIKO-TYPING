@@ -61,6 +61,8 @@
 .result-worst__empty { font-size: clamp(10px, 1.1cqw, 13px); color: #fce7f3; }
 
 .result-actions, .result-detail-actions { position: absolute; left: 51%; right: 7%; top: 25%; bottom: 8%; display: flex; flex-direction: column; justify-content: center; gap: .7cqw; }
+.result-actions--verification { justify-content: flex-start; overflow-y: auto; }
+.result-actions--verification > * { flex-shrink: 0; }
 .result-button { min-width: 0; min-height: 3.8cqw; padding: .65cqw .75cqw; border: 1px solid #d8b4fe; border-radius: 8px; background: #21162f; color: #fff; font: inherit; font-size: clamp(10px, 1.3cqw, 18px); font-weight: 900; line-height: 1.25; cursor: pointer; }
 .result-button:hover { background: #42264b; }
 .result-button:disabled { opacity: .55; cursor: not-allowed; }

@@ -3,6 +3,7 @@
 import { useGameStore } from '../store/gameStore';
 import { submitScore } from '../api/rankings';
 import { canSubmitRanking } from '../lib/rankingEligibility';
+import { classifyRankingTiming } from '../lib/rankingTiming';
 
 let guideTimer = null;
 useGameStore.subscribe((state, prev) => {
@@ -26,8 +27,12 @@ useGameStore.subscribe((state, prev) => {
 
   // --- 曲終了（リザルト画面遷移）時：公式譜面ならランキングへ自動登録 ---
   if (state.status === 'result' && prev.status !== 'result') {
-    // 名前別の記録では、Guestの重複レコードを作らず手動登録時に名前を確定する。
-    if (canSubmitRanking(state) && !(state.playBoothMode && state.playBoothRecordByName)) {
+    const timing = classifyRankingTiming(state.statsData?.stats);
+    if (canSubmitRanking(state) && timing !== 'eligible') {
+      state.setSubmitSuccessMessage(timing === 'verification' ? 'ランキング登録には本人確認が必要です。' : '内部精度が記録されていないため、ランキングに登録できません。');
+    }
+    // 確認が必要な場合は、結果画面から手動登録する。
+    if (canSubmitRanking(state) && timing === 'eligible' && !(state.playBoothMode && state.playBoothRecordByName)) {
       let savedPlayerName = 'Guest';
       if (!state.playBoothMode) {
         try {
@@ -52,6 +57,7 @@ useGameStore.subscribe((state, prev) => {
         goodCount: state.goodCount,
         missCount: state.missCount,
         totalNotes: state.statsData?.stats?.totalNotes,
+        fastCount: state.statsData?.stats?.fastCount, lateCount: state.statsData?.stats?.lateCount,
         isAuto: true
       })
         .then((res) => {

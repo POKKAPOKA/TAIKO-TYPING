@@ -1,6 +1,7 @@
 import { supabase } from '../lib/supabase';
 import { getDeviceId } from '../lib/deviceId';
 import { getRankedSession, rankingSessionError } from './rankedSession';
+import { classifyRankingTiming } from '../lib/rankingTiming';
 
 // 自動送信と手動送信が重なった場合に順番に処理するための直列化キュー
 let submitQueue = Promise.resolve();
@@ -28,7 +29,7 @@ export const fetchRankings = async (songId) => {
     await submitQueue.catch(() => {});
 
     const { data, error } = await supabase
-      .from('rankings')
+      .from('valid_rankings')
       .select('id, song_id, player_name, score, max_combo, peak_kps, perfect_count, good_count, miss_count, created_at')
       .eq('song_id', songId)
       .or('max_combo.lt.1,peak_kps.neq.0')
@@ -85,7 +86,7 @@ const executeSubmitScore = async (payload, session) => {
       perfectCount,
       goodCount,
       missCount,
-      totalNotes,
+      totalNotes, fastCount, lateCount, verificationToken,
       deviceId = getDeviceId()
     } = payload;
 
@@ -97,6 +98,16 @@ const executeSubmitScore = async (payload, session) => {
       throw noteLimitError(Number.isInteger(limit) && limit > 0
         ? `警告：最大コンボまたは判定数が譜面のノーツ数（${limit}）を超えているか、記録が不正なためランキングに登録できません。`
         : '警告：譜面のノーツ数を確認できないためランキングに登録できません。');
+    }
+
+    const timing = classifyRankingTiming({ fastCount, lateCount });
+    if (timing === 'unavailable' || timing === 'ineligible') {
+      const error = new Error('内部精度が記録されていないため、ランキングに登録できません。');
+      error.code = 'RANKING_INVALID_TIMING'; throw error;
+    }
+    if (timing === 'verification' && !verificationToken) {
+      const error = new Error('ランキング登録には本人確認が必要です。');
+      error.code = 'RANKING_VERIFICATION_REQUIRED'; throw error;
     }
 
     // 名前のバリデーション（1〜20文字制限に合わせる）
@@ -120,7 +131,7 @@ const executeSubmitScore = async (payload, session) => {
     }
     // 同じプレイの名前変更は、最初の登録と同じ記録だけを更新する。
     if (session.deviceId === null) session.deviceId = deviceId;
-    const { data, error } = await supabase.rpc('finish_ranked_play', {
+    const { data: response, error: transportError } = await supabase.functions.invoke('ranking-submit', { body: { token: verificationToken || null, payload: {
       p_session_id: started.sessionId,
       p_device_id: session.deviceId,
       p_player_name: finalPlayerName,
@@ -130,7 +141,10 @@ const executeSubmitScore = async (payload, session) => {
       p_perfect_count: normalizedPerfect,
       p_good_count: normalizedGood,
       p_miss_count: normalizedMiss,
-    });
+      p_fast_count: fastCount, p_late_count: lateCount,
+    } } });
+    const error = transportError || (response?.ok ? null : { message: response?.code || 'RANKING_SUBMIT_FAILED' });
+    const data = response?.result;
 
     if (error) {
       if (error.message?.includes('RANKING_SESSION_TOO_EARLY')) {
@@ -150,6 +164,17 @@ const executeSubmitScore = async (payload, session) => {
       }
       if (error.message?.includes('RANKING_SONG_LIMIT_NOT_CONFIGURED')) {
         throw noteLimitError('警告：この曲のノーツ数上限がデータベースに設定されていないためランキングに登録できません。');
+      }
+      if (error.message?.includes('RANKING_VERIFICATION')) {
+        const verificationError = new Error('本人確認に失敗したか、確認を利用できません。もう一度お試しください。');
+        verificationError.code = 'RANKING_VERIFICATION_ERROR'; throw verificationError;
+      }
+      if (error.message?.includes('RANKING_INVALID_TIMING') || error.message?.includes('RANKING_ZERO_TIMING')) {
+        const timingError = new Error('内部精度を確認できないため、ランキングに登録できません。');
+        timingError.code = 'RANKING_INVALID_TIMING'; throw timingError;
+      }
+      if (error.message?.includes('RANKING_INVALID_CHART_KPS')) {
+        throw invalidKpsError('この曲の譜面とMAX KPSが一致しないため、ランキングに登録できません。');
       }
       console.error('Failed to submit score:', error);
       throw error;

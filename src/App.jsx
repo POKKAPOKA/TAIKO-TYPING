@@ -173,7 +173,7 @@ function App() {
     setNameState({ value: e.target.value, sessionId: currentPlaySessionId });
   };
 
-  const handleScoreSubmit = async () => {
+  const handleScoreSubmit = async (verificationToken) => {
     if (!canSubmitRanking(useGameStore.getState())) return;
     setIsSubmitting(true);
     setSubmitSuccessMessage(null);
@@ -198,6 +198,9 @@ function App() {
         goodCount: useGameStore.getState().goodCount,
         missCount: useGameStore.getState().missCount,
         totalNotes: useGameStore.getState().statsData?.stats?.totalNotes,
+        fastCount: useGameStore.getState().statsData?.stats?.fastCount,
+        lateCount: useGameStore.getState().statsData?.stats?.lateCount,
+        verificationToken,
         isAuto: false
       });
       if (useGameStore.getState().currentPlaySessionId !== currentPlaySessionId) return;
@@ -208,7 +211,7 @@ function App() {
       }
     } catch (err) {
       if (useGameStore.getState().currentPlaySessionId === currentPlaySessionId) {
-        const message = ['RANKING_INVALID_NOTE_COUNT', 'RANKING_INVALID_KPS', 'RANKING_SESSION_ERROR'].includes(err.code) ? err.message : '送信失敗: ' + (err.message || '不明なエラー');
+        const message = ['RANKING_INVALID_NOTE_COUNT', 'RANKING_INVALID_KPS', 'RANKING_SESSION_ERROR', 'RANKING_INVALID_TIMING', 'RANKING_VERIFICATION_REQUIRED', 'RANKING_VERIFICATION_ERROR'].includes(err.code) ? err.message : '送信失敗: ' + (err.message || '不明なエラー');
         setSubmitSuccessMessage(message);
         showToast(message);
       }
@@ -978,6 +981,7 @@ function App() {
 
       {appMode === 'game' && status === 'result' && (
         <ResultScreen
+          key={currentPlaySessionId}
           onRetry={handleRetry}
           onBack={handleBackToMenu}
           onHome={handleReturnHome}

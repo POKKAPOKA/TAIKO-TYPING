@@ -329,6 +329,14 @@ git push origin main
 
 > `supabase_ranked_sessions.sql` はプレイ開始時のサーバー側セッションと経過時間を確認し、旧スコア登録 RPC の公開を停止します。新しいアプリと SQL の両方が必要です。古い版の `supabase_security_fix.sql` を再実行すると旧 RPC が再公開されるため、最後に必ず最新版の `supabase_ranked_sessions.sql` を再適用してください。既存曲の受付開始時間は SQL 内に設定されています。新曲はノーツ数上限の登録のみで利用できますが、受付開始時間を追加設定するまでは待機時間の検証は行いません。セッションの発行や待機を再現するプログラムによる偽スコアを完全に防ぐことはできません。既存のランキングは変更されません。
 
+> 内部精度（FAST＋LATE）の合計が0の結果は登録せず、1〜30回では登録前にCloudflare Turnstileの本人確認が必要です。31回以上は確認なしで登録します。確認が必要な結果は自動送信せず、リザルト画面で確認後に「登録する」を押してください。内部精度はブラウザで集計されるため改変可能であり、この対策やTurnstileは実プレイを証明しません。0には未入力のほか、判定がすべて中央ちょうどの結果も含まれます。
+
+> 新しいランキング登録を使用するには、CloudflareでTurnstileウィジェットを作り、公開サイトキーを `.env.local` の `VITE_TURNSTILE_SITE_KEY` に設定します。Supabase Edge Function `ranking-submit` をデプロイし、関数の秘密設定に `TURNSTILE_SECRET_KEY` と、許可するホスト名のカンマ区切り `TURNSTILE_ALLOWED_HOSTNAMES` を設定します（例: `example.com,www.example.com`。URLやポートは含めません）。秘密鍵・service role keyをブラウザへ設定しないでください。秘密設定がない場合、確認が必要な記録は登録されません。Edge Functionは匿名の呼び出しを受けますが、低い内部精度の結果ではCloudflareにトークンを照会し、用途とホスト名も確認します。
+
+> DBでは既存の更新SQLの後に `supabase_ranking_kps_values.sql`、`supabase_ranking_timing.sql` の順で適用します。新しいアプリとEdge Functionを準備してから切り替えてください。適用すると旧アプリの直接登録は失敗します。古いセッションSQLを再実行した場合は、必ず `supabase_ranking_timing.sql` を最後に再適用して直接登録口を閉じてください。SQLの適用やアプリ・関数の公開は自動では行われません。
+
+> MAX KPSは完了ノーツの基準打鍵数を譜面上の受付時間で割った値の最大であり、実際の打鍵速度ではありません。現在の各譜面からPC・スマホ双方の候補を生成し、候補にない記録は登録・一覧表示しません（既存データは削除しません）。既存データには譜面バージョンがないため、譜面変更前の正当な記録も非表示になる場合があります。曲や判定ロジックの変更時は `node generate_ranking_kps.mjs` で候補SQLを再生成して適用してください。
+
 > `supabase_ranking_note_limits.sql` は譜面の最大ノーツ数を超えるコンボ・判定数の新規登録を拒否します。公式曲の追加や譜面の更新時には、`public/songs/index.json` と SQL 内の上限値を実際の入力対象ノーツ数に合わせて更新し、SQL を再適用してください。既存のランキングは自動では変更されません。既存ベストが新しい上限を超えている場合、その行の更新も拒否されます。
 
 > 最大コンボが1以上で MAX KPS が0の記録はランキング一覧に表示せず、新規登録も拒否します。既存の行は削除されません。このデータベース側の制限にも `supabase_ranking_note_limits.sql` の再適用が必要です。
