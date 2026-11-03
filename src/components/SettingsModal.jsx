@@ -667,7 +667,7 @@ export default function SettingsModal({ onClose }) {
                 <div className="rounded-2xl border-2 border-cyan-500/60 bg-[#100d1c] p-4 sm:p-5 flex flex-wrap items-center justify-between gap-4">
                   <div>
                     <h3 className="text-lg font-black text-cyan-300 font-dotgothic">🎪 展示ブースモード</h3>
-                    <p className="text-xs sm:text-sm text-neutral-300 font-bold mt-1">共有PC・1プレイごとに別記録としてランキング登録</p>
+                    <p className="text-xs sm:text-sm text-neutral-300 font-bold mt-1">共有PCでのランキング記録方法を選べます</p>
                   </div>
                   <button
                     type="button"
@@ -700,12 +700,12 @@ export default function SettingsModal({ onClose }) {
                     <div className="flex flex-col gap-3 text-sm font-bold">
                       {isRhythmMode && <p className="text-xs text-amber-200">この設定は通常のタイピングプレイに適用されます。</p>}
                       <label className="flex items-center gap-2 cursor-pointer">
-                        <input type="radio" name="booth-record-mode" checked={!boothRecordByName} onChange={() => setBoothRecordByName(false)} />
-                        1プレイごとに別記録（おすすめ）
+                        <input type="radio" name="booth-record-mode" checked={boothRecordByName} onChange={() => setBoothRecordByName(true)} />
+                        同じ名前の自己ベストを更新（おすすめ・Guestは別記録）
                       </label>
                       <label className="flex items-center gap-2 cursor-pointer">
-                        <input type="radio" name="booth-record-mode" checked={boothRecordByName} onChange={() => setBoothRecordByName(true)} />
-                        同じ名前の自己ベストを更新（Guestは別記録）
+                        <input type="radio" name="booth-record-mode" checked={!boothRecordByName} onChange={() => setBoothRecordByName(false)} />
+                        1プレイごとに別記録
                       </label>
                       {boothRecordByName && <p className="text-xs text-neutral-300">この方法ではリザルト画面の「登録する」で記録を送信します。名前を空欄にするとGuestとして別記録になります。</p>}
                     </div>

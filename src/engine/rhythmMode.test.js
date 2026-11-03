@@ -115,8 +115,8 @@ describe('展示ブースのリズムモード', () => {
     expect(mocks.submitScore).not.toHaveBeenCalled();
   });
 
-  it('通常モードの公式譜面は引き続き自動登録される', () => {
-    store.setState({ isRhythmMode: false });
+  it('別記録を選んだ通常モードの公式譜面は自動登録される', () => {
+    store.setState({ isRhythmMode: false, boothRecordByName: false });
     engine.start();
     expect(mocks.startRankedSession).toHaveBeenCalledWith('test-play-session', 'song');
     engine.stop();

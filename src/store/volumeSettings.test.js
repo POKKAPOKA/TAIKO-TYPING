@@ -26,6 +26,20 @@ beforeEach(() => {
 
 afterEach(() => vi.unstubAllGlobals());
 
+describe('展示ブースの記録方法', () => {
+  it.each([null, '{}', '{invalid'])('未設定や不正な設定では名前ごとの自己ベストを選ぶ: %s', async (saved) => {
+    if (saved !== null) storage.set('taiko_settings', saved);
+    const { useGameStore } = await import('./gameStore');
+    expect(useGameStore.getState().boothRecordByName).toBe(true);
+  });
+
+  it.each([true, false])('保存済みの選択を維持する: %s', async (saved) => {
+    storage.set('taiko_settings', JSON.stringify({ boothRecordByName: saved }));
+    const { useGameStore } = await import('./gameStore');
+    expect(useGameStore.getState().boothRecordByName).toBe(saved);
+  });
+});
+
 describe('volume settings', () => {
   it('defaults to full volume for existing settings without volume values', async () => {
     storage.set('taiko_settings', JSON.stringify({ speedMultiplier: 4, speedScaleVersion: 2 }));

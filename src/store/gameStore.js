@@ -49,7 +49,7 @@ function loadInitialMobileMode() {
 function loadSettings() {
   try {
     const raw = localStorage.getItem(SETTINGS_STORAGE_KEY);
-    if (!raw) return { speedMultiplier: 4.0, wallAmount: 0, offsetMs: 0, showCustomModes: false, isBoothMode: true, boothRecordByName: false, isRhythmMode: false, ...defaultVolumes };
+    if (!raw) return { speedMultiplier: 4.0, wallAmount: 0, offsetMs: 0, showCustomModes: false, isBoothMode: true, boothRecordByName: true, isRhythmMode: false, ...defaultVolumes };
     const parsed = JSON.parse(raw);
     // 旧スケール（speedScaleVersion !== 2）で初期値 1.0 のまま保存されていた場合は新基準値 4.0 に移行
     const rawSpeed = parsed.speedScaleVersion === 2
@@ -65,14 +65,14 @@ function loadSettings() {
       offsetMs: typeof parsed.offsetMs === 'number' ? parsed.offsetMs : 0,
       showCustomModes: typeof parsed.showCustomModes === 'boolean' ? parsed.showCustomModes : false,
       isBoothMode: typeof parsed.isBoothMode === 'boolean' ? parsed.isBoothMode : true,
-      boothRecordByName: typeof parsed.boothRecordByName === 'boolean' ? parsed.boothRecordByName : false,
+      boothRecordByName: typeof parsed.boothRecordByName === 'boolean' ? parsed.boothRecordByName : true,
       isRhythmMode: typeof parsed.isRhythmMode === 'boolean' ? parsed.isRhythmMode : false,
       musicVolume: normalizeVolume(parsed.musicVolume),
       gameplaySeVolume: normalizeVolume(parsed.gameplaySeVolume),
       systemSeVolume: normalizeVolume(parsed.systemSeVolume)
     };
   } catch {
-    return { speedMultiplier: 4.0, wallAmount: 0, offsetMs: 0, showCustomModes: false, isBoothMode: true, boothRecordByName: false, isRhythmMode: false, ...defaultVolumes };
+    return { speedMultiplier: 4.0, wallAmount: 0, offsetMs: 0, showCustomModes: false, isBoothMode: true, boothRecordByName: true, isRhythmMode: false, ...defaultVolumes };
   }
 }
 
