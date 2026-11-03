@@ -2,7 +2,7 @@
   {
     "id": "kimigayo",
     "title": "君が代",
-    "creator": "ほかほか",
+    "creator": "ぽっかぽか",
     "difficulty": 1,
     "scorePath": "./songs/kimigayo/kimigayo.json",
     "audioPath": "./songs/kimigayo/kimigayo.mp3",
@@ -22,7 +22,7 @@
   {
     "id": "harugakita",
     "title": "春が来た",
-    "creator": "ほかほか",
+    "creator": "ぽっかぽか",
     "difficulty": 4,
     "scorePath": "./songs/harugakita/harugakita.json",
     "audioPath": "./songs/harugakita/harugakita.mp3",
@@ -32,7 +32,7 @@
   {
     "id": "koinobori",
     "title": "こいのぼり",
-    "creator": "ほかほか",
+    "creator": "ぽっかぽか",
     "difficulty": 3,
     "scorePath": "./songs/koinobori/koinobori.json",
     "audioPath": "./songs/koinobori/koinobori.mp3",
@@ -42,7 +42,7 @@
   {
     "id": "usagitokame",
     "title": "うさぎとかめ",
-    "creator": "ほかほか",
+    "creator": "ぽっかぽか",
     "difficulty": 8,
     "scorePath": "./songs/usagitokame/usagitokame.json",
     "audioPath": "./songs/usagitokame/usagitokame.mp3",
@@ -72,7 +72,7 @@
   {
     "id": "hotarunohikari",
     "title": "蛍の光",
-    "creator": "ほかほか",
+    "creator": "ぽっかぽか",
     "difficulty": 2,
     "scorePath": "./songs/hotarunohikari/hotarunohikari.json",
     "audioPath": "./songs/hotarunohikari/hotarunohikari.mp3",
