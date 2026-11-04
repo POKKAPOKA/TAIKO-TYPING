@@ -1,4 +1,5 @@
 import { create } from 'zustand';
+import { normalizeGridRegions, setGridRegion } from '../engine/editorGrid';
 
 // トースト自動消去用タイマー（UI側のuseEffectを使わずストア側で管理する）
 let editorToastTimer = null;
@@ -21,6 +22,7 @@ export const useEditorStore = create((set) => ({
   // テスト用のノーツ配列 (エディタで配置したもの)
   // 構造: { id, measure, beat, durationBeats, word }
   editorNotes: [],
+  gridRegions: [],
 
   // 選択状態 (複数選択対応)
   selectedNoteIds: [],
@@ -84,9 +86,15 @@ export const useEditorStore = create((set) => ({
     if (!Number.isNaN(time)) set({ seekRequest: time });
   },
 
+  setGridRegions: (regions) => set({ gridRegions: normalizeGridRegions(regions) }),
+  updateGridRegion: (start, end, division) => set((state) => ({
+    ...state.saveHistory(state),
+    gridRegions: setGridRegion(state.gridRegions, start, end, division),
+  })),
+
   // 履歴保存の内部ヘルパー（最大50件）
   saveHistory: (state) => {
-    const newPast = [...state.pastNotes, state.editorNotes].slice(-50);
+    const newPast = [...state.pastNotes, { notes: state.editorNotes, gridRegions: state.gridRegions }].slice(-50);
     return { pastNotes: newPast, futureNotes: [] };
   },
 
@@ -139,8 +147,9 @@ export const useEditorStore = create((set) => ({
     const newPastNotes = state.pastNotes.slice(0, -1);
     return {
       pastNotes: newPastNotes,
-      futureNotes: [state.editorNotes, ...state.futureNotes],
-      editorNotes: previousNotes,
+      futureNotes: [{ notes: state.editorNotes, gridRegions: state.gridRegions }, ...state.futureNotes],
+      editorNotes: previousNotes.notes,
+      gridRegions: previousNotes.gridRegions,
       selectedNoteIds: []
     };
   }),
@@ -149,11 +158,12 @@ export const useEditorStore = create((set) => ({
     if (state.futureNotes.length === 0) return state;
     const nextNotes = state.futureNotes[0];
     const newFutureNotes = state.futureNotes.slice(1);
-    const newPast = [...state.pastNotes, state.editorNotes].slice(-50);
+    const newPast = [...state.pastNotes, { notes: state.editorNotes, gridRegions: state.gridRegions }].slice(-50);
     return {
       pastNotes: newPast,
       futureNotes: newFutureNotes,
-      editorNotes: nextNotes,
+      editorNotes: nextNotes.notes,
+      gridRegions: nextNotes.gridRegions,
       selectedNoteIds: []
     };
   }),

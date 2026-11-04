@@ -1,6 +1,7 @@
 import { useState, useRef } from 'react';
 import { useEditorStore } from '../../store/editorStore';
 import { getKeystrokeCount, findUntypableChars } from '../../engine/RomajiParser';
+import { nextEditorGridBeat, snapEditorBeat } from '../../engine/editorGrid';
 
 export default function EditorNote({ note, beatWidth, msPerBeat }) {
   const updateEditorNote = useEditorStore(state => state.updateEditorNote);
@@ -127,7 +128,7 @@ export default function EditorNote({ note, beatWidth, msPerBeat }) {
 
     if (state.mode === 'move') {
       const newTotalBeatsUnsnapped = state.originalTotalBeats + deltaBeats;
-      const snappedBeats = Math.max(0, Math.round(newTotalBeatsUnsnapped / 0.25) * 0.25);
+      const snappedBeats = snapEditorBeat(newTotalBeatsUnsnapped, useEditorStore.getState().gridRegions);
 
       const diffBeats = snappedBeats - state.originalTotalBeats;
       const isMultiMove = selectedNoteIds.includes(note.id) && selectedNoteIds.length > 1;
@@ -149,9 +150,11 @@ export default function EditorNote({ note, beatWidth, msPerBeat }) {
       }
 
     } else if (state.mode === 'resize') {
-      const newDurationUnsnapped = state.originalDurationBeats + deltaBeats;
-      const clampedDuration = Math.max(0.25, newDurationUnsnapped);
-      const snappedDuration = Math.round(clampedDuration / 0.25) * 0.25;
+      const regions = useEditorStore.getState().gridRegions;
+      const minEnd = nextEditorGridBeat(state.originalTotalBeats, regions);
+      const unsnappedEnd = state.originalTotalBeats + state.originalDurationBeats + deltaBeats;
+      const snappedEnd = Math.max(minEnd, snapEditorBeat(unsnappedEnd, regions));
+      const snappedDuration = snappedEnd - state.originalTotalBeats;
 
       const diffDuration = snappedDuration - state.originalDurationBeats;
       const isMultiResize = selectedNoteIds.includes(note.id) && selectedNoteIds.length > 1;
@@ -161,7 +164,7 @@ export default function EditorNote({ note, beatWidth, msPerBeat }) {
           const el = document.getElementById(`editor-note-${id}`);
           if (el) {
             const origDuration = parseFloat(el.dataset.originalDuration);
-            const targetDuration = Math.max(0.25, origDuration + diffDuration);
+            const targetDuration = Math.max(0.125, origDuration + diffDuration);
             el.style.width = `${targetDuration * beatWidth}px`;
             el.dataset.newDurationBeats = targetDuration;
           }

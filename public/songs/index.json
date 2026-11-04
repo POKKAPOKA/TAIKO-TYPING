@@ -120,5 +120,17 @@
     "audioPath": "./songs/taipatime/taipatime.mp3",
     "notesCount": 219,
     "durationMs": 89386.66666666666
+  },
+  {
+    "id": "taipatime_rhythm",
+    "title": "タイパタイムタイポタイプ for リズムモード",
+    "creator": "ぽっかぽか",
+    "provider": "222",
+    "note": "タイピングは本当に難しいのでリズムモードを推奨します",
+    "difficulty": 10,
+    "scorePath": "./songs/taipatime_rhythm/taipatime_rhythm.json",
+    "audioPath": "./songs/taipatime_rhythm/taipatime_rhythm.mp3",
+    "notesCount": 705,
+    "durationMs": 89386.66666666666
   }
 ]

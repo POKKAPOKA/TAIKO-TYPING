@@ -2,6 +2,7 @@
 // ReactのuseEffectに依存せず、Zustandストアの購読（subscribe）とイベント駆動で動作する。
 import { useEditorStore } from '../store/editorStore';
 import { useGameStore } from '../store/gameStore';
+import { snapEditorBeat } from './editorGrid';
 
 let audioEl = null;
 let viewportEl = null;
@@ -185,7 +186,7 @@ export async function loadEditorAudio(file) {
 }
 
 // --- 譜面の保存 / 読み込み ---
-function generateSaveData() {
+export function generateSaveData() {
   const state = useEditorStore.getState();
   const currentBpm = state.bpm;
   const currentOffset = state.offset;
@@ -208,7 +209,7 @@ function generateSaveData() {
   // タイムライン上で追加・編集した結果、時間が前後している可能性があるので必ずtimeでソートする
   compiledNotes.sort((a, b) => a.time - b.time);
 
-  return JSON.stringify({ bpm: currentBpm, offset: currentOffset, notes: compiledNotes }, null, 2);
+  return JSON.stringify({ bpm: currentBpm, offset: currentOffset, notes: compiledNotes, editorGridRegions: state.gridRegions }, null, 2);
 }
 
 async function writeToFileHandle(fileHandle, data) {
@@ -295,6 +296,7 @@ export function importScoreFile(file) {
 
         store.setBpm(importedBpm);
         store.setOffset(importedOffset);
+        store.setGridRegions(json.editorGridRegions);
 
         // 絶対時間からグリッド位置(measure, beat)に逆算してストアへ
         json.notes.forEach(note => {
@@ -423,9 +425,8 @@ function handleEditorKeyDown(e) {
           if (b < minBeats) minBeats = b;
         });
 
-        // 現在のシークバー位置を基準（ビート）に変換し、16分グリッド(0.25拍単位)にスナップさせる
-        let currentBeats = (state.currentTime / (60000 / state.bpm));
-        currentBeats = Math.round(currentBeats * 4) / 4;
+        // 先頭ノーツを現在位置の区間グリッドへ吸着し、他ノーツとの相対位置を維持する。
+        const currentBeats = snapEditorBeat(state.currentTime / (60000 / state.bpm), state.gridRegions);
 
         const newNotes = [];
         state.clipboardNotes.forEach((note, index) => {

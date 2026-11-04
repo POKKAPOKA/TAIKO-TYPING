@@ -517,7 +517,7 @@ function SongListContent({ songsPromise, onBack, onStartGame }) {
     return `${minutes}:${seconds.toString().padStart(2, '0')}`;
   };
 
-  const renderSongCard = (song, isSealedMaxDiff = false) => {
+  const renderSongCard = (song, isSealedMaxDiff = false, attachMaxDiffRef = false) => {
     const diff = Math.max(1, Math.min(10, song.difficulty || 1));
     const isMaxDiff = diff >= 10;
     const isLocked = isSealedMaxDiff && (sealPhase === 'sealed' || sealPhase === 'warning');
@@ -536,7 +536,7 @@ function SongListContent({ songsPromise, onBack, onStartGame }) {
     return (
       <div
         key={song.id}
-        ref={isMaxDiff ? maxDiffCardRef : undefined}
+        ref={attachMaxDiffRef ? maxDiffCardRef : undefined}
         onClick={handleCardClick}
         className={`song-card ${isMaxDiff ? 'song-card-max-diff' : ''} ${
           isShattering ? 'song-card-shattering-shake' : ''
@@ -584,6 +584,11 @@ function SongListContent({ songsPromise, onBack, onStartGame }) {
               </span>
             </span>
           </div>
+          {song.note && (
+            <p className="text-xs sm:text-sm font-bold text-amber-300 mt-1.5 leading-snug">
+              注意: {song.note}
+            </p>
+          )}
           <div className="flex flex-wrap items-center gap-2 sm:gap-3 mt-2.5">
             <span
               className="song-badge text-xs font-bold px-3 py-1 flex items-center gap-1"
@@ -993,7 +998,7 @@ function SongListContent({ songsPromise, onBack, onStartGame }) {
 
               {/* ☆10 楽曲カード本体（封印中：ヒビ割れ＋ぼかし → 解除時：氷砕けSEと共にフェードアウト） */}
               <div className="w-full flex flex-col gap-4 pb-8">
-                {maxDiffSongs.map((song) => renderSongCard(song, true))}
+                {maxDiffSongs.map((song, idx) => renderSongCard(song, true, idx === 0))}
               </div>
             </div>
           )}

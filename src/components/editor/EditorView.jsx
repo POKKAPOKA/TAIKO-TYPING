@@ -2,6 +2,7 @@ import { useState } from 'react';
 import EditorTimeline from './EditorTimeline';
 import HeaderLogo from '../HeaderLogo';
 import { useEditorStore } from '../../store/editorStore';
+import { snapEditorBeat } from '../../engine/editorGrid';
 import {
   registerEditorAudio,
   loadEditorAudio,
@@ -93,8 +94,7 @@ export default function EditorView({ onExit }) {
     const chunks = bulkAddText.match(/.[ぁぃぅぇぉゃゅょっゎ]*/g) || [];
     if (chunks.length === 0) return;
 
-    let currentBeats = (state.currentTime / (60000 / state.bpm));
-    currentBeats = Math.round(currentBeats * 4) / 4;
+    const currentBeats = snapEditorBeat(state.currentTime / (60000 / state.bpm), state.gridRegions);
 
     const stepBeats = Number(bulkAddInterval) || 0.25;
     let beatOffset = 0;
@@ -476,6 +476,7 @@ export default function EditorView({ onExit }) {
           </div>
         </div>
 
+        <p className="text-xs text-neutral-300 px-2 mb-1">上の帯：左ドラッグで再生位置を移動 ／ 右ドラッグでグリッド範囲を選択</p>
         {/* タイムライン領域 */}
         <div className="flex-grow w-full overflow-hidden p-0 flex flex-col relative h-full">
           <EditorTimeline />

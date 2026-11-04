@@ -3,6 +3,7 @@ import { useEditorStore } from '../../store/editorStore';
 import EditorNote from './EditorNote';
 import EditorSeekBar from './EditorSeekBar';
 import { registerEditorViewport } from '../../engine/EditorController';
+import { nextEditorGridBeat, snapEditorBeat, gridStep } from '../../engine/editorGrid';
 
 const BEATS_PER_MEASURE = 4;
 
@@ -41,11 +42,16 @@ export default function EditorTimeline() {
   const containerRef = useRef(null);
   const rulerRef = useRef(null);
   const rulerDragState = useRef({ isDragging: false, wasPlaying: false });
+  const rulerSelectionCleanup = useRef(null);
+  const [gridSelection, setGridSelection] = useState(null);
+  const [gridMenu, setGridMenu] = useState(null);
 
   const bpm = useEditorStore(state => state.bpm);
   const scrollTimeOffset = useEditorStore(state => state.scrollTimeOffset);
   const setScrollTimeOffset = useEditorStore(state => state.setScrollTimeOffset);
   const editorNotes = useEditorStore(state => state.editorNotes);
+  const gridRegions = useEditorStore(state => state.gridRegions);
+  const updateGridRegion = useEditorStore(state => state.updateGridRegion);
   const addEditorNote = useEditorStore(state => state.addEditorNote);
 
   const baseMeasureWidth = useEditorStore(state => state.measureWidth);
@@ -80,6 +86,7 @@ export default function EditorTimeline() {
   // 再生リセット時のscrollLeft同期は EditorController 側が直接行う。
   const viewportRef = useRef(null);
   const handleViewportRef = useCallback((node) => {
+    if (!node) rulerSelectionCleanup.current?.();
     if (viewportRef.current) {
       viewportRef.current.removeEventListener('wheel', handleViewportWheel);
     }
@@ -100,6 +107,45 @@ export default function EditorTimeline() {
 
   const handleRulerPointerDown = (e) => {
     e.stopPropagation();
+    if (e.button === 2) {
+      e.preventDefault();
+      setGridMenu(null);
+      rulerSelectionCleanup.current?.();
+      const beatAt = event => Math.max(0, Math.min(continuousTimelineWidth / beatWidth,
+        (event.clientX - rulerRef.current.getBoundingClientRect().left) / beatWidth));
+      // 範囲端は通常の16分線に揃え、範囲外の編集を予期せず変えない。
+      const boundary = event => Math.round(beatAt(event) * 4) / 4;
+      const start = boundary(e);
+      let current = start;
+      setGridSelection({ start, end: start });
+      const onMove = event => {
+        current = boundary(event);
+        setGridSelection({ start, end: current });
+      };
+      const cleanup = () => {
+        window.removeEventListener('pointermove', onMove);
+        window.removeEventListener('pointerup', onUp);
+        window.removeEventListener('pointercancel', onCancel);
+        rulerSelectionCleanup.current = null;
+      };
+      const onCancel = () => { cleanup(); setGridSelection(null); };
+      const onUp = event => {
+        current = boundary(event);
+        cleanup();
+        setGridSelection(null);
+        if (Math.abs(current - start) < 0.001) return;
+        setGridMenu({ start: Math.min(start, current), end: Math.max(start, current),
+          x: Math.max(8, Math.min(window.innerWidth - 210, event.clientX)),
+          y: Math.max(8, Math.min(window.innerHeight - 230, event.clientY + 10)) });
+      };
+      rulerSelectionCleanup.current = cleanup;
+      window.addEventListener('pointermove', onMove);
+      window.addEventListener('pointerup', onUp);
+      window.addEventListener('pointercancel', onCancel);
+      return;
+    }
+    if (e.button !== 0) return;
+    setGridMenu(null);
     const state = useEditorStore.getState();
     rulerDragState.current = { isDragging: true, wasPlaying: state.isPlaying };
     if (state.isPlaying) {
@@ -173,8 +219,7 @@ export default function EditorTimeline() {
     // オフセットXを拍(beat)に変換
     const absoluteBeats = offsetX / beatWidth;
 
-    // 0.25(16分音符)単位にスナップ
-    const snappedBeats = Math.max(0, Math.round(absoluteBeats / 0.25) * 0.25);
+    const snappedBeats = snapEditorBeat(absoluteBeats, gridRegions);
 
     const measure = Math.floor(snappedBeats / 4);
     const beat = snappedBeats % 4;
@@ -183,7 +228,7 @@ export default function EditorTimeline() {
       id: crypto.randomUUID(),
       measure,
       beat,
-      durationBeats: 0.25,
+      durationBeats: nextEditorGridBeat(snappedBeats, gridRegions) - snappedBeats,
       word: "WORD"
     });
   };
@@ -287,8 +332,11 @@ export default function EditorTimeline() {
           ref={rulerRef}
           className="w-full h-8 bg-neutral-800 border-b-2 border-neutral-700 cursor-text flex-shrink-0 relative"
           onPointerDown={handleRulerPointerDown}
+          onContextMenu={e => e.preventDefault()}
+          title="左ドラッグで再生位置を移動、右ドラッグでグリッドの範囲を選択"
         >
-          {/* シンプルな帯 */}
+          {gridRegions.map(region => <div key={`${region.start}-${region.end}`} className="absolute inset-y-0 bg-cyan-600/50 border-x border-cyan-300 text-xs text-white overflow-hidden pointer-events-none" style={{ left: region.start * beatWidth, width: (region.end - region.start) * beatWidth }}>{region.division}分</div>)}
+          {gridSelection && <div className="absolute inset-y-0 bg-amber-400/40 border-x border-amber-300 pointer-events-none" style={{ left: Math.min(gridSelection.start, gridSelection.end) * beatWidth, width: Math.abs(gridSelection.end - gridSelection.start) * beatWidth }} />}
         </div>
 
       <div
@@ -300,6 +348,15 @@ export default function EditorTimeline() {
         onContextMenu={e => e.preventDefault()}
         style={{ ...gridBackground }}
       >
+        {/* 範囲ごとに16分線を覆い、拍0を基準に選んだ間隔の線を描く。 */}
+        {gridRegions.map(region => <div key={`${region.start}-${region.end}`} className="absolute inset-y-0 pointer-events-none" style={{
+          left: region.start * beatWidth, width: (region.end - region.start) * beatWidth,
+          backgroundColor: '#171717',
+          backgroundImage: 'linear-gradient(to right, rgba(255,255,255,0.3) 2px, transparent 2px), linear-gradient(to right, rgba(255,255,255,0.15) 1px, transparent 1px), linear-gradient(to right, rgba(34,211,238,0.25) 1px, transparent 1px)',
+          backgroundSize: `${measureWidth}px 100%, ${beatWidth}px 100%, ${gridStep(region.division) * beatWidth}px 100%`,
+          backgroundPosition: `${-region.start * beatWidth}px 0, ${-region.start * beatWidth}px 0, ${-region.start * beatWidth}px 0`,
+          borderLeft: '1px solid rgba(34,211,238,0.5)', borderRight: '1px solid rgba(34,211,238,0.5)',
+        }} />)}
         {/* 波形表示 */}
         {audioPeaks?.length > 0 && (
           <svg className="absolute inset-0 w-full h-full pointer-events-none opacity-20" preserveAspectRatio="none">
@@ -348,6 +405,12 @@ export default function EditorTimeline() {
         ))}
       </div>
       </div>
+      {gridMenu && <div role="dialog" aria-label="選択範囲のグリッド" className="fixed z-[100] bg-neutral-800 border-2 border-cyan-500 rounded-xl p-3 flex flex-col gap-2 text-white" style={{ left: gridMenu.x, top: gridMenu.y }} onPointerDown={e => e.stopPropagation()}>
+        <p className="font-bold text-sm">選択範囲のグリッド</p>
+        <div className="flex gap-2">{[12, 24, 32].map(division => <button key={division} type="button" className="bg-cyan-700 hover:bg-cyan-600 rounded-lg px-3 py-2 font-bold" onClick={() => { updateGridRegion(gridMenu.start, gridMenu.end, division); setGridMenu(null); }}>{division}分</button>)}</div>
+        <button type="button" className="bg-neutral-700 hover:bg-neutral-600 rounded-lg px-3 py-2" onClick={() => { updateGridRegion(gridMenu.start, gridMenu.end, 16); setGridMenu(null); }}>16分に戻す</button>
+        <button type="button" className="bg-neutral-700 hover:bg-neutral-600 rounded-lg px-3 py-2" onClick={() => setGridMenu(null)}>キャンセル</button>
+      </div>}
     </div>
   );
 }
