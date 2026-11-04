@@ -33,7 +33,8 @@ INSERT INTO public.ranked_play_song_durations (song_id, min_seconds) VALUES
   ('kirakira', 28),
   ('shiningstar', 69),
   ('donguri', 30),
-  ('taipatime', 71)
+  ('taipatime', 71),
+  ('taipatime_rhythm', 71)
 ON CONFLICT (song_id) DO UPDATE SET min_seconds = EXCLUDED.min_seconds;
 
 CREATE TABLE IF NOT EXISTS public.ranked_play_sessions (

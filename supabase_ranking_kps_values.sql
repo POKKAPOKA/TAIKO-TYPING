@@ -128,5 +128,14 @@ INSERT INTO public.ranking_allowed_kps (song_id, peak_kps) VALUES
   ('taipatime', 16.50),
   ('taipatime', 13.00),
   ('taipatime', 17.33),
-  ('taipatime', 13.50);
+  ('taipatime', 13.50),
+  ('taipatime_rhythm', 12.00),
+  ('taipatime_rhythm', 24.00),
+  ('taipatime_rhythm', 30.00),
+  ('taipatime_rhythm', 18.00),
+  ('taipatime_rhythm', 9.00),
+  ('taipatime_rhythm', 6.00),
+  ('taipatime_rhythm', 8.00),
+  ('taipatime_rhythm', 4.00),
+  ('taipatime_rhythm', 3.00);
 COMMIT;

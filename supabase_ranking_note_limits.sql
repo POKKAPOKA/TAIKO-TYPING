@@ -26,7 +26,8 @@ INSERT INTO public.ranking_note_limits (song_id, max_notes) VALUES
   ('kirakira', 36),
   ('shiningstar', 182),
   ('donguri', 106),
-  ('taipatime', 219)
+  ('taipatime', 219),
+  ('taipatime_rhythm', 705)
 ON CONFLICT (song_id) DO UPDATE SET max_notes = EXCLUDED.max_notes;
 
 CREATE OR REPLACE FUNCTION public.validate_ranking_note_limit()
