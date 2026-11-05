@@ -115,6 +115,7 @@ const initialPlayState = {
   playBoothMode: false,
   playBoothRecordByName: false,
   playRhythmMode: false,
+  playStartVerified: true,
   vocalState: 'sing_1',
   isSubmittingScore: false,
   submitSuccessMessage: null,
@@ -177,6 +178,7 @@ export const useGameStore = create((set, get) => ({
   playBoothMode: false,
   playBoothRecordByName: false,
   playRhythmMode: false,
+  playStartVerified: true,
   playLogsCount: getLocalPlayLogs().length,
   isExportingCsv: false,
 

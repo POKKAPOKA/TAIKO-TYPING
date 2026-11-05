@@ -27,6 +27,10 @@ useGameStore.subscribe((state, prev) => {
 
   // --- 曲終了（リザルト画面遷移）時：公式譜面ならランキングへ自動登録 ---
   if (state.status === 'result' && prev.status !== 'result') {
+    if (!state.isLocalPlay && !state.playRhythmMode && state.scoreFileName && state.playStartVerified === false) {
+      state.setSubmitSuccessMessage('遊ぶボタンまたはランダム選曲ボタンの操作が確認できないため、ランキングに登録できません。');
+      return;
+    }
     const timing = classifyRankingTiming(state.statsData?.stats);
     if (canSubmitRanking(state) && timing !== 'eligible') {
       state.setSubmitSuccessMessage(timing === 'verification' ? 'ランキング登録には本人確認が必要です。' : '内部精度が記録されていないため、ランキングに登録できません。');

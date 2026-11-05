@@ -26,6 +26,7 @@ import { getAchievementRank } from './utils/achievementRank';
 import { fetchRankingsResult, submitScore } from './api/rankings';
 import { getDeviceId } from './lib/deviceId';
 import { canSubmitRanking } from './lib/rankingEligibility';
+import { setPlayStartGuardEnforced, recordPlayStartHover, authorizeVerifiedRetry, clearPlayStartAuthorization } from './lib/playStartGuard';
 import { loadSongs } from './api/songList';
 import { Maximize, Minimize, Smartphone, Monitor, User, Settings, Pause, Play, RotateCcw, Home, HelpCircle, Info, X } from 'lucide-react';
 
@@ -200,6 +201,7 @@ function App() {
         totalNotes: useGameStore.getState().statsData?.stats?.totalNotes,
         fastCount: useGameStore.getState().statsData?.stats?.fastCount,
         lateCount: useGameStore.getState().statsData?.stats?.lateCount,
+        playStartVerified: useGameStore.getState().playStartVerified,
         verificationToken,
         isAuto: false
       });
@@ -211,7 +213,7 @@ function App() {
       }
     } catch (err) {
       if (useGameStore.getState().currentPlaySessionId === currentPlaySessionId) {
-        const message = ['RANKING_INVALID_NOTE_COUNT', 'RANKING_INVALID_KPS', 'RANKING_SESSION_ERROR', 'RANKING_INVALID_TIMING', 'RANKING_VERIFICATION_REQUIRED', 'RANKING_VERIFICATION_ERROR'].includes(err.code) ? err.message : '送信失敗: ' + (err.message || '不明なエラー');
+        const message = ['RANKING_INVALID_START', 'RANKING_INVALID_NOTE_COUNT', 'RANKING_INVALID_KPS', 'RANKING_SESSION_ERROR', 'RANKING_INVALID_TIMING', 'RANKING_VERIFICATION_REQUIRED', 'RANKING_VERIFICATION_ERROR'].includes(err.code) ? err.message : '送信失敗: ' + (err.message || '不明なエラー');
         setSubmitSuccessMessage(message);
         showToast(message);
       }
@@ -230,7 +232,12 @@ function App() {
     gameEngine.start();
   };
 
-  const handleRetry = () => {
+  const handleRetry = (e) => {
+    const currentSongId = scoreFileName ? scoreFileName.replace(/\.json$/i, '') : (loadedScore?.id || '');
+    if (!isLocalPlay && currentSongId) {
+      setPlayStartGuardEnforced(true);
+      authorizeVerifiedRetry(currentSongId, e && typeof e === 'object' && 'isTrusted' in e ? e : undefined);
+    }
     resetPlayState();
     setSubmitSuccessMessage(null);
     setAppMode('game');
@@ -239,6 +246,7 @@ function App() {
 
   const handleBackToMenu = () => {
     gameEngine.stop(false);
+    clearPlayStartAuthorization();
     resetGameState();
     setSubmitSuccessMessage(null);
     if (isLocalPlay) {
@@ -253,6 +261,7 @@ function App() {
 
   const handleReturnHome = () => {
     gameEngine.stop(false);
+    clearPlayStartAuthorization();
     resetGameState();
     setSubmitSuccessMessage(null);
     setAppMode('menu');
@@ -1016,6 +1025,9 @@ function App() {
               プレーに戻る
             </button>
             <button
+              onMouseEnter={(e) => recordPlayStartHover('retry', scoreFileName ? scoreFileName.replace(/\.json$/i, '') : (loadedScore?.id || ''), e)}
+              onPointerEnter={(e) => recordPlayStartHover('retry', scoreFileName ? scoreFileName.replace(/\.json$/i, '') : (loadedScore?.id || ''), e)}
+              onTouchStart={(e) => recordPlayStartHover('retry', scoreFileName ? scoreFileName.replace(/\.json$/i, '') : (loadedScore?.id || ''), e)}
               onClick={handleRetry}
               className="w-full py-4 bg-orange-500 hover:bg-orange-400 text-neutral-900 rounded-full font-black text-xl transition-colors flex items-center justify-center gap-2"
             >

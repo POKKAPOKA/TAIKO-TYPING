@@ -12,7 +12,7 @@ import { fetchRankings, submitScore } from './rankings';
 import { getRankedSession, startRankedSession } from './rankedSession';
 
 const playSessionId = 'client-play-id';
-const payload = (extra = {}) => ({ songId: 'song', playSessionId, totalNotes: 32, fastCount: 31, lateCount: 0, ...extra });
+const payload = (extra = {}) => ({ songId: 'song', playSessionId, totalNotes: 32, fastCount: 31, lateCount: 0, verificationToken: 'token', ...extra });
 async function startSession(songId = 'song') {
   startRankedSession(playSessionId, songId);
   await getRankedSession(playSessionId, songId).promise;
@@ -92,14 +92,14 @@ describe('ranking RPC', () => {
       await expect(submitScore({ songId: 'kimigayo', playSessionId, fastCount: 31, lateCount: 0, score: 1010000, ...stats })).rejects.toMatchObject({ code: 'RANKING_INVALID_NOTE_COUNT', message: expect.stringContaining('警告') });
     }
     expect(rpc).not.toHaveBeenCalled();
-    await expect(submitScore({ songId: 'kimigayo', playSessionId, fastCount: 31, lateCount: 0, score: 1010000, totalNotes: 32, maxCombo: 32, perfectCount: 32, maxKps: 2 })).resolves.toMatchObject({ success: true });
+    await expect(submitScore({ songId: 'kimigayo', playSessionId, fastCount: 31, lateCount: 0, verificationToken: 'token', score: 1010000, totalNotes: 32, maxCombo: 32, perfectCount: 32, maxKps: 2 })).resolves.toMatchObject({ success: true });
     expect(rpc).toHaveBeenCalledOnce();
   });
 
   it.each(['RANKING_NOTE_LIMIT_EXCEEDED', 'RANKING_SONG_LIMIT_NOT_CONFIGURED'])('DB側の%sを利用者向けの警告に変換する', async (message) => {
     await startSession('kimigayo');
     rpc.mockResolvedValueOnce({ data: null, error: { code: '22023', message } });
-    await expect(submitScore({ songId: 'kimigayo', playSessionId, fastCount: 31, lateCount: 0, score: 100, totalNotes: 32 })).rejects.toMatchObject({ code: 'RANKING_INVALID_NOTE_COUNT', message: expect.stringContaining('警告') });
+    await expect(submitScore({ songId: 'kimigayo', playSessionId, fastCount: 31, lateCount: 0, verificationToken: 'token', score: 100, totalNotes: 32 })).rejects.toMatchObject({ code: 'RANKING_INVALID_NOTE_COUNT', message: expect.stringContaining('警告') });
   });
 
   it('コンボが1以上でKPSが0の記録を登録せず、コンボ0は登録できる', async () => {
@@ -113,11 +113,13 @@ describe('ranking RPC', () => {
     await expect(submitScore(payload({ maxCombo: 1, maxKps: 1 }))).rejects.toMatchObject({ code: 'RANKING_INVALID_KPS' });
   });
 
-  it('内部精度が0なら送信せず、1〜30なら本人確認を要求する', async () => {
-    await expect(submitScore(payload({ fastCount: 0, lateCount: 0 }))).rejects.toMatchObject({ code: 'RANKING_INVALID_TIMING' });
-    await expect(submitScore(payload({ fastCount: 30, lateCount: 0 }))).rejects.toMatchObject({ code: 'RANKING_VERIFICATION_REQUIRED' });
+  it('内部精度が0なら送信せず、1以上はすべて本人確認を要求する', async () => {
+    await expect(submitScore(payload({ fastCount: 0, lateCount: 0, verificationToken: '' }))).rejects.toMatchObject({ code: 'RANKING_INVALID_TIMING' });
+    await expect(submitScore(payload({ fastCount: 30, lateCount: 0, verificationToken: '' }))).rejects.toMatchObject({ code: 'RANKING_VERIFICATION_REQUIRED' });
+    await expect(submitScore(payload({ fastCount: 31, lateCount: 0, verificationToken: '' }))).rejects.toMatchObject({ code: 'RANKING_VERIFICATION_REQUIRED' });
     expect(rpc).not.toHaveBeenCalled();
     await expect(submitScore(payload({ fastCount: 30, lateCount: 0, verificationToken: 'token' }))).resolves.toMatchObject({ success: true });
+    await expect(submitScore(payload({ fastCount: 31, lateCount: 0, verificationToken: 'token' }))).resolves.toMatchObject({ success: true });
   });
 
   it('KPSが0でコンボが1以上の順位を除外して順位を振り直す', async () => {

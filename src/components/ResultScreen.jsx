@@ -7,6 +7,7 @@ import { getAchievementRank } from '../utils/achievementRank';
 import HeaderLogo from './HeaderLogo';
 import RankingTurnstile from './RankingTurnstile';
 import { classifyRankingTiming } from '../lib/rankingTiming';
+import { recordPlayStartHover } from '../lib/playStartGuard';
 import resultPage1 from '../assets/result_page1.png';
 import resultPage2 from '../assets/result_page2.png';
 import resultBg from '../assets/result_bg.png';
@@ -66,6 +67,7 @@ export default function ResultScreen({ onRetry, onBack, onHome, isLocalPlay, sco
   const hasLikedCurrentResult = useGameStore(state => state.hasLikedCurrentResult);
   const isLikingSong = useGameStore(state => state.isLikingSong);
   const playRhythmMode = useGameStore(state => state.playRhythmMode);
+  const playStartVerified = useGameStore(state => state.playStartVerified);
   const toggleCurrentSongLike = useGameStore(state => state.toggleCurrentSongLike);
   const setShowSurveyModal = useGameStore(state => state.setShowSurveyModal);
 
@@ -136,16 +138,26 @@ export default function ResultScreen({ onRetry, onBack, onHome, isLocalPlay, sco
                   <label htmlFor="result-player-name">ランキング登録</label>
                   <div className="result-register__row">
                     <input id="result-player-name" type="text" placeholder="Guest" value={playerName} onChange={handleNameChange} maxLength={20} />
-                    <button type="button" className="result-button result-button--cyan" onClick={submitResult} disabled={isSubmitting || timingStatus === 'ineligible' || timingStatus === 'unavailable' || (timingStatus === 'verification' && !verificationToken)}>{isSubmitting ? '送信中...' : '登録する'}</button>
+                    <button type="button" className="result-button result-button--cyan" onClick={submitResult} disabled={isSubmitting || playStartVerified === false || timingStatus === 'ineligible' || timingStatus === 'unavailable' || (timingStatus === 'verification' && !verificationToken)}>{isSubmitting ? '送信中...' : '登録する'}</button>
                   </div>
-                  {timingStatus === 'verification' && <><p>ランキング登録前に本人確認が必要です。</p><RankingTurnstile key={verificationAttempt} onToken={setVerificationToken} /></>}
-                  {(timingStatus === 'ineligible' || timingStatus === 'unavailable') && <p>内部精度が記録されていないため、ランキングに登録できません。</p>}
+                  {playStartVerified === false && <p>遊ぶボタンまたはランダム選曲ボタンの操作が確認できないため、ランキングに登録できません。</p>}
+                  {playStartVerified !== false && timingStatus === 'verification' && <><p>ランキング登録前に本人確認が必要です。</p><RankingTurnstile key={verificationAttempt} onToken={setVerificationToken} /></>}
+                  {playStartVerified !== false && (timingStatus === 'ineligible' || timingStatus === 'unavailable') && <p>内部精度が記録されていないため、ランキングに登録できません。</p>}
                   {submitSuccessMessage && <p className="result-register__message" role="status">{submitSuccessMessage}</p>}
                 </div>
               ) : isLocalPlay ? <p className="result-local-message">創作譜面の記録はランキングに送信されません</p> : null}
               {!isLocalPlay && songId && <button type="button" className="result-button result-button--like" disabled={isLikingSong} aria-pressed={hasLikedCurrentResult} onClick={handleLike}><Heart size={17} fill={hasLikedCurrentResult ? 'currentColor' : 'none'} /> {hasLikedCurrentResult ? 'いいね！済み' : 'いいね'} <span className="result-number">♥ {likeCount}</span></button>}
               <div className="result-action-grid">
-                <button type="button" className="result-button result-button--amber" onClick={onRetry}>リトライ</button>
+                <button
+                  type="button"
+                  className="result-button result-button--amber"
+                  onMouseEnter={(e) => recordPlayStartHover('retry', songId, e)}
+                  onPointerEnter={(e) => recordPlayStartHover('retry', songId, e)}
+                  onTouchStart={(e) => recordPlayStartHover('retry', songId, e)}
+                  onClick={onRetry}
+                >
+                  リトライ
+                </button>
                 {!isLocalPlay && scoreFileName && <button type="button" className="result-button" onClick={openLeaderboard}>ランキング一覧</button>}
                 <button type="button" className="result-button" onClick={onBack}>{isLocalPlay ? 'セットアップに戻る' : '曲一覧に戻る'}</button>
                 <button type="button" className="result-button" onClick={() => setShowSurveyModal(true)}>📝 アンケート</button>
@@ -166,7 +178,16 @@ export default function ResultScreen({ onRetry, onBack, onHome, isLocalPlay, sco
             <MistakeHistory entries={history} />
             <aside className="result-detail-actions" aria-label="詳細ページの操作">
               <button type="button" className="result-button result-button--primary" onClick={() => setPage(1)}>◀ 基本スコアに戻る (1/2)</button>
-              <button type="button" className="result-button result-button--amber" onClick={onRetry}>リトライ</button>
+              <button
+                type="button"
+                className="result-button result-button--amber"
+                onMouseEnter={(e) => recordPlayStartHover('retry', songId, e)}
+                onPointerEnter={(e) => recordPlayStartHover('retry', songId, e)}
+                onTouchStart={(e) => recordPlayStartHover('retry', songId, e)}
+                onClick={onRetry}
+              >
+                リトライ
+              </button>
               <button type="button" className="result-button" onClick={onBack}>{isLocalPlay ? 'セットアップに戻る' : '曲一覧に戻る'}</button>
             </aside>
           </>

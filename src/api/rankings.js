@@ -87,8 +87,15 @@ const executeSubmitScore = async (payload, session) => {
       goodCount,
       missCount,
       totalNotes, fastCount, lateCount, verificationToken,
+      playStartVerified = true,
       deviceId = getDeviceId()
     } = payload;
+
+    if (playStartVerified === false) {
+      const error = new Error('遊ぶボタンまたはランダム選曲ボタンの操作が確認できないため、ランキングに登録できません。');
+      error.code = 'RANKING_INVALID_START';
+      throw error;
+    }
 
     // 曲一覧の古い表示値ではなく、実際に演奏した譜面のノーツ数を上限にする。
     const limit = Number(totalNotes);

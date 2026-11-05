@@ -13,18 +13,23 @@ describe('ランキング登録サーバー', () => {
     expect(await (await handleRankingRequest(request({ p_fast_count: 41 }), env, fetcher)).json()).toMatchObject({ ok: false, code: 'RANKING_INVALID_TIMING' });
     expect(fetcher).not.toHaveBeenCalled();
   });
-  it('1〜30回はトークンが必要で、サイトと用途を照合する', async () => {
+  it('1回以上はすべてトークンが必要で、サイトと用途を照合する', async () => {
     const fetcher = vi.fn().mockResolvedValueOnce(answer({ success: true, hostname: 'wrong.test', action: 'ranking_submit' }));
     expect(await (await handleRankingRequest(request({ p_fast_count: 30 }), env, fetcher)).json()).toMatchObject({ code: 'RANKING_VERIFICATION_REQUIRED' });
-    expect(await (await handleRankingRequest(request({ p_fast_count: 30 }, 'token'), env, fetcher)).json()).toMatchObject({ code: 'RANKING_VERIFICATION_FAILED' });
+    expect(await (await handleRankingRequest(request({ p_fast_count: 31 }), env, fetcher)).json()).toMatchObject({ code: 'RANKING_VERIFICATION_REQUIRED' });
+    expect(await (await handleRankingRequest(request({ p_fast_count: 31 }, 'token'), env, fetcher)).json()).toMatchObject({ code: 'RANKING_VERIFICATION_FAILED' });
     expect(fetcher).toHaveBeenCalledTimes(1);
   });
-  it('検証成功後のみDBへ送り、31回以上では検証を省く', async () => {
-    const fetcher = vi.fn().mockResolvedValueOnce(answer({ success: true, hostname: 'game.test', action: 'ranking_submit' })).mockResolvedValue(answer({ updated: true }));
+  it('回数にかかわらず検証成功後のみDBへ送る', async () => {
+    const fetcher = vi.fn()
+      .mockResolvedValueOnce(answer({ success: true, hostname: 'game.test', action: 'ranking_submit' }))
+      .mockResolvedValueOnce(answer({ updated: true }))
+      .mockResolvedValueOnce(answer({ success: true, hostname: 'game.test', action: 'ranking_submit' }))
+      .mockResolvedValueOnce(answer({ updated: true }));
     expect(await (await handleRankingRequest(request({ p_fast_count: 1 }, 'token'), env, fetcher)).json()).toMatchObject({ ok: true });
     expect(fetcher.mock.calls[1][0]).toContain('finish_ranked_play_checked');
-    await handleRankingRequest(request({ p_fast_count: 31 }), env, fetcher);
-    expect(fetcher.mock.calls[2][0]).toContain('finish_ranked_play_checked');
+    expect(await (await handleRankingRequest(request({ p_fast_count: 31 }, 'token-31'), env, fetcher)).json()).toMatchObject({ ok: true });
+    expect(fetcher.mock.calls[3][0]).toContain('finish_ranked_play_checked');
   });
   it('鍵がない場合は安全側で拒否する', async () => {
     const fetcher = vi.fn();

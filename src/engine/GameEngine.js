@@ -5,6 +5,7 @@ import { playPerfect, playGood, playMiss } from '../hooks/useSystemSE';
 import { getAchievementRank } from '../utils/achievementRank';
 import { stageRhythm } from './stageRhythm';
 import { startRankedSession } from '../api/rankedSession';
+import { consumePlayStartTicket } from '../lib/playStartGuard';
 
 const JUDGE_WINDOW = {
   PERFECT: 50,
@@ -178,9 +179,11 @@ export class GameEngine {
     store.resetPlayState();
     const playRhythmMode = Boolean(store.isBoothMode && !store.isMobileMode && store.isRhythmMode);
     const currentPlaySessionId = createPlaySessionId();
-    useGameStore.setState({ currentPlaySessionId, playBoothMode: store.isBoothMode, playBoothRecordByName: store.boothRecordByName, playRhythmMode });
-    if (!store.isLocalPlay && !playRhythmMode && store.scoreFileName) {
-      startRankedSession(currentPlaySessionId, store.scoreFileName.replace(/\.json$/i, ''));
+    const songId = store.scoreFileName ? store.scoreFileName.replace(/\.json$/i, '') : (loadedScore.id || '');
+    const playStartVerified = store.isLocalPlay || playRhythmMode ? true : consumePlayStartTicket(songId);
+    useGameStore.setState({ currentPlaySessionId, playBoothMode: store.isBoothMode, playBoothRecordByName: store.boothRecordByName, playRhythmMode, playStartVerified });
+    if (!store.isLocalPlay && !playRhythmMode && store.scoreFileName && playStartVerified) {
+      startRankedSession(currentPlaySessionId, songId);
     }
     store.setStatus('playing');
 
@@ -536,6 +539,7 @@ export class GameEngine {
   }
 
   handleKeyDown(e) {
+    if (e.isTrusted === false) return;
     if (e.repeat) return;
     if (e.key === 'Escape') {
       this.togglePause();

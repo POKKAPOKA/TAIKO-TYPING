@@ -5,6 +5,7 @@ import Leaderboard from './Leaderboard';
 import HeaderLogo from './HeaderLogo';
 import { fetchRankingsResult } from '../api/rankings';
 import { exportPlayLogsCsv, exportLevelValidationSummaryCsv } from '../utils/csvExport';
+import { setPlayStartGuardEnforced, recordPlayStartHover, authorizePlayStart, clearPlayStartAuthorization } from '../lib/playStartGuard';
 import { ChevronDown, Check } from 'lucide-react';
 
 const DIFFICULTY_TABS = [
@@ -227,7 +228,9 @@ function SongListContent({ songsPromise, onBack, onStartGame }) {
   const songRequestRef = useRef(null);
   const handleScrollContainerRef = useCallback((node) => {
     scrollContainerRef.current = node;
-    if (!node) {
+    if (node) {
+      setPlayStartGuardEnforced(true);
+    } else {
       songRequestRef.current?.abort();
       songRequestRef.current = null;
     }
@@ -235,6 +238,7 @@ function SongListContent({ songsPromise, onBack, onStartGame }) {
   const handleGoHome = () => {
     songRequestRef.current?.abort();
     songRequestRef.current = null;
+    clearPlayStartAuthorization();
     onBack();
   };
   const maxDiffSectionRef = useRef(null);
@@ -289,11 +293,11 @@ function SongListContent({ songsPromise, onBack, onStartGame }) {
     showToast('これまでのプレイ記録ログをすべてクリアしました');
   };
 
-  const handleRandomPlay = async () => {
+  const handleRandomPlay = async (e) => {
     if (!songs || songs.length === 0) return;
     const randomSong = songs[Math.floor(Math.random() * songs.length)];
     // 通常の選曲と同じ経路で読み込んでから開始する
-    await handleSelectSong(randomSong);
+    await handleSelectSong(randomSong, 'random', e);
   };
 
   const [selectedLeaderboard, setSelectedLeaderboard] = useState(null); // { songTitle, promise } | null
@@ -337,7 +341,14 @@ function SongListContent({ songsPromise, onBack, onStartGame }) {
   const setLoadedScore = useGameStore(state => state.setLoadedScore);
   const setAudioUrl = useGameStore(state => state.setAudioUrl);
 
-  const handleSelectSong = async (song) => {
+  const handleSelectSong = async (song, startType = 'play', clickEvent = null) => {
+    const scoreFileName = song.scorePath.split('/').pop();
+    const songId = song.id || scoreFileName.replace(/\.json$/i, '');
+    if (!authorizePlayStart(startType, songId, clickEvent)) {
+      useGameStore.getState().showToast('「あそぶ」または「ランダム選曲」ボタンにカーソルを合わせてから開始してください');
+      return;
+    }
+
     songRequestRef.current?.abort();
     const controller = new AbortController();
     songRequestRef.current = controller;
@@ -349,12 +360,11 @@ function SongListContent({ songsPromise, onBack, onStartGame }) {
       const data = await response.json();
       if (controller.signal.aborted || songRequestRef.current !== controller) return;
 
-      const scoreFileName = song.scorePath.split('/').pop();
       const audioFileName = song.audioPath.split('/').pop();
 
       setLoadedScore({
         ...data,
-        id: song.id || scoreFileName.replace(/\.json$/i, ''),
+        id: songId,
         title: song.title || data.title || '楽曲',
         creator: song.creator || data.creator || '不明',
         difficulty: song.difficulty ?? data.difficulty ?? 1,
@@ -369,6 +379,7 @@ function SongListContent({ songsPromise, onBack, onStartGame }) {
       setTimeout(() => gameEngine.start(), 0);
     } catch (err) {
       if (controller.signal.aborted || songRequestRef.current !== controller) return;
+      clearPlayStartAuthorization();
       console.error(err);
       useGameStore.getState().showToast('譜面データの読み込みに失敗しました。');
     } finally {
@@ -527,10 +538,7 @@ function SongListContent({ songsPromise, onBack, onStartGame }) {
       if (isLocked) {
         retreatIgnoreScrollRef.current = false;
         setSealPhase('warning');
-        return;
       }
-      if (isShattering) return;
-      handleSelectSong(song);
     };
 
     return (
@@ -540,7 +548,7 @@ function SongListContent({ songsPromise, onBack, onStartGame }) {
         onClick={handleCardClick}
         className={`song-card ${isMaxDiff ? 'song-card-max-diff' : ''} ${
           isShattering ? 'song-card-shattering-shake' : ''
-        } w-full cursor-pointer flex flex-col md:flex-row justify-between items-start md:items-center gap-3 md:gap-4`}
+        } w-full ${isLocked ? 'cursor-pointer' : ''} flex flex-col md:flex-row justify-between items-start md:items-center gap-3 md:gap-4`}
       >
         {/* 氷結封印・ヒビ割れ＆ぼかしオーバーレイ（封印中〜破砕フェードアウト中のみ表示） */}
         {(isLocked || isShattering) && <IceCrackSealOverlay isShattering={isShattering} />}
@@ -660,10 +668,27 @@ function SongListContent({ songsPromise, onBack, onStartGame }) {
           </button>
           <button
             type="button"
+            onMouseEnter={(e) => {
+              if (isLocked || isShattering) return;
+              recordPlayStartHover('play', song.id, e);
+            }}
+            onPointerEnter={(e) => {
+              if (isLocked || isShattering) return;
+              recordPlayStartHover('play', song.id, e);
+            }}
+            onTouchStart={(e) => {
+              if (isLocked || isShattering) return;
+              recordPlayStartHover('play', song.id, e);
+            }}
             onClick={(e) => {
               e.stopPropagation();
-              if (isLocked || isShattering) return;
-              handleSelectSong(song);
+              if (isLocked) {
+                retreatIgnoreScrollRef.current = false;
+                setSealPhase('warning');
+                return;
+              }
+              if (isShattering) return;
+              handleSelectSong(song, 'play', e);
             }}
             className="play-btn-container play-btn max-w-[48%] md:max-w-none"
             title="あそぶ"
@@ -706,7 +731,10 @@ function SongListContent({ songsPromise, onBack, onStartGame }) {
             {/* ランダム選曲ボタン */}
             <button
               type="button"
-              onClick={handleRandomPlay}
+              onMouseEnter={(e) => recordPlayStartHover('random', null, e)}
+              onPointerEnter={(e) => recordPlayStartHover('random', null, e)}
+              onTouchStart={(e) => recordPlayStartHover('random', null, e)}
+              onClick={(e) => handleRandomPlay(e)}
               className="image-btn h-9 sm:h-12 md:h-14 w-auto"
               title="ランダム選曲"
               aria-label="ランダム選曲"
