@@ -2,6 +2,7 @@ import { supabase } from '../lib/supabase';
 import { getDeviceId } from '../lib/deviceId';
 import { getRankedSession, rankingSessionError } from './rankedSession';
 import { classifyRankingTiming } from '../lib/rankingTiming';
+import { verifyPlayIntegrity } from '../lib/playIntegrity';
 
 // 自動送信と手動送信が重なった場合に順番に処理するための直列化キュー
 let submitQueue = Promise.resolve();
@@ -94,6 +95,12 @@ const executeSubmitScore = async (payload, session) => {
     if (playStartVerified === false) {
       const error = new Error('遊ぶボタンまたはランダム選曲ボタンの操作が確認できないため、ランキングに登録できません。');
       error.code = 'RANKING_INVALID_START';
+      throw error;
+    }
+
+    if (!verifyPlayIntegrity(payload)) {
+      const error = new Error('警告：プレイ結果の整合性が確認できないか、不正な操作が検出されたためランキングに登録できません。');
+      error.code = 'RANKING_INTEGRITY_ERROR';
       throw error;
     }
 

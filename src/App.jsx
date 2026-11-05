@@ -213,7 +213,7 @@ function App() {
       }
     } catch (err) {
       if (useGameStore.getState().currentPlaySessionId === currentPlaySessionId) {
-        const message = ['RANKING_INVALID_START', 'RANKING_INVALID_NOTE_COUNT', 'RANKING_INVALID_KPS', 'RANKING_SESSION_ERROR', 'RANKING_INVALID_TIMING', 'RANKING_VERIFICATION_REQUIRED', 'RANKING_VERIFICATION_ERROR'].includes(err.code) ? err.message : '送信失敗: ' + (err.message || '不明なエラー');
+        const message = ['RANKING_INVALID_START', 'RANKING_INTEGRITY_ERROR', 'RANKING_INVALID_NOTE_COUNT', 'RANKING_INVALID_KPS', 'RANKING_SESSION_ERROR', 'RANKING_INVALID_TIMING', 'RANKING_VERIFICATION_REQUIRED', 'RANKING_VERIFICATION_ERROR'].includes(err.code) ? err.message : '送信失敗: ' + (err.message || '不明なエラー');
         setSubmitSuccessMessage(message);
         showToast(message);
       }

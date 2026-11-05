@@ -1,12 +1,83 @@
 import React, { useRef, useMemo, useCallback } from 'react';
 import { useGameStore } from '../store/gameStore';
 import { gameEngine } from '../engine/GameEngine';
+import { fitNoteText, getNoteText, NOTE_MEASURE_FONT_SIZE, NOTE_TEXT_BOX } from './noteTextFit';
 
 const NOTE_SPEED = 0.5; // px per ms（基準速度。設定の倍速がこれに乗算される）
 const JUDGE_LINE_X = 180; // 判定縦棒のX座標(px)
 const BASE_WIDTH = 896; // 基準コンテナ幅
 const BASE_HEIGHT = 136; // 基準レーン高（下部サイバーガラスレーン）
 const JUDGE_LINE_PERCENT = (JUDGE_LINE_X / BASE_WIDTH) * 100;
+
+const noteTextCache = new Map();
+const fontSubscribers = new Set();
+let measuredContext = null;
+let watchedFonts = null;
+
+function refreshNoteFontMeasurements() {
+  noteTextCache.clear();
+  fontSubscribers.forEach(callback => callback());
+}
+
+function subscribeToFontChanges(callback) {
+  fontSubscribers.add(callback);
+  const fonts = typeof document !== 'undefined' ? document.fonts : null;
+  if (fonts && !watchedFonts) {
+    watchedFonts = fonts;
+    fonts.addEventListener?.('loadingdone', refreshNoteFontMeasurements);
+    fonts.ready?.then(() => { if (watchedFonts === fonts && fontSubscribers.size) refreshNoteFontMeasurements(); });
+  }
+  return () => {
+    fontSubscribers.delete(callback);
+    if (!fontSubscribers.size && watchedFonts) {
+      watchedFonts.removeEventListener?.('loadingdone', refreshNoteFontMeasurements);
+      watchedFonts = null;
+    }
+  };
+}
+
+function measureNoteText(node, text) {
+  const computed = window.getComputedStyle(node);
+  const font = `${computed.fontWeight || '900'} ${NOTE_MEASURE_FONT_SIZE}px ${computed.fontFamily || 'sans-serif'}`;
+  const key = `${font}\u0000${text}`;
+  if (noteTextCache.has(key)) return noteTextCache.get(key);
+
+  if (!measuredContext) measuredContext = document.createElement('canvas').getContext('2d');
+  let metrics;
+  if (measuredContext) {
+    measuredContext.font = font;
+    metrics = measuredContext.measureText(text);
+  } else {
+    metrics = { width: Math.max(1, Array.from(text).length) * NOTE_MEASURE_FONT_SIZE };
+  }
+  const result = fitNoteText(metrics);
+  if (noteTextCache.size >= 1024) noteTextCache.clear();
+  noteTextCache.set(key, result);
+  return result;
+}
+
+// 倍率は描画にのみ適用し、ノーツ枠やレーン位置には影響させない。
+// DOM参照時とフォント読込時だけ計測し、アニメーション中は再計測しない。
+const NoteLabel = React.memo(({ text, scale }) => {
+  const [fit, setFit] = React.useState(() => fitNoteText({ width: Math.max(1, Array.from(text).length) * NOTE_MEASURE_FONT_SIZE }));
+  const unsubscribeRef = useRef(null);
+  const labelRef = useCallback(node => {
+    unsubscribeRef.current?.();
+    unsubscribeRef.current = null;
+    if (!node) return;
+    const update = () => setFit(measureNoteText(node, text));
+    update();
+    unsubscribeRef.current = subscribeToFontChanges(update);
+  }, [text]);
+  const factor = Number.isFinite(scale) ? Math.max(0.5, Math.min(3, scale)) : 1;
+  return (
+    <svg ref={labelRef} width={NOTE_TEXT_BOX} height={NOTE_TEXT_BOX} viewBox={`0 0 ${NOTE_TEXT_BOX} ${NOTE_TEXT_BOX}`} role="img" aria-label={text} style={{ overflow: 'visible', flexShrink: 0 }}>
+      <g transform={`translate(36 36) scale(${factor}) translate(-36 -36)`}>
+        <text x={fit.x} y={fit.y} fontSize={fit.fontSize} fill="currentColor" xmlSpace="preserve">{text}</text>
+      </g>
+    </svg>
+  );
+});
 
 // リアルタイム判定＆コンボ表示（ノーツレーンの内側ではなく、判定縦棒のすぐ上＝レーン枠の上外側に配置して被りを完全防止）
 const JudgmentPopup = React.memo(() => {
@@ -97,6 +168,7 @@ const NotesArea = React.memo(() => {
   const loadedScore = useGameStore(state => state.loadedScore);
   const wallAmount = useGameStore(state => state.wallAmount);
   const playRhythmMode = useGameStore(state => state.playRhythmMode);
+  const noteTextScale = useGameStore(state => state.noteTextScale);
 
   const [visibleRange, setVisibleRange] = React.useState({ start: -2000, end: 8000 });
   const [scale, setScale] = React.useState(1);
@@ -308,13 +380,12 @@ const NotesArea = React.memo(() => {
 
             {allNotes.map((note) => {
               const isCurrent = currentTarget?.id === note.id;
-              const word = note.word || note.reading || '';
-              const displayWord = playRhythmMode ? '♪' : word.length > 4 ? word.substring(0, 4) : word;
+              const displayWord = getNoteText(note, playRhythmMode);
               return (
                 <div
                   key={note.id}
                   data-id={note.id}
-                  className={`absolute top-1/2 -translate-y-1/2 flex items-center justify-center min-w-[78px] h-[78px] px-4 rounded-full font-black text-xl transition-colors z-10 transform -translate-x-1/2 whitespace-nowrap ${
+                  className={`absolute top-1/2 -translate-y-1/2 flex items-center justify-center w-[78px] h-[78px] rounded-full font-black transition-colors z-10 transform -translate-x-1/2 ${
                     isCurrent
                       ? 'bg-gradient-to-br from-pink-500 via-fuchsia-500 to-cyan-400 text-white border-[3px] border-white'
                       : 'bg-slate-900/90 text-cyan-200 border-[3px] border-cyan-400'
@@ -326,7 +397,7 @@ const NotesArea = React.memo(() => {
                       : '0 0 12px rgba(0, 245, 255, 0.5)'
                   }}
                 >
-                  {displayWord}
+                  <NoteLabel text={displayWord} scale={noteTextScale} />
                 </div>
               );
             })}

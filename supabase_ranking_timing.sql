@@ -10,12 +10,17 @@ CREATE OR REPLACE FUNCTION public.finish_ranked_play_checked(
   p_max_combo numeric, p_max_kps numeric, p_fast_count integer, p_late_count integer
 ) RETURNS jsonb LANGUAGE plpgsql SECURITY DEFINER
 SET search_path = pg_catalog, public, pg_temp AS $$
-DECLARE play public.ranked_play_sessions%ROWTYPE; timing jsonb; result jsonb;
+DECLARE play public.ranked_play_sessions%ROWTYPE; timing jsonb; result jsonb; hits bigint;
 BEGIN
+  hits := coalesce(p_perfect_count, -1)::bigint + coalesce(p_good_count, -1)::bigint;
   IF p_fast_count IS NULL OR p_late_count IS NULL OR p_fast_count < 0 OR p_late_count < 0
     OR p_fast_count::bigint + p_late_count::bigint = 0
-    OR p_perfect_count IS NULL OR p_good_count IS NULL
-    OR p_fast_count::bigint + p_late_count::bigint > p_perfect_count::bigint + p_good_count::bigint THEN
+    OR p_perfect_count IS NULL OR p_good_count IS NULL OR p_miss_count IS NULL OR p_max_combo IS NULL
+    OR p_perfect_count < 0 OR p_good_count < 0 OR p_miss_count < 0 OR p_max_combo < 0
+    OR p_max_combo::bigint > hits
+    OR p_fast_count::bigint + p_late_count::bigint > hits
+    OR (p_score >= 1010000 AND (p_good_count <> 0 OR p_miss_count <> 0 OR p_max_combo <> p_perfect_count OR p_perfect_count <= 0))
+    OR (p_score >= 950000 AND hits >= 20 AND (p_fast_count = 0 OR p_late_count = 0 OR p_fast_count::bigint + p_late_count::bigint < hits / 2)) THEN
     RAISE EXCEPTION 'RANKING_INVALID_TIMING' USING ERRCODE = '22023';
   END IF;
   SELECT * INTO play FROM public.ranked_play_sessions WHERE session_id = p_session_id FOR UPDATE;

@@ -62,7 +62,7 @@ DECLARE
   new_session_id uuid := gen_random_uuid();
   started_at timestamptz := clock_timestamp();
   available_at timestamptz;
-  valid_until timestamptz := started_at + interval '12 hours';
+  valid_until timestamptz;
 BEGIN
   SELECT coalesce(durations.min_seconds, 0) INTO duration_seconds
     FROM public.ranking_note_limits AS limits
@@ -79,6 +79,7 @@ BEGIN
       WHERE expires_at < started_at ORDER BY expires_at LIMIT 100
     );
   available_at := started_at + make_interval(secs => duration_seconds);
+  valid_until := available_at + interval '15 minutes';
   INSERT INTO public.ranked_play_sessions (session_id, song_id, not_before, expires_at)
     VALUES (new_session_id, p_song_id, available_at, valid_until);
   RETURN jsonb_build_object(

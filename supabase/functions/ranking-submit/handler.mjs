@@ -10,12 +10,22 @@ export async function handleRankingRequest(request, env, fetcher = fetch) {
   try { body = await request.json(); } catch { return json({ ok: false, code: 'INVALID_REQUEST' }); }
   const p = body?.payload;
   const fast = p?.p_fast_count, late = p?.p_late_count;
+  const hits = (p?.p_perfect_count ?? -1) + (p?.p_good_count ?? -1);
   if (!Number.isSafeInteger(fast) || fast < 0 || !Number.isSafeInteger(late) || late < 0 ||
       !Number.isSafeInteger(fast + late) || !Number.isSafeInteger(p?.p_perfect_count) || !Number.isSafeInteger(p?.p_good_count) ||
-      p.p_perfect_count < 0 || p.p_good_count < 0 || fast + late > p.p_perfect_count + p.p_good_count) {
+      !Number.isSafeInteger(p?.p_miss_count) || !Number.isSafeInteger(p?.p_max_combo) ||
+      typeof p?.p_score !== 'number' || !Number.isFinite(p.p_score) || p.p_score < 0 || p.p_score > 1010000 ||
+      p.p_perfect_count < 0 || p.p_good_count < 0 || p.p_miss_count < 0 || p.p_max_combo < 0 ||
+      p.p_max_combo > hits || fast + late > hits) {
     return json({ ok: false, code: 'RANKING_INVALID_TIMING' });
   }
   if (fast + late === 0) return json({ ok: false, code: 'RANKING_ZERO_TIMING' });
+  if (p.p_score === 1010000 && (p.p_good_count !== 0 || p.p_miss_count !== 0 || p.p_max_combo !== p.p_perfect_count || p.p_perfect_count <= 0)) {
+    return json({ ok: false, code: 'RANKING_INVALID_TIMING' });
+  }
+  if (p.p_score >= 950000 && hits >= 20 && (fast === 0 || late === 0 || fast + late < Math.floor(hits * 0.5))) {
+    return json({ ok: false, code: 'RANKING_INVALID_TIMING' });
+  }
   const hosts = (env.TURNSTILE_ALLOWED_HOSTNAMES || '').split(',').map(x => x.trim().toLowerCase()).filter(Boolean);
   if (!env.TURNSTILE_SECRET_KEY || !hosts.length) return json({ ok: false, code: 'RANKING_VERIFICATION_UNAVAILABLE' });
   if (typeof body.token !== 'string' || !body.token || body.token.length > 2048) return json({ ok: false, code: 'RANKING_VERIFICATION_REQUIRED' });

@@ -6,6 +6,13 @@ import { getAchievementRank } from '../utils/achievementRank';
 import { stageRhythm } from './stageRhythm';
 import { startRankedSession } from '../api/rankedSession';
 import { consumePlayStartTicket } from '../lib/playStartGuard';
+import {
+  beginPlayIntegritySession,
+  recordTrustedPlayInput,
+  recordPlayJudgment,
+  recordPlayUnjudgedMisses,
+  sealPlayIntegritySession
+} from '../lib/playIntegrity';
 
 const JUDGE_WINDOW = {
   PERFECT: 50,
@@ -188,6 +195,11 @@ export class GameEngine {
     store.setStatus('playing');
 
     this.queue = preparePlayableNotes(loadedScore.notes);
+    beginPlayIntegritySession({
+      playSessionId: currentPlaySessionId,
+      songId,
+      totalNotes: this.queue.length
+    });
 
     // スコア配点: 全ノーツの基準打鍵数の合計で 1,010,000 点を按分し、
     // 全 PERFECT でちょうど理論値 1,010,000 点になるようにする
@@ -318,19 +330,23 @@ export class GameEngine {
       ? Boolean(this.mobileTargetKana && this.mobileTypedIndex < this.mobileTargetKana.length)
       : Boolean(this.romajiParser && !this.romajiParser.isComplete());
 
+    let unjudgedMisses = 0;
     if (this.currentTarget && isCurrentIncomplete) {
       store.setCombo(0);
       if (!this.currentTargetJudged) {
         store.addMissCount();
+        unjudgedMisses += 1;
       }
       this.recordDropped(store, this.currentTarget, !this.currentTargetJudged, this.currentTime);
     }
     // 音源が譜面より先に終了した場合も、残りを未入力として集計する。
     for (const note of this.queue) {
       store.addMissCount();
+      unjudgedMisses += 1;
       this.recordDropped(store, note, true, this.currentTime);
     }
     this.queue = [];
+    recordPlayUnjudgedMisses(unjudgedMisses);
 
     // リザルト画面では現在ターゲットを表示しないため、打ち残しの有無にかかわらず
     // 常にクリアする（次回プレイへの状態持ち越しも防げる）
@@ -344,6 +360,18 @@ export class GameEngine {
 
     // 判定の追加後はZustandの新しいスナップショットを読む。
     const finalState = useGameStore.getState();
+    sealPlayIntegritySession(finalState.currentPlaySessionId, {
+      songId: finalState.scoreFileName ? finalState.scoreFileName.replace(/\.json$/i, '') : (finalState.loadedScore?.id || ''),
+      score: finalState.score,
+      maxCombo: finalState.maxCombo,
+      maxKps: finalState.maxKps,
+      perfectCount: finalState.perfectCount,
+      goodCount: finalState.goodCount,
+      missCount: finalState.missCount,
+      totalNotes: this.stats.totalNotes,
+      fastCount: finalState.fastCount,
+      lateCount: finalState.lateCount,
+    });
     const clearRate = finalState.completedCount > 0
       ? (finalState.completedCount / this.stats.totalNotes) * 100
       : 0;
@@ -507,6 +535,7 @@ export class GameEngine {
         return;
       }
 
+      recordTrustedPlayInput({ isTrusted: true });
       if (diff <= JUDGE_WINDOW.PERFECT) {
         this.applyJudgment('PERFECT', currentTimeMs - targetTime);
       } else if (diff <= JUDGE_WINDOW.GOOD) {
@@ -558,6 +587,7 @@ export class GameEngine {
       const timingOffset = currentTimeMs - this.currentTarget.time;
       const diff = Math.abs(timingOffset);
       if (diff > JUDGE_WINDOW.MISS) return;
+      recordTrustedPlayInput(e);
       if (diff <= JUDGE_WINDOW.PERFECT) {
         this.applyJudgment('PERFECT', timingOffset);
       } else if (diff <= JUDGE_WINDOW.GOOD) {
@@ -614,6 +644,7 @@ export class GameEngine {
         return;
       }
 
+      recordTrustedPlayInput(e);
       if (diff <= JUDGE_WINDOW.PERFECT) {
         this.applyJudgment('PERFECT', currentTimeMs - targetTime);
       } else if (diff <= JUDGE_WINDOW.GOOD) {
@@ -663,6 +694,7 @@ export class GameEngine {
   applyJudgment(judgment, timingOffset = null) {
     const store = useGameStore.getState();
     this.currentTargetJudged = true;
+    recordPlayJudgment(judgment, timingOffset);
     if ((judgment === 'PERFECT' || judgment === 'GOOD') && timingOffset != null) {
       if (timingOffset < 0) store.addFastCount();
       else if (timingOffset > 0) store.addLateCount();

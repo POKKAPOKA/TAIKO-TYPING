@@ -14,6 +14,7 @@ const CHARACTER_STORAGE_KEY = 'taiko_selected_character';
 const INPUT_MODE_STORAGE_KEY = 'taiko_input_mode';
 
 const normalizeVolume = (value) => Number.isFinite(value) ? Math.max(0, Math.min(1, value)) : 1;
+const normalizeNoteTextScale = (value) => Number.isFinite(value) ? Math.min(3, Math.max(0.5, Number(value.toFixed(2)))) : 1;
 const defaultVolumes = { musicVolume: 1, gameplaySeVolume: 1, systemSeVolume: 1 };
 
 function loadSelectedCharacter() {
@@ -49,7 +50,7 @@ function loadInitialMobileMode() {
 function loadSettings() {
   try {
     const raw = localStorage.getItem(SETTINGS_STORAGE_KEY);
-    if (!raw) return { speedMultiplier: 4.0, wallAmount: 0, offsetMs: 0, showCustomModes: false, isBoothMode: true, boothRecordByName: true, isRhythmMode: false, ...defaultVolumes };
+    if (!raw) return { speedMultiplier: 4.0, noteTextScale: 1, wallAmount: 0, offsetMs: 0, showCustomModes: false, isBoothMode: true, boothRecordByName: true, isRhythmMode: false, ...defaultVolumes };
     const parsed = JSON.parse(raw);
     // 旧スケール（speedScaleVersion !== 2）で初期値 1.0 のまま保存されていた場合は新基準値 4.0 に移行
     const rawSpeed = parsed.speedScaleVersion === 2
@@ -61,6 +62,7 @@ function loadSettings() {
       speedMultiplier: typeof rawSpeed === 'number'
         ? Math.min(10.0, Math.max(1.0, parseFloat(rawSpeed.toFixed(2))))
         : 4.0,
+      noteTextScale: normalizeNoteTextScale(parsed.noteTextScale),
       wallAmount: typeof parsed.wallAmount === 'number' ? parsed.wallAmount : 0,
       offsetMs: typeof parsed.offsetMs === 'number' ? parsed.offsetMs : 0,
       showCustomModes: typeof parsed.showCustomModes === 'boolean' ? parsed.showCustomModes : false,
@@ -72,7 +74,7 @@ function loadSettings() {
       systemSeVolume: normalizeVolume(parsed.systemSeVolume)
     };
   } catch {
-    return { speedMultiplier: 4.0, wallAmount: 0, offsetMs: 0, showCustomModes: false, isBoothMode: true, boothRecordByName: true, isRhythmMode: false, ...defaultVolumes };
+    return { speedMultiplier: 4.0, noteTextScale: 1, wallAmount: 0, offsetMs: 0, showCustomModes: false, isBoothMode: true, boothRecordByName: true, isRhythmMode: false, ...defaultVolumes };
   }
 }
 
@@ -340,6 +342,11 @@ export const useGameStore = create((set, get) => ({
     const next = { speedMultiplier: val, wallAmount: state.wallAmount, offsetMs: state.offsetMs, showCustomModes: state.showCustomModes, isBoothMode: state.isBoothMode };
     saveSettings(next);
     return { speedMultiplier: val };
+  }),
+  setNoteTextScale: (value) => set(() => {
+    const noteTextScale = normalizeNoteTextScale(value);
+    saveSettings({ noteTextScale });
+    return { noteTextScale };
   }),
   setWallAmount: (wallAmount) => set((state) => {
     const next = { speedMultiplier: state.speedMultiplier, wallAmount, offsetMs: state.offsetMs, showCustomModes: state.showCustomModes, isBoothMode: state.isBoothMode };

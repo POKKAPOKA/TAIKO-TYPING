@@ -57,7 +57,9 @@ BEGIN
   END IF;
 
   IF NEW.max_combo > allowed_notes OR
-     coalesce(NEW.perfect_count, 0) + coalesce(NEW.good_count, 0) + coalesce(NEW.miss_count, 0) > allowed_notes THEN
+     NEW.max_combo > coalesce(NEW.perfect_count, 0) + coalesce(NEW.good_count, 0) OR
+     coalesce(NEW.perfect_count, 0) + coalesce(NEW.good_count, 0) + coalesce(NEW.miss_count, 0) > allowed_notes OR
+     (NEW.score >= 1010000 AND (coalesce(NEW.perfect_count, 0) <> allowed_notes OR coalesce(NEW.good_count, 0) <> 0 OR coalesce(NEW.miss_count, 0) <> 0 OR NEW.max_combo <> allowed_notes)) THEN
     RAISE EXCEPTION 'RANKING_NOTE_LIMIT_EXCEEDED'
       USING ERRCODE = '22023',
         DETAIL = format('この楽曲の最大ノーツ数は%sです。既存の記録が上限を超えている場合も更新できません。', allowed_notes);

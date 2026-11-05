@@ -36,4 +36,13 @@ describe('ランキング登録サーバー', () => {
     expect(await (await handleRankingRequest(request({ p_fast_count: 1 }, 'token'), { ...env, TURNSTILE_SECRET_KEY: '' }, fetcher)).json()).toMatchObject({ code: 'RANKING_VERIFICATION_UNAVAILABLE' });
     expect(fetcher).not.toHaveBeenCalled();
   });
+  it('理論値(1010000)の矛盾データや高得点での片寄り・不足した内部精度を拒否する', async () => {
+    const fetcher = vi.fn();
+    // 1010000点なのにミスやコンボ不一致がある場合
+    expect(await (await handleRankingRequest(request({ p_score: 1010000, p_perfect_count: 40, p_miss_count: 1, p_max_combo: 40, p_fast_count: 20, p_late_count: 20 }, 'token'), env, fetcher)).json()).toMatchObject({ ok: false, code: 'RANKING_INVALID_TIMING' });
+    // 高得点(95万点以上・20ノーツ以上)なのにFASTまたはLATEが0、あるいは合計が極端に少ない場合
+    expect(await (await handleRankingRequest(request({ p_score: 1010000, p_perfect_count: 40, p_max_combo: 40, p_fast_count: 31, p_late_count: 0 }, 'token'), env, fetcher)).json()).toMatchObject({ ok: false, code: 'RANKING_INVALID_TIMING' });
+    expect(await (await handleRankingRequest(request({ p_score: 1010000, p_perfect_count: 40, p_max_combo: 40, p_fast_count: 1, p_late_count: 1 }, 'token'), env, fetcher)).json()).toMatchObject({ ok: false, code: 'RANKING_INVALID_TIMING' });
+    expect(fetcher).not.toHaveBeenCalled();
+  });
 });

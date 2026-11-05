@@ -77,6 +77,7 @@ export default function SettingsModal({ onClose }) {
   const [confirmClearLogs, setConfirmClearLogs] = useState(false);
 
   const speedMultiplier = useGameStore(state => state.speedMultiplier);
+  const noteTextScale = useGameStore(state => state.noteTextScale);
   const wallAmount = useGameStore(state => state.wallAmount);
   const offsetMs = useGameStore(state => state.offsetMs);
   const showCustomModes = useGameStore(state => state.showCustomModes);
@@ -91,6 +92,7 @@ export default function SettingsModal({ onClose }) {
   const isExportingCsv = useGameStore(state => state.isExportingCsv);
 
   const setSpeedMultiplier = useGameStore(state => state.setSpeedMultiplier);
+  const setNoteTextScale = useGameStore(state => state.setNoteTextScale);
   const setWallAmount = useGameStore(state => state.setWallAmount);
   const setOffsetMs = useGameStore(state => state.setOffsetMs);
   const toggleShowCustomModes = useGameStore(state => state.toggleShowCustomModes);
@@ -160,6 +162,10 @@ export default function SettingsModal({ onClose }) {
     const current = useGameStore.getState().speedMultiplier;
     const next = Math.min(10.0, Math.max(1.0, parseFloat((current + delta).toFixed(2))));
     setSpeedMultiplier(next);
+  };
+
+  const handleNoteTextScaleStep = (delta) => {
+    setNoteTextScale(useGameStore.getState().noteTextScale + delta);
   };
 
   const handleWallChange = (e) => {
@@ -373,6 +379,7 @@ export default function SettingsModal({ onClose }) {
   }, [onClose]);
 
   const speedRatio = (speedMultiplier - 1.0) / 9.0;
+  const noteTextScaleRatio = (noteTextScale - 0.5) / 2.5;
   const wallRatio = wallAmount / 1000;
 
   const getSpeedCategoryLabel = (spd) => {
@@ -605,6 +612,29 @@ export default function SettingsModal({ onClose }) {
                           <span className="mt-1 text-[11px] sm:text-xs">10.00 (最高速)</span>
                         </button>
                       </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* ノーツ文字サイズ */}
+                <div className="relative rounded-2xl border-2 border-cyan-500/60 bg-[#100d1c] p-1">
+                  <MechCornerBrackets color="cyan" />
+                  <div className="rounded-xl border border-amber-500/30 bg-[#0c0a16] p-4 sm:p-5 flex flex-col gap-4">
+                    <div className="border-b border-[#28203d] pb-3">
+                      <h3 className="text-lg sm:text-xl font-black text-cyan-300 tracking-widest font-dotgothic">ノーツ文字の大きさ</h3>
+                      <p className="text-xs sm:text-sm text-neutral-300 font-bold mt-1">枠に合わせた文字の大きさを倍率で調整します（1.00が標準）。</p>
+                    </div>
+                    <div className="bg-[#08060e] rounded-xl border-2 border-[#251e38] p-3.5 sm:p-4 flex flex-wrap items-center justify-center gap-1.5 sm:gap-3">
+                      <button type="button" onClick={() => handleNoteTextScaleStep(-0.1)} aria-label="文字サイズを0.10小さくする" className="px-2.5 sm:px-3.5 py-2.5 bg-[#161224] hover:bg-[#231d38] text-neutral-200 rounded-xl border border-[#382e54] font-dotgothic font-bold text-xs sm:text-sm cursor-pointer">-0.10</button>
+                      <button type="button" onClick={() => handleNoteTextScaleStep(-0.01)} aria-label="文字サイズを0.01小さくする" className="px-3 py-2.5 bg-[#1a152a] hover:bg-[#272040] text-cyan-300 rounded-xl border-2 border-cyan-500/60 font-dotgothic font-black text-xs sm:text-sm flex items-center gap-1 cursor-pointer"><Minus size={15} />0.01</button>
+                      <div className="min-w-[120px] sm:min-w-[150px] text-center bg-[#120e20] px-3 py-1.5 rounded-xl border-2 border-cyan-400/60 flex items-baseline justify-center gap-1.5"><span className="text-3xl sm:text-4xl font-black font-dotgothic text-cyan-300">{noteTextScale.toFixed(2)}</span><span className="text-xs text-amber-400/80 font-dotgothic">/ 3.00</span></div>
+                      <button type="button" onClick={() => handleNoteTextScaleStep(0.01)} aria-label="文字サイズを0.01大きくする" className="px-3 py-2.5 bg-[#1a152a] hover:bg-[#272040] text-amber-300 rounded-xl border-2 border-amber-500/60 font-dotgothic font-black text-xs sm:text-sm flex items-center gap-1 cursor-pointer"><Plus size={15} />0.01</button>
+                      <button type="button" onClick={() => handleNoteTextScaleStep(0.1)} aria-label="文字サイズを0.10大きくする" className="px-2.5 sm:px-3.5 py-2.5 bg-[#161224] hover:bg-[#231d38] text-neutral-200 rounded-xl border border-[#382e54] font-dotgothic font-bold text-xs sm:text-sm cursor-pointer">+0.10</button>
+                    </div>
+                    <div className="flex flex-col gap-1.5">
+                      <MechSegmentedBar ratio={noteTextScaleRatio} segments={26} activeColor="cyan" standardIndex={5} />
+                      <input type="range" min="0.50" max="3.00" step="0.01" value={noteTextScale} onChange={e => setNoteTextScale(Number(e.target.value))} aria-label="ノーツ文字の大きさ" className="mech-gauge-slider" style={{ background: `linear-gradient(to right, #06b6d4 0%, #f59e0b calc(13px + (100% - 26px) * ${noteTextScaleRatio}), #161224 calc(13px + (100% - 26px) * ${noteTextScaleRatio}), #161224 100%)` }} />
+                      <div className="flex items-center justify-between text-xs font-dotgothic font-bold text-neutral-400"><span>0.50</span><button type="button" onClick={() => setNoteTextScale(1)} className="rounded-md px-2 py-1 bg-amber-500/15 border border-amber-500/50 text-amber-300 cursor-pointer">1.00 標準に戻す</button><span>3.00</span></div>
                     </div>
                   </div>
                 </div>
