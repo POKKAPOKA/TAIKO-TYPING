@@ -25,9 +25,28 @@ export function fitNoteText(metrics) {
   };
 }
 
-// キャプチャ元のテキストを切り詰めず、文字単位（UTF-16）で分割しない。
+export const MAX_NOTE_TEXT_CHARS = 3;
+
+const graphemeSegmenter = typeof Intl !== 'undefined' && typeof Intl.Segmenter === 'function'
+  ? new Intl.Segmenter('ja', { granularity: 'grapheme' })
+  : null;
+
+// 長い文字が極端に小さくなるのを防ぐため、ノーツ内表示は先頭3文字（書記素単位）までに制限する。
 export function getNoteText(note, rhythmMode) {
-  return rhythmMode ? '♪' : String(note?.word || note?.reading || '');
+  if (rhythmMode) return '♪';
+  const raw = String(note?.word || note?.reading || '');
+  if (!raw) return '';
+  if (graphemeSegmenter) {
+    let result = '';
+    let count = 0;
+    for (const { segment } of graphemeSegmenter.segment(raw)) {
+      if (count >= MAX_NOTE_TEXT_CHARS) break;
+      result += segment;
+      count += 1;
+    }
+    return result;
+  }
+  return Array.from(raw).slice(0, MAX_NOTE_TEXT_CHARS).join('');
 }
 
 export const NOTE_MEASURE_FONT_SIZE = REFERENCE_FONT_SIZE;

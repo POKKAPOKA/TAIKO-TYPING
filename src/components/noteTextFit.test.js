@@ -31,10 +31,12 @@ describe('ノーツ文字の枠への収まり', () => {
     expect(Number.isFinite(fitNoteText({ width: 0 }).fontSize)).toBe(true);
   });
 
-  it('長文・絵文字・結合文字を切らずに表示し、リズムモードでは音符を使う', () => {
+  it('4文字以上のテキストは先頭3文字に切り詰め（絵文字・結合文字も文字単位で保持）、リズムモードでは音符を使う', () => {
     const text = 'が𠮷🎵abcdef';
-    expect(getNoteText({ word: text }, false)).toBe(text);
-    expect(getNoteText({ reading: 'かきくけこ' }, false)).toBe('かきくけこ');
+    expect(getNoteText({ word: text }, false)).toBe('が𠮷🎵');
+    expect(getNoteText({ reading: 'かきくけこ' }, false)).toBe('かきく');
+    expect(getNoteText({ word: 'あいう' }, false)).toBe('あいう');
+    expect(getNoteText({ word: 'あい' }, false)).toBe('あい');
     expect(getNoteText({ word: text }, true)).toBe('♪');
   });
 });
